@@ -1,0 +1,116 @@
+<!-- templates/observations/observation_detail.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="card mb-3">
+    <div class="card-header">
+      <h4>{{ object.title }}</h4>
+      <small>Observed: {{ object.date_observed|date:"Y-m-d H:i" }} • Severity: {{ object.get_severity_display }} • Status: {{ object.get_status_display }}</small>
+    </div>
+    <div class="card-body">
+      <p><strong>Location:</strong> {{ object.location }}</p>
+      <p><strong>Description:</strong><br/>{{ object.description|linebreaks }}</p>
+
+      {% if object.photo_before %}
+        <div class="mb-3">
+          <strong>Photo Before Rectification:</strong><br>
+
+          <img src="{{ object.photo_before.url }}"
+              alt="before"
+              class="img-thumbnail"
+              style="max-width:200px; cursor:zoom-in;"
+              data-bs-toggle="modal"
+              data-bs-target="#beforeImageModal">
+        </div>
+
+        <!-- Modal for Before Image -->
+        <div class="modal fade" id="beforeImageModal" tabindex="-1"
+            aria-labelledby="beforeImageModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="beforeImageModalLabel">
+                  Before Rectification
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+              </div>
+              <div class="modal-body text-center">
+                <img src="{{ object.photo_before.url }}"
+                    alt="before"
+                    class="img-fluid">
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+
+      <p><strong>Assigned to:</strong> {{ object.assigned_to }}</p>
+      <p><strong>Target date:</strong> {{ object.target_date }}</p>
+
+      <hr>
+
+      <h5>Rectification</h5>
+
+      {% if object.rectification_details %}
+        <p>{{ object.rectification_details|linebreaks }}</p>
+
+        {% if object.photo_after %}
+          <div class="mb-3">
+            <strong>Photo After Rectification:</strong><br>
+
+            <img src="{{ object.photo_after.url }}"
+                alt="after"
+                class="img-thumbnail"
+                style="max-width:200px; cursor:zoom-in;"
+                data-bs-toggle="modal"
+                data-bs-target="#afterImageModal">
+          </div>
+
+          <!-- Modal for After Image -->
+          <div class="modal fade" id="afterImageModal" tabindex="-1"
+              aria-labelledby="afterImageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="afterImageModalLabel">
+                    After Rectification
+                  </h5>
+                  <button type="button"
+                          class="btn-close"
+                          data-bs-dismiss="modal"
+                          aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                  <img src="{{ object.photo_after.url }}"
+                      alt="after"
+                      class="img-fluid">
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+      {% else %}
+        <p class="text-muted">No rectification details yet.</p>
+      {% endif %}
+      
+
+      <div class="mt-3">
+        {% if user.is_authenticated %}
+          {% if object.assigned_to and user == object.assigned_to %}
+            <a class="btn btn-outline-primary" href="{% url 'observations:rectify' object.pk %}">Update Rectification</a>
+          {% endif %}
+          {% if user.is_safety_manager %}
+            <a class="btn btn-outline-success" href="{% url 'observations:verify' object.pk %}">Verify / Close</a>
+          {% endif %}
+        {% endif %}
+        <a class="btn btn-secondary" href="{% url 'observations:observation_list' %}">Back</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 700px;">
+  <h2 class="mb-4">My Profile</h2>
+
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Account Details</div>
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Name</dt>
+        <dd class="col-sm-8">{{ user.get_full_name }}</dd>
+
+        <dt class="col-sm-4">Email</dt>
+        <dd class="col-sm-8">{{ user.email }}</dd>
+
+        <dt class="col-sm-4">Role</dt>
+        <dd class="col-sm-8">
+          {% if user.is_manager %}Manager{% endif %}
+          {% if user.is_observer %}Observer{% endif %}
+          {% if user.is_action_owner %}Action Owner{% endif %}
+          {% if user.is_safety_manager %}Safety Manager{% endif %}
+          {% if not user.is_manager and not user.is_observer and not user.is_action_owner and not user.is_safety_manager %}
+            —
+          {% endif %}
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  {% if current_org %}
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Organisation</div>
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Name</dt>
+        <dd class="col-sm-8">{{ current_org.name }}</dd>
+
+        <dt class="col-sm-4">Domain</dt>
+        <dd class="col-sm-8">{{ current_org.domain }}</dd>
+
+        {% if subscription %}
+        <dt class="col-sm-4">Plan</dt>
+        <dd class="col-sm-8">{{ subscription.plan.name }}</dd>
+
+        {% if trial_days_left is not None %}
+        <dt class="col-sm-4">Trial Ends</dt>
+        <dd class="col-sm-8">
+          {% if trial_days_left > 0 %}
+            <span class="text-warning fw-semibold">{{ trial_days_left }} day{{ trial_days_left|pluralize }} remaining</span>
+          {% else %}
+            <span class="text-danger fw-semibold">Expired</span>
+          {% endif %}
+        </dd>
+        {% endif %}
+        {% endif %}
+      </dl>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if user.is_manager %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'core:invite_user' %}" class="btn btn-outline-primary">Invite Team Members</a>
+    <a href="{% url 'core:billing' %}" class="btn btn-outline-secondary">Manage Billing</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

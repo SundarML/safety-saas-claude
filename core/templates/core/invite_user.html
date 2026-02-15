@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <h4 class="mb-3">Invite User</h4>
+      <p class="text-muted">
+        Invite a user to join your organization.
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label">Email Address</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Role</label>
+          <select name="role" class="form-select">
+            <option value="observer">Observer</option>
+            <option value="action_owner">Action Owner</option>
+            <option value="manager">Manager</option>
+          </select>
+        </div>
+
+        <div class="d-flex justify-content-end">
+          <a href="/" class="btn btn-secondary me-2">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            Send Invite
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

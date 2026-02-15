@@ -1,0 +1,20 @@
+<!-- templates/observations/observation_verify.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <h3>Verify Observation: {{ observation.title }}</h3>
+  <div class="card mb-3">
+    <div class="card-body">
+      <p><strong>Description:</strong> {{ observation.description|linebreaks }}</p>
+      <p><strong>Rectification:</strong> {{ observation.rectification_details|linebreaks }}</p>
+      <form method="post">{% csrf_token %}
+        {{ form|crispy }}
+        <div class="mt-3">
+          <button class="btn btn-primary" type="submit">Submit Verification</button>
+          <a class="btn btn-secondary" href="{% url 'observations:detail' observation.pk %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

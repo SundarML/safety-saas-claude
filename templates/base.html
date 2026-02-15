@@ -1,0 +1,266 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SafetySuite</title>
+
+```
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    body {
+        background:#f8f9fb;
+    }
+
+    /* Sidebar */
+    #sidebar {
+        width:240px;
+        min-height:100vh;
+        transition:all .3s;
+        background:white;
+    }
+
+    #sidebar.collapsed {
+        margin-left:-240px;
+    }
+
+    .list-group-item {
+        border:none;
+        padding:14px 18px;
+        font-weight:500;
+    }
+
+    .list-group-item:hover {
+        background:#eef4ff;
+        color:#0d6efd;
+    }
+</style>
+```
+
+</head>
+
+<body>
+
+<!-- ================= HELP MODAL ================= -->
+
+<div class="modal fade" id="helpModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+```
+  <div class="modal-header">
+    <h5 class="modal-title">📘 Safety Observation System – Help Guide</h5>
+    <button class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+
+  <div class="modal-body">
+
+    <h5>🔍 What is this application?</h5>
+    <p>
+      A digital platform to record, track, rectify and verify safety
+      observations — replacing spreadsheets and manual follow-ups.
+    </p>
+
+    <hr>
+
+    <h5>🔄 Workflow</h5>
+    <ol>
+      <li>Observe</li>
+      <li>Assign</li>
+      <li>Rectify</li>
+      <li>Verify</li>
+      <li>Track</li>
+    </ol>
+
+    <hr>
+
+    <h5>📊 Key Features</h5>
+    <ul>
+      <li>Photo evidence</li>
+      <li>Due date tracking</li>
+      <li>Analytics dashboards</li>
+      <li>Archival system</li>
+      <li>Role security</li>
+    </ul>
+
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+  </div>
+
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ================= TOP BAR ================= -->
+
+<nav class="navbar navbar-dark bg-dark px-3 shadow-sm">
+
+```
+<!-- Toggle -->
+<button class="btn btn-outline-light me-2" id="sidebarToggle">
+    <i class="bi bi-list"></i>
+</button>
+
+<!-- Brand -->
+<a class="navbar-brand fw-bold" href="{% url 'home' %}">
+    🦺 SafetySuite
+</a>
+
+<!-- Right side -->
+<div class="ms-auto d-flex align-items-center">
+    {% if not user.is_authenticated %}
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'core:organization_signup' %}">
+                <span class="badge bg-primary me-3 fs-6">
+                <i class="bi bi-person-plus"></i> Organization Sign Up
+                </span>
+            </a>
+        </li>
+    {% endif %}
+
+    {% if trial_days_left is not None %}
+    <span class="badge bg-warning text-dark">
+    Trial: {{ trial_days_left }} days left..
+    </span>
+    {% endif %}
+
+
+    {% if current_org %}
+    <span class="badge bg-primary me-3 fs-6">
+        🏢 {{ current_org.name }}
+    </span>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <div class="dropdown">
+        <a class="btn btn-outline-light dropdown-toggle"
+           data-bs-toggle="dropdown">
+           {{ user.email }}
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+
+            <li>
+                <a class="dropdown-item" href="{% url 'users:profile' %}">
+                    Profile
+                </a>
+            </li>
+
+            {% if user.is_superuser %}
+            <li>
+                <a class="dropdown-item text-danger"
+                   href="{% url 'admin:index' %}">
+                   Admin Panel
+                </a>
+            </li>
+            {% endif %}
+
+            <li><hr class="dropdown-divider"></li>
+
+            <li>
+                <a class="dropdown-item text-danger"
+                   href="#"
+                   onclick="event.preventDefault();document.getElementById('logout-form').submit();">
+                   Logout
+                </a>
+            </li>
+
+        </ul>
+    </div>
+
+    <form id="logout-form" method="post" action="{% url 'logout' %}" class="d-none">
+        {% csrf_token %}
+    </form>
+    {% endif %}
+
+</div>
+```
+
+</nav>
+
+<!-- ================= MAIN LAYOUT ================= -->
+
+<div class="d-flex">
+
+```
+<!-- SIDEBAR -->
+<div id="sidebar" class="border-end">
+
+    <div class="list-group list-group-flush">
+
+        <a href="{% url 'home' %}" class="list-group-item list-group-item-action">
+            <i class="bi bi-house"></i> Home
+        </a>
+
+        <a href="{% url 'observations:dashboard' %}" class="list-group-item list-group-item-action">
+            <i class="bi bi-bar-chart"></i> Dashboard
+        </a>
+
+        <a href="{% url 'observations:observation_list' %}" class="list-group-item list-group-item-action">
+            <i class="bi bi-list-ul"></i> Observations
+        </a>
+
+        <a href="{% url 'observations:create' %}" class="list-group-item list-group-item-action">
+            <i class="bi bi-plus-circle"></i> Report New
+        </a>
+
+        <a href="{% url 'observations:archived_list' %}" class="list-group-item list-group-item-action">
+            <i class="bi bi-archive"></i> Archived
+        </a>
+
+        {% if request.user.is_manager %}
+        <a href="{% url 'core:invite_user' %}" class="list-group-item list-group-item-action">
+            <i class="bi bi-person-plus"></i> Invite Users
+        </a>
+        {% endif %}
+
+        <button class="list-group-item list-group-item-action"
+                data-bs-toggle="modal"
+                data-bs-target="#helpModal">
+            <i class="bi bi-question-circle"></i> Help
+        </button>
+
+    </div>
+</div>
+
+<!-- CONTENT -->
+<div class="flex-grow-1 p-4">
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+</div>
+```
+
+</div>
+
+<!-- ================= SCRIPTS ================= -->
+
+<script>
+document.getElementById("sidebarToggle")
+.addEventListener("click", function(){
+    document.getElementById("sidebar")
+    .classList.toggle("collapsed");
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
