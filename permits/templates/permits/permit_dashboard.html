@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}PTW Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h3><i class="bi bi-bar-chart me-2"></i>Permit to Work — Dashboard</h3>
+  <a href="{% url 'permits:create' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-plus-circle me-1"></i>New Permit
+  </a>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-0">
+      <div class="card-body">
+        <div class="display-6 fw-bold">{{ total }}</div>
+        <small class="text-muted">Total</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-0 bg-warning bg-opacity-10">
+      <div class="card-body">
+        <div class="display-6 fw-bold text-warning">{{ by_status.SUBMITTED|default:0 }}</div>
+        <small class="text-muted">Pending Review</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-0 bg-success bg-opacity-10">
+      <div class="card-body">
+        <div class="display-6 fw-bold text-success">{{ by_status.ACTIVE|default:0 }}</div>
+        <small class="text-muted">Active</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-0 bg-info bg-opacity-10">
+      <div class="card-body">
+        <div class="display-6 fw-bold text-info">{{ by_status.APPROVED|default:0 }}</div>
+        <small class="text-muted">Approved</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-0 bg-dark bg-opacity-10">
+      <div class="card-body">
+        <div class="display-6 fw-bold">{{ by_status.CLOSED|default:0 }}</div>
+        <small class="text-muted">Closed</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card text-center shadow-sm border-0 bg-danger bg-opacity-10">
+      <div class="card-body">
+        <div class="display-6 fw-bold text-danger">{{ overdue|length }}</div>
+        <small class="text-muted">Overdue</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Pending Approval -->
+  {% if pending_approval %}
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-warning">
+      <div class="card-header bg-warning text-dark fw-semibold">
+        <i class="bi bi-hourglass-split me-2"></i>Awaiting Your Approval ({{ pending_approval|length }})
+      </div>
+      <div class="list-group list-group-flush">
+        {% for p in pending_approval %}
+        <a href="{% url 'permits:approve' p.pk %}" class="list-group-item list-group-item-action">
+          <div class="d-flex justify-content-between">
+            <span class="fw-semibold">{{ p.permit_number }}</span>
+            <small class="text-muted">{{ p.planned_start|date:"d M H:i" }}</small>
+          </div>
+          <small>{{ p.get_work_type_display }} — {{ p.location }} — {{ p.requestor.get_full_name }}</small>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Active Permits -->
+  {% if active_permits %}
+  <div class="col-lg-6">
+    <div class="card shadow-sm border-success">
+      <div class="card-header bg-success text-white fw-semibold">
+        <i class="bi bi-activity me-2"></i>Active Permits ({{ active_permits|length }})
+      </div>
+      <div class="list-group list-group-flush">
+        {% for p in active_permits %}
+        <a href="{% url 'permits:detail' p.pk %}" class="list-group-item list-group-item-action">
+          <div class="d-flex justify-content-between">
+            <span class="fw-semibold">{{ p.permit_number }}</span>
+            <small>Ends {{ p.planned_end|date:"d M H:i" }}</small>
+          </div>
+          <small>{{ p.get_work_type_display }} — {{ p.location }} — {{ p.requestor.get_full_name }}</small>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Overdue -->
+  {% if overdue %}
+  <div class="col-12">
+    <div class="card shadow-sm border-danger">
+      <div class="card-header bg-danger text-white fw-semibold">
+        <i class="bi bi-exclamation-triangle me-2"></i>Overdue Permits ({{ overdue|length }})
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Permit No.</th><th>Type</th><th>Location</th>
+              <th>Requestor</th><th>Was Due</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in overdue %}
+            <tr>
+              <td>{{ p.permit_number }}</td>
+              <td>{{ p.get_work_type_display }}</td>
+              <td>{{ p.location }}</td>
+              <td>{{ p.requestor.get_full_name }}</td>
+              <td class="text-danger">{{ p.planned_end|date:"d M Y H:i" }}</td>
+              <td><a href="{% url 'permits:detail' p.pk %}" class="btn btn-xs btn-outline-danger btn-sm">View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Work type breakdown -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold bg-dark text-white">Permits by Work Type</div>
+      <div class="list-group list-group-flush">
+        {% for row in by_type %}
+        <div class="list-group-item d-flex justify-content-between">
+          <span>{{ row.work_type|title|cut:"_" }}</span>
+          <span class="badge bg-primary rounded-pill">{{ row.count }}</span>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No data yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Status breakdown -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold bg-dark text-white">Permits by Status</div>
+      <div class="list-group list-group-flush">
+        {% for status, count in by_status.items %}
+        <div class="list-group-item d-flex justify-content-between">
+          <span>{{ status|title }}</span>
+          <span class="badge bg-secondary rounded-pill">{{ count }}</span>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-muted">No data yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

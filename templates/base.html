@@ -1,266 +1,263 @@
 <!doctype html>
-
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SafetySuite</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SafetySuite{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body { background: #f8f9fb; }
 
-```
-<!-- Bootstrap -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-<style>
-    body {
-        background:#f8f9fb;
-    }
-
-    /* Sidebar */
     #sidebar {
-        width:240px;
-        min-height:100vh;
-        transition:all .3s;
-        background:white;
+      width: 240px;
+      min-height: 100vh;
+      transition: all .3s;
+      background: white;
     }
-
-    #sidebar.collapsed {
-        margin-left:-240px;
-    }
+    #sidebar.collapsed { margin-left: -240px; }
 
     .list-group-item {
-        border:none;
-        padding:14px 18px;
-        font-weight:500;
+      border: none;
+      padding: 12px 18px;
+      font-weight: 500;
+      color: #444;
     }
-
-    .list-group-item:hover {
-        background:#eef4ff;
-        color:#0d6efd;
+    .list-group-item:hover,
+    .list-group-item.active {
+      background: #eef4ff;
+      color: #0d6efd;
     }
-</style>
-```
+    .list-group-item.active { border-left: 3px solid #0d6efd; }
 
+    .trial-badge {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .7; }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
 </head>
 
 <body>
 
-<!-- ================= HELP MODAL ================= -->
-
+<!-- ===== HELP MODAL ===== -->
 <div class="modal fade" id="helpModal" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-
-```
-  <div class="modal-header">
-    <h5 class="modal-title">📘 Safety Observation System – Help Guide</h5>
-    <button class="btn-close" data-bs-dismiss="modal"></button>
-  </div>
-
-  <div class="modal-body">
-
-    <h5>🔍 What is this application?</h5>
-    <p>
-      A digital platform to record, track, rectify and verify safety
-      observations — replacing spreadsheets and manual follow-ups.
-    </p>
-
-    <hr>
-
-    <h5>🔄 Workflow</h5>
-    <ol>
-      <li>Observe</li>
-      <li>Assign</li>
-      <li>Rectify</li>
-      <li>Verify</li>
-      <li>Track</li>
-    </ol>
-
-    <hr>
-
-    <h5>📊 Key Features</h5>
-    <ul>
-      <li>Photo evidence</li>
-      <li>Due date tracking</li>
-      <li>Analytics dashboards</li>
-      <li>Archival system</li>
-      <li>Role security</li>
-    </ul>
-
-  </div>
-
-  <div class="modal-footer">
-    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-  </div>
-
-</div>
-```
-
+      <div class="modal-header">
+        <h5 class="modal-title">📘 SafetySuite — Help Guide</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <h5>🔍 What is this?</h5>
+        <p>A digital platform to record, track, rectify and verify safety observations — replacing spreadsheets and manual follow-ups.</p>
+        <hr>
+        <h5>🔄 Workflow</h5>
+        <ol>
+          <li><strong>Observe</strong> — Record hazard with description &amp; photo.</li>
+          <li><strong>Assign</strong> — Assign an action owner with a target date.</li>
+          <li><strong>Rectify</strong> — Action owner submits fix &amp; photo.</li>
+          <li><strong>Verify</strong> — Safety Manager approves or rejects.</li>
+          <li><strong>Archive</strong> — Closed observations move to archive.</li>
+        </ol>
+        <hr>
+        <h5>👥 Roles</h5>
+        <ul>
+          <li><strong>Observer</strong> — Reports observations.</li>
+          <li><strong>Action Owner</strong> — Fixes and submits rectification.</li>
+          <li><strong>Safety Manager</strong> — Verifies and closes.</li>
+          <li><strong>Manager</strong> — Full access, invites users, manages billing.</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ================= TOP BAR ================= -->
-
+<!-- ===== TOP NAV ===== -->
 <nav class="navbar navbar-dark bg-dark px-3 shadow-sm">
-
-```
-<!-- Toggle -->
-<button class="btn btn-outline-light me-2" id="sidebarToggle">
+  <button class="btn btn-outline-light me-2" id="sidebarToggle">
     <i class="bi bi-list"></i>
-</button>
+  </button>
 
-<!-- Brand -->
-<a class="navbar-brand fw-bold" href="{% url 'home' %}">
-    🦺 SafetySuite
-</a>
+  <a class="navbar-brand fw-bold" href="{% url 'home' %}">🦺 SafetySuite</a>
 
-<!-- Right side -->
-<div class="ms-auto d-flex align-items-center">
+  <div class="ms-auto d-flex align-items-center gap-2">
+
     {% if not user.is_authenticated %}
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'core:organization_signup' %}">
-                <span class="badge bg-primary me-3 fs-6">
-                <i class="bi bi-person-plus"></i> Organization Sign Up
-                </span>
-            </a>
-        </li>
+      <a href="{% url 'core:organization_signup' %}" class="btn btn-sm btn-primary">
+        <i class="bi bi-person-plus"></i> Sign Up
+      </a>
     {% endif %}
 
     {% if trial_days_left is not None %}
-    <span class="badge bg-warning text-dark">
-    Trial: {{ trial_days_left }} days left..
-    </span>
+      {% if trial_days_left <= 3 %}
+        <span class="badge bg-danger trial-badge">
+          ⚠ Trial: {{ trial_days_left }} day{{ trial_days_left|pluralize }} left
+        </span>
+      {% else %}
+        <span class="badge bg-warning text-dark">
+          Trial: {{ trial_days_left }} day{{ trial_days_left|pluralize }} left
+        </span>
+      {% endif %}
     {% endif %}
 
-
     {% if current_org %}
-    <span class="badge bg-primary me-3 fs-6">
-        🏢 {{ current_org.name }}
-    </span>
+      <span class="badge bg-secondary fs-6">
+        <i class="bi bi-building"></i> {{ current_org.name }}
+      </span>
     {% endif %}
 
     {% if user.is_authenticated %}
     <div class="dropdown">
-        <a class="btn btn-outline-light dropdown-toggle"
-           data-bs-toggle="dropdown">
-           {{ user.email }}
-        </a>
-
-        <ul class="dropdown-menu dropdown-menu-end shadow">
-
-            <li>
-                <a class="dropdown-item" href="{% url 'users:profile' %}">
-                    Profile
-                </a>
-            </li>
-
-            {% if user.is_superuser %}
-            <li>
-                <a class="dropdown-item text-danger"
-                   href="{% url 'admin:index' %}">
-                   Admin Panel
-                </a>
-            </li>
-            {% endif %}
-
-            <li><hr class="dropdown-divider"></li>
-
-            <li>
-                <a class="dropdown-item text-danger"
-                   href="#"
-                   onclick="event.preventDefault();document.getElementById('logout-form').submit();">
-                   Logout
-                </a>
-            </li>
-
-        </ul>
+      <a class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+        <i class="bi bi-person-circle me-1"></i>
+        {{ user.get_full_name }}
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end shadow">
+        <li class="px-3 py-1">
+          <small class="text-muted">{{ user.email }}</small>
+        </li>
+        <li><hr class="dropdown-divider my-1"></li>
+        <li>
+          <a class="dropdown-item" href="{% url 'users:profile' %}">
+            <i class="bi bi-person me-2"></i>Profile
+          </a>
+        </li>
+        {% if user.is_manager %}
+        <li>
+          <a class="dropdown-item" href="{% url 'core:billing' %}">
+            <i class="bi bi-credit-card me-2"></i>Billing &amp; Plans
+          </a>
+        </li>
+        {% endif %}
+        {% if user.is_superuser %}
+        <li>
+          <a class="dropdown-item text-danger" href="{% url 'admin:index' %}">
+            <i class="bi bi-shield-lock me-2"></i>Admin Panel
+          </a>
+        </li>
+        {% endif %}
+        <li><hr class="dropdown-divider my-1"></li>
+        <li>
+          <a class="dropdown-item text-danger" href="#"
+             onclick="event.preventDefault();document.getElementById('logout-form').submit();">
+            <i class="bi bi-box-arrow-right me-2"></i>Logout
+          </a>
+        </li>
+      </ul>
     </div>
-
     <form id="logout-form" method="post" action="{% url 'logout' %}" class="d-none">
-        {% csrf_token %}
+      {% csrf_token %}
     </form>
     {% endif %}
 
-</div>
-```
-
+  </div>
 </nav>
 
-<!-- ================= MAIN LAYOUT ================= -->
-
+<!-- ===== MAIN LAYOUT ===== -->
 <div class="d-flex">
 
-```
-<!-- SIDEBAR -->
-<div id="sidebar" class="border-end">
-
+  <!-- SIDEBAR -->
+  {% if user.is_authenticated %}
+  <div id="sidebar" class="border-end">
     <div class="list-group list-group-flush">
 
-        <a href="{% url 'home' %}" class="list-group-item list-group-item-action">
-            <i class="bi bi-house"></i> Home
-        </a>
+      <a href="{% url 'home' %}"
+         class="list-group-item list-group-item-action {% if request.path == '/' %}active{% endif %}">
+        <i class="bi bi-house me-2"></i>Home
+      </a>
 
-        <a href="{% url 'observations:dashboard' %}" class="list-group-item list-group-item-action">
-            <i class="bi bi-bar-chart"></i> Dashboard
-        </a>
+      <a href="{% url 'observations:dashboard' %}"
+         class="list-group-item list-group-item-action {% if 'dashboard' in request.path %}active{% endif %}">
+        <i class="bi bi-bar-chart me-2"></i>Dashboard
+      </a>
 
-        <a href="{% url 'observations:observation_list' %}" class="list-group-item list-group-item-action">
-            <i class="bi bi-list-ul"></i> Observations
-        </a>
+      <a href="{% url 'observations:observation_list' %}"
+         class="list-group-item list-group-item-action {% if request.path == '/observations/' %}active{% endif %}">
+        <i class="bi bi-list-ul me-2"></i>Observations
+      </a>
 
-        <a href="{% url 'observations:create' %}" class="list-group-item list-group-item-action">
-            <i class="bi bi-plus-circle"></i> Report New
-        </a>
+      <a href="{% url 'observations:create' %}"
+         class="list-group-item list-group-item-action {% if 'new' in request.path %}active{% endif %}">
+        <i class="bi bi-plus-circle me-2"></i>Report New
+      </a>
 
-        <a href="{% url 'observations:archived_list' %}" class="list-group-item list-group-item-action">
-            <i class="bi bi-archive"></i> Archived
-        </a>
+      <a href="{% url 'observations:archived_list' %}"
+         class="list-group-item list-group-item-action {% if 'archived' in request.path %}active{% endif %}">
+        <i class="bi bi-archive me-2"></i>Archived
+      </a>
 
-        {% if request.user.is_manager %}
-        <a href="{% url 'core:invite_user' %}" class="list-group-item list-group-item-action">
-            <i class="bi bi-person-plus"></i> Invite Users
-        </a>
-        {% endif %}
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'observations:export_observations_csv' %}"
+         class="list-group-item list-group-item-action">
+        <i class="bi bi-download me-2"></i>Export CSV
+      </a>
+      {% endif %}
 
-        <button class="list-group-item list-group-item-action"
-                data-bs-toggle="modal"
-                data-bs-target="#helpModal">
-            <i class="bi bi-question-circle"></i> Help
-        </button>
+      {% if user.is_manager %}
+      <hr class="my-1">
+      <a href="{% url 'core:invite_user' %}"
+         class="list-group-item list-group-item-action {% if 'invite' in request.path %}active{% endif %}">
+        <i class="bi bi-person-plus me-2"></i>Invite Users
+      </a>
+      <a href="{% url 'core:billing' %}"
+         class="list-group-item list-group-item-action {% if 'billing' in request.path %}active{% endif %}">
+        <i class="bi bi-credit-card me-2"></i>Billing
+      </a>
+      {% endif %}
+
+      <hr class="my-1">
+      <a href="{% url 'permits:permit_list' %}"
+         class="list-group-item list-group-item-action {% if 'permits' in request.path %}active{% endif %}">
+        <i class="bi bi-file-earmark-check me-2"></i>Permits to Work
+      </a>
+      <a href="{% url 'permits:dashboard' %}"
+         class="list-group-item list-group-item-action {% if 'permits' in request.path and 'dashboard' in request.path %}active{% endif %}">
+        <i class="bi bi-bar-chart me-2"></i>PTW Dashboard
+      </a>
+
+      <hr class="my-1">
+      <button class="list-group-item list-group-item-action text-start"
+              data-bs-toggle="modal" data-bs-target="#helpModal">
+        <i class="bi bi-question-circle me-2"></i>Help
+      </button>
 
     </div>
-</div>
+  </div>
+  {% endif %}
 
-<!-- CONTENT -->
-<div class="flex-grow-1 p-4">
+  <!-- CONTENT -->
+  <div class="flex-grow-1 p-4" style="min-width: 0;">
 
     {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-            {{ message }}
-            <button class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
     {% endif %}
 
     {% block content %}{% endblock %}
 
-</div>
-```
+  </div>
 
 </div>
 
-<!-- ================= SCRIPTS ================= -->
-
-<script>
-document.getElementById("sidebarToggle")
-.addEventListener("click", function(){
-    document.getElementById("sidebar")
-    .classList.toggle("collapsed");
-});
-</script>
-
+<!-- ===== SCRIPTS ===== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById("sidebarToggle").addEventListener("click", function () {
+    document.getElementById("sidebar").classList.toggle("collapsed");
+  });
+</script>
+{% block extra_js %}{% endblock %}
 
 </body>
 </html>

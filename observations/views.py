@@ -101,7 +101,14 @@ class ObservationCreateView(LoginRequiredMixin, OrgRequiredMixin, CreateView):
         form.instance.organization = self.request.organization
         form.instance.observer = self.request.user
         form.instance.status = "OPEN"
-        return super().form_valid(form)
+        response = super().form_valid(form)
+
+        # Send immediate alert for HIGH severity observations
+        if self.object.severity == "HIGH" and self.object.assigned_to:
+            from core.utils.email import send_high_risk_alert
+            send_high_risk_alert(self.object)
+
+        return response
 
 
 @login_required

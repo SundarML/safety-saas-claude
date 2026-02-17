@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Review Permit {{ permit.permit_number }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <h3 class="mb-1"><i class="bi bi-shield-check me-2"></i>Review Permit</h3>
+    <p class="text-muted mb-4">{{ permit.permit_number }} — {{ permit.title }}</p>
+
+    <!-- Quick summary -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-dark text-white fw-semibold">Permit Summary</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Work Type</dt>   <dd class="col-sm-8">{{ permit.get_work_type_display }}</dd>
+          <dt class="col-sm-4">Location</dt>    <dd class="col-sm-8">{{ permit.location }}</dd>
+          <dt class="col-sm-4">Requestor</dt>   <dd class="col-sm-8">{{ permit.requestor.get_full_name }}</dd>
+          <dt class="col-sm-4">Planned Start</dt><dd class="col-sm-8">{{ permit.planned_start|date:"d M Y H:i" }}</dd>
+          <dt class="col-sm-4">Planned End</dt> <dd class="col-sm-8">{{ permit.planned_end|date:"d M Y H:i" }}</dd>
+          <dt class="col-sm-4">Hazards</dt>     <dd class="col-sm-8">{{ permit.hazards_identified|truncatewords:20 }}</dd>
+          <dt class="col-sm-4">Controls</dt>    <dd class="col-sm-8">{{ permit.risk_controls|truncatewords:20 }}</dd>
+        </dl>
+        <a href="{% url 'permits:detail' permit.pk %}" class="btn btn-sm btn-outline-primary mt-2" target="_blank">
+          <i class="bi bi-eye me-1"></i>View Full Permit
+        </a>
+      </div>
+    </div>
+
+    <!-- Pre-work checklist quick view -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-info text-dark fw-semibold">Pre-work Checklist Status</div>
+      <div class="card-body d-flex flex-wrap gap-3">
+        <span class="{% if permit.toolbox_talk_done %}text-success{% else %}text-danger{% endif %}">
+          <i class="bi bi-{% if permit.toolbox_talk_done %}check{% else %}x{% endif %}-circle-fill me-1"></i>Toolbox Talk
+        </span>
+        <span class="{% if permit.area_barricaded %}text-success{% else %}text-danger{% endif %}">
+          <i class="bi bi-{% if permit.area_barricaded %}check{% else %}x{% endif %}-circle-fill me-1"></i>Area Barricaded
+        </span>
+        <span class="{% if permit.equipment_inspected %}text-success{% else %}text-danger{% endif %}">
+          <i class="bi bi-{% if permit.equipment_inspected %}check{% else %}x{% endif %}-circle-fill me-1"></i>Equipment Inspected
+        </span>
+        <span class="{% if permit.gas_test_done %}text-success{% else %}text-muted{% endif %}">
+          <i class="bi bi-{% if permit.gas_test_done %}check{% else %}dash{% endif %}-circle-fill me-1"></i>Gas Test
+        </span>
+      </div>
+    </div>
+
+    <!-- Approval form -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white fw-semibold">Your Decision</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {{ form|crispy }}
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-success px-4">
+              <i class="bi bi-check-circle me-1"></i>Submit Decision
+            </button>
+            <a href="{% url 'permits:detail' permit.pk %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

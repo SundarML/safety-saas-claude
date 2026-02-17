@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}{{ permit.permit_number }}{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+  <div>
+    <h3 class="mb-1">
+      <i class="bi bi-file-earmark-check me-2"></i>{{ permit.permit_number }}
+    </h3>
+    <small class="text-muted">{{ permit.get_work_type_display }} &nbsp;·&nbsp; Created {{ permit.created_at|date:"d M Y H:i" }}</small>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'permits:permit_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+
+    {% if permit.status == "DRAFT" and permit.requestor == request.user %}
+    <a href="{% url 'permits:edit' permit.pk %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-pencil"></i> Edit
+    </a>
+    <form method="post" action="{% url 'permits:submit' permit.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button class="btn btn-primary btn-sm" onclick="return confirm('Submit this permit for approval?')">
+        <i class="bi bi-send"></i> Submit for Approval
+      </button>
+    </form>
+    <a href="{% url 'permits:cancel' permit.pk %}" class="btn btn-outline-danger btn-sm">
+      <i class="bi bi-x-circle"></i> Cancel
+    </a>
+    {% endif %}
+
+    {% if permit.status == "SUBMITTED" and request.user.is_safety_manager or permit.status == "SUBMITTED" and request.user.is_manager %}
+    <a href="{% url 'permits:approve' permit.pk %}" class="btn btn-success btn-sm">
+      <i class="bi bi-check-circle"></i> Review & Approve
+    </a>
+    {% endif %}
+
+    {% if permit.status == "APPROVED" and permit.requestor == request.user %}
+    <a href="{% url 'permits:activate' permit.pk %}" class="btn btn-info btn-sm">
+      <i class="bi bi-play-circle"></i> Confirm Work Started
+    </a>
+    {% endif %}
+
+    {% if permit.status == "ACTIVE" %}
+    {% if permit.requestor == request.user or request.user.is_safety_manager or request.user.is_manager %}
+    <a href="{% url 'permits:close' permit.pk %}" class="btn btn-dark btn-sm">
+      <i class="bi bi-lock"></i> Close Permit
+    </a>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- Status banner -->
+<div class="alert
+  {% if permit.status == 'DRAFT' %}alert-secondary
+  {% elif permit.status == 'SUBMITTED' %}alert-warning
+  {% elif permit.status == 'APPROVED' %}alert-info
+  {% elif permit.status == 'ACTIVE' %}alert-success
+  {% elif permit.status == 'CLOSED' %}alert-dark
+  {% elif permit.status == 'REJECTED' %}alert-danger
+  {% elif permit.status == 'CANCELLED' %}alert-light border
+  {% endif %} d-flex justify-content-between align-items-center">
+  <span>
+    <strong>Status:</strong> {{ permit.get_status_display }}
+    {% if permit.is_overdue %}
+      &nbsp;<span class="badge bg-danger">Overdue</span>
+    {% endif %}
+  </span>
+  <small>Duration: {{ permit.duration_hours }} hrs</small>
+</div>
+
+<div class="row g-4">
+
+  <!-- Left column -->
+  <div class="col-lg-7">
+
+    <!-- Work Details -->
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header fw-semibold bg-dark text-white">Work Details</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Title</dt>
+          <dd class="col-sm-8">{{ permit.title }}</dd>
+
+          <dt class="col-sm-4">Work Type</dt>
+          <dd class="col-sm-8">{{ permit.get_work_type_display }}</dd>
+
+          <dt class="col-sm-4">Location</dt>
+          <dd class="col-sm-8">{{ permit.location }}</dd>
+
+          <dt class="col-sm-4">Work Area</dt>
+          <dd class="col-sm-8">{{ permit.work_area|default:"—" }}</dd>
+
+          <dt class="col-sm-4">Description</dt>
+          <dd class="col-sm-8">{{ permit.description|linebreaks }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header fw-semibold bg-dark text-white">Schedule</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Planned Start</dt>
+          <dd class="col-sm-8">{{ permit.planned_start|date:"d M Y H:i" }}</dd>
+          <dt class="col-sm-4">Planned End</dt>
+          <dd class="col-sm-8">{{ permit.planned_end|date:"d M Y H:i" }}</dd>
+          {% if permit.actual_start %}
+          <dt class="col-sm-4">Actual Start</dt>
+          <dd class="col-sm-8">{{ permit.actual_start|date:"d M Y H:i" }}</dd>
+          {% endif %}
+          {% if permit.actual_end %}
+          <dt class="col-sm-4">Actual End</dt>
+          <dd class="col-sm-8">{{ permit.actual_end|date:"d M Y H:i" }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <!-- Hazards & Controls -->
+    <div class="card mb-3 shadow-sm border-warning">
+      <div class="card-header fw-semibold bg-warning text-dark">Hazards & Controls</div>
+      <div class="card-body">
+        <h6 class="text-danger">Hazards Identified</h6>
+        <p>{{ permit.hazards_identified|linebreaks }}</p>
+        <h6 class="text-success">Risk Controls</h6>
+        <p>{{ permit.risk_controls|linebreaks }}</p>
+        {% if permit.ppe_required %}
+        <h6>PPE Required</h6>
+        <p>{{ permit.ppe_required|linebreaks }}</p>
+        {% endif %}
+        {% if permit.isolation_required %}
+        <h6>Isolation / LOTO</h6>
+        <p>{{ permit.isolation_details|linebreaks }}</p>
+        {% endif %}
+        {% if permit.emergency_procedure %}
+        <h6>Emergency Procedure</h6>
+        <p>{{ permit.emergency_procedure|linebreaks }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right column -->
+  <div class="col-lg-5">
+
+    <!-- Personnel -->
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header fw-semibold bg-dark text-white">Personnel</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Requestor</dt>
+          <dd class="col-sm-7">{{ permit.requestor.get_full_name }}</dd>
+          <dt class="col-sm-5">Contractor</dt>
+          <dd class="col-sm-7">{{ permit.contractor_name|default:"—" }}</dd>
+          <dt class="col-sm-5">Contact</dt>
+          <dd class="col-sm-7">{{ permit.contractor_contact|default:"—" }}</dd>
+          <dt class="col-sm-5">Workers</dt>
+          <dd class="col-sm-7">{{ permit.workers_count }}</dd>
+          {% if permit.approved_by %}
+          <dt class="col-sm-5">Approved by</dt>
+          <dd class="col-sm-7">{{ permit.approved_by.get_full_name }}</dd>
+          <dt class="col-sm-5">Approved at</dt>
+          <dd class="col-sm-7">{{ permit.approved_at|date:"d M Y H:i" }}</dd>
+          {% endif %}
+          {% if permit.closed_by %}
+          <dt class="col-sm-5">Closed by</dt>
+          <dd class="col-sm-7">{{ permit.closed_by.get_full_name }}</dd>
+          <dt class="col-sm-5">Closed at</dt>
+          <dd class="col-sm-7">{{ permit.closed_at|date:"d M Y H:i" }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <!-- Pre-work Checklist -->
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header fw-semibold bg-info text-dark">Pre-work Checklist</div>
+      <div class="card-body">
+        {% for label, value in checklist %}
+        <div class="d-flex align-items-center mb-1">
+          {% if value %}
+            <i class="bi bi-check-circle-fill text-success me-2"></i>
+          {% else %}
+            <i class="bi bi-x-circle-fill text-danger me-2"></i>
+          {% endif %}
+          <span>{{ label }}</span>
+        </div>
+        {% endfor %}
+        {% if permit.gas_test_done and permit.gas_test_result %}
+        <small class="text-muted ms-4">Result: {{ permit.gas_test_result }}</small>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Approval / Rejection note -->
+    {% if permit.approval_comment %}
+    <div class="card mb-3 shadow-sm border-success">
+      <div class="card-header fw-semibold bg-success text-white">Approval Note</div>
+      <div class="card-body">{{ permit.approval_comment }}</div>
+    </div>
+    {% endif %}
+
+    {% if permit.rejection_reason %}
+    <div class="card mb-3 shadow-sm border-danger">
+      <div class="card-header fw-semibold bg-danger text-white">Rejection Reason</div>
+      <div class="card-body">{{ permit.rejection_reason }}</div>
+    </div>
+    {% endif %}
+
+    {% if permit.closure_comment %}
+    <div class="card mb-3 shadow-sm border-dark">
+      <div class="card-header fw-semibold bg-dark text-white">Closure Note</div>
+      <div class="card-body">{{ permit.closure_comment }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Attachment -->
+    {% if permit.attachment %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header fw-semibold bg-dark text-white">Attachment</div>
+      <div class="card-body">
+        <a href="{{ permit.attachment.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-file-earmark-arrow-down me-1"></i>Download
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

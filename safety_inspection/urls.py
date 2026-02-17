@@ -25,6 +25,9 @@ urlpatterns = [
 
     # Observations app
     path("observations/", include("observations.urls", namespace="observations")),
+
+    # Permit to Work app
+    path("permits/", include("permits.urls", namespace="permits")),
 ]
 
 if settings.DEBUG:
