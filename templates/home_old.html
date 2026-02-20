@@ -1,0 +1,1010 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Vigilo — Safety Observation & Permit Management{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── Tokens ──────────────────────────────────────────────────────────── */
+:root {
+  --green:      #16a34a;
+  --green-lt:   #22c55e;
+  --green-bg:   #f0fdf4;
+  --green-mid:  #dcfce7;
+  --teal:       #0d9488;
+  --navy:       #0f172a;
+  --slate:      #334155;
+  --muted:      #64748b;
+  --border:     #e2e8f0;
+  --off:        #f8fafc;
+  --white:      #ffffff;
+  --orange:     #f97316;
+  --amber:      #f59e0b;
+  --red:        #ef4444;
+  --blue:       #3b82f6;
+}
+
+/* ─── Base overrides ───────────────────────────────────────────────────── */
+.mkt { font-family: 'DM Sans', sans-serif; color: var(--slate); }
+.mkt h1,.mkt h2,.mkt h3,.mkt h4 { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--navy); }
+
+/* ─── Mesh gradient background ────────────────────────────────────────── */
+.hero-wrap {
+  background: var(--white);
+  position: relative; overflow: hidden;
+  padding: 80px 0 60px;
+}
+.hero-wrap::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 80% 20%, rgba(22,163,74,.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(13,148,136,.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 60% 60%, rgba(34,197,94,.05) 0%, transparent 50%);
+}
+
+/* ─── Eyebrow pill ─────────────────────────────────────────────────────── */
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--green-bg); border: 1px solid #bbf7d0;
+  color: var(--green); font-size: .78rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 100px; margin-bottom: 20px;
+}
+.eyebrow-dot {
+  width: 7px; height: 7px; background: var(--green-lt);
+  border-radius: 50%; animation: pulse-dot 1.8s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.4); opacity: .6; }
+}
+
+/* ─── Hero headline ────────────────────────────────────────────────────── */
+.hero-h1 {
+  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  font-weight: 800; line-height: 1.1;
+  color: var(--navy); letter-spacing: -.02em;
+}
+.hero-h1 mark {
+  background: linear-gradient(135deg, var(--green) 0%, var(--teal) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; padding: 0;
+}
+.hero-sub {
+  font-size: 1.1rem; color: var(--muted); line-height: 1.75;
+  max-width: 500px; margin-top: 18px;
+}
+
+/* ─── CTA buttons ──────────────────────────────────────────────────────── */
+.btn-primary-mkt {
+  background: var(--green); color: var(--white);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .95rem; font-weight: 700;
+  padding: 14px 30px; border-radius: 8px; border: none;
+  text-decoration: none; display: inline-block;
+  transition: background .2s, box-shadow .2s, transform .15s;
+  box-shadow: 0 4px 14px rgba(22,163,74,.35);
+}
+.btn-primary-mkt:hover {
+  background: #15803d; color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(22,163,74,.4);
+}
+.btn-secondary-mkt {
+  background: var(--white); color: var(--navy);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .95rem; font-weight: 600;
+  padding: 13px 28px; border-radius: 8px;
+  border: 1.5px solid var(--border);
+  text-decoration: none; display: inline-block;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.btn-secondary-mkt:hover {
+  border-color: var(--green); color: var(--green);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+.btn-link-mkt {
+  color: var(--green); font-weight: 600; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: gap .2s;
+}
+.btn-link-mkt:hover { gap: 10px; color: #15803d; }
+
+/* ─── Hero trust strip ─────────────────────────────────────────────────── */
+.trust-strip {
+  display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
+  margin-top: 32px;
+}
+.trust-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .82rem; color: var(--muted); font-weight: 500;
+}
+.trust-item i { color: var(--green); font-size: .9rem; }
+
+/* ─── Product illustration (SVG) ──────────────────────────────────────── */
+.hero-visual {
+  position: relative;
+  filter: drop-shadow(0 20px 60px rgba(0,0,0,.12));
+}
+.hero-visual .card-float {
+  background: var(--white); border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+}
+.float-1 {
+  position: absolute; top: -20px; left: -30px;
+  animation: float1 4s ease-in-out infinite;
+  width: 200px;
+}
+.float-2 {
+  position: absolute; bottom: -15px; right: -20px;
+  animation: float2 4.5s ease-in-out infinite;
+  width: 180px;
+}
+@keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+/* ─── Social proof numbers ─────────────────────────────────────────────── */
+.proof-strip {
+  background: var(--off); border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); padding: 36px 0;
+}
+.proof-item { text-align: center; }
+.proof-num {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2.2rem; font-weight: 800; color: var(--navy);
+  line-height: 1;
+}
+.proof-num span { color: var(--green); }
+.proof-label { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+
+/* ─── Section headings ─────────────────────────────────────────────────── */
+.section-kicker {
+  font-size: .78rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--green);
+  margin-bottom: 10px; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.section-h {
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800; line-height: 1.15; letter-spacing: -.02em;
+}
+.section-sub { font-size: 1rem; color: var(--muted); line-height: 1.7; max-width: 520px; }
+
+/* ─── Feature cards ────────────────────────────────────────────────────── */
+.feat-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 12px; padding: 28px;
+  transition: box-shadow .25s, transform .25s, border-color .25s;
+  height: 100%;
+}
+.feat-card:hover {
+  box-shadow: 0 12px 36px rgba(0,0,0,.09);
+  transform: translateY(-4px);
+  border-color: #bbf7d0;
+}
+.feat-icon {
+  width: 48px; height: 48px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; margin-bottom: 16px;
+}
+.feat-card h4 {
+  font-size: 1.05rem; font-weight: 700; margin-bottom: 8px;
+}
+.feat-card p { font-size: .88rem; color: var(--muted); line-height: 1.6; margin: 0; }
+
+/* ─── Module showcase ──────────────────────────────────────────────────── */
+.module-showcase {
+  background: var(--off); border-radius: 16px;
+  border: 1px solid var(--border); overflow: hidden;
+}
+.module-tab-nav { border-bottom: 1px solid var(--border); }
+.module-tab {
+  padding: 16px 24px; font-weight: 600; font-size: .9rem;
+  color: var(--muted); cursor: pointer; border: none;
+  background: none; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: color .2s, border-color .2s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.module-tab.active { color: var(--green); border-bottom-color: var(--green); }
+.module-pane { display: none; padding: 32px; }
+.module-pane.active { display: block; }
+.module-feature-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.module-feature-item:last-child { border-bottom: none; }
+.mfi-icon {
+  width: 32px; height: 32px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: .9rem;
+}
+.mfi-title { font-weight: 600; font-size: .9rem; color: var(--navy); }
+.mfi-desc  { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+
+/* ─── Workflow steps ───────────────────────────────────────────────────── */
+.workflow-wrap { background: var(--navy); border-radius: 20px; padding: 52px 40px; }
+.wf-step {
+  display: flex; gap: 20px; align-items: flex-start;
+  position: relative;
+}
+.wf-step:not(:last-child)::after {
+  content: ''; position: absolute;
+  left: 19px; top: 44px; bottom: -20px; width: 2px;
+  background: linear-gradient(to bottom, #334155, transparent);
+}
+.wf-num {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(22,163,74,.15); border: 1.5px solid rgba(22,163,74,.4);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800; font-size: .9rem; color: var(--green-lt);
+}
+.wf-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; color: var(--white); font-size: 1rem; }
+.wf-desc  { font-size: .85rem; color: #94a3b8; margin-top: 4px; line-height: 1.6; }
+
+/* ─── PTW permit tags ──────────────────────────────────────────────────── */
+.permit-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 100px; padding: 8px 16px; font-size: .83rem;
+  font-weight: 600; color: var(--slate); margin: 5px;
+  transition: all .2s;
+}
+.permit-chip:hover { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+
+/* ─── Testimonial ──────────────────────────────────────────────────────── */
+.testimonial-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.05);
+}
+.stars { color: #f59e0b; font-size: 1rem; letter-spacing: 2px; }
+.testi-text { font-size: .97rem; color: var(--slate); line-height: 1.75; margin: 14px 0; font-style: italic; }
+.testi-author { font-weight: 700; color: var(--navy); font-size: .9rem; }
+.testi-role { font-size: .82rem; color: var(--muted); }
+
+/* ─── Pricing teaser ───────────────────────────────────────────────────── */
+.plan-card {
+  background: var(--white); border: 1.5px solid var(--border);
+  border-radius: 14px; padding: 28px; transition: all .25s; height: 100%;
+}
+.plan-card.featured {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(22,163,74,.08);
+}
+.plan-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.1); }
+.plan-badge {
+  background: var(--green); color: var(--white);
+  font-size: .72rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 100px;
+}
+.plan-price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2.5rem; font-weight: 800; color: var(--navy); line-height: 1;
+}
+.plan-price sup { font-size: 1.2rem; vertical-align: top; margin-top: 8px; }
+.plan-price small { font-size: .9rem; color: var(--muted); font-weight: 400; }
+.plan-feature { display: flex; align-items: center; gap: 8px; font-size: .87rem; color: var(--slate); padding: 6px 0; }
+.plan-feature i { color: var(--green); font-size: .9rem; }
+
+/* ─── Final CTA ────────────────────────────────────────────────────────── */
+.final-cta {
+  background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+  border: 1px solid #bbf7d0; border-radius: 20px;
+  padding: 64px 48px; text-align: center;
+}
+
+/* ─── Footer ───────────────────────────────────────────────────────────── */
+.mkt-footer {
+  background: var(--navy); padding: 48px 0 32px;
+}
+.footer-brand { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--white); font-size: 1.3rem; }
+.footer-tagline { font-size: .83rem; color: #64748b; margin-top: 6px; }
+.footer-link { color: #94a3b8; text-decoration: none; font-size: .85rem; display: block; margin-bottom: 8px; transition: color .2s; }
+.footer-link:hover { color: var(--green-lt); }
+.footer-divider { border-color: rgba(255,255,255,.08); margin: 32px 0 24px; }
+.footer-copy { font-size: .78rem; color: #475569; }
+
+/* ─── App dashboard (authenticated) ───────────────────────────────────── */
+.dash-header {
+  background: linear-gradient(135deg, var(--green-bg) 0%, #e0f2fe 100%);
+  border-bottom: 1px solid var(--border); padding: 32px 0;
+}
+.ql-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px 20px;
+  transition: all .2s; text-decoration: none; display: block;
+}
+.ql-card:hover {
+  border-color: var(--green); transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+.ql-icon { font-size: 1.8rem; margin-bottom: 10px; }
+.ql-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem; color: var(--navy); }
+.ql-desc  { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+
+/* ─── Scroll animations ────────────────────────────────────────────────── */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .65s ease, transform .65s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mkt" style="margin: -1.5rem;">
+
+{% if user.is_authenticated %}
+<!-- ══════════════════════════════════════════════════
+     AUTHENTICATED — App Dashboard
+══════════════════════════════════════════════════ -->
+<div class="dash-header">
+  <div class="container">
+    <div class="section-kicker">Dashboard</div>
+    <h2 class="section-h mb-1">
+      Welcome back, {{ user.get_full_name }}
+    </h2>
+    {% if current_org %}
+    <p class="text-muted mb-0">{{ current_org.name }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="row g-3">
+    <div class="col-6 col-md-3">
+      <a href="{% url 'observations:create' %}" class="ql-card">
+        <div class="ql-icon">📋</div>
+        <div class="ql-title">Report Observation</div>
+        <div class="ql-desc">Log a new safety hazard</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'observations:observation_list' %}" class="ql-card">
+        <div class="ql-icon">📊</div>
+        <div class="ql-title">All Observations</div>
+        <div class="ql-desc">View & manage records</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'observations:dashboard' %}" class="ql-card">
+        <div class="ql-icon">📈</div>
+        <div class="ql-title">Analytics</div>
+        <div class="ql-desc">KPIs, trends & reports</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'permits:create' %}" class="ql-card">
+        <div class="ql-icon">🔐</div>
+        <div class="ql-title">New Permit</div>
+        <div class="ql-desc">Raise a permit to work</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'permits:permit_list' %}" class="ql-card">
+        <div class="ql-icon">📑</div>
+        <div class="ql-title">All Permits</div>
+        <div class="ql-desc">View & manage PTW</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'permits:dashboard' %}" class="ql-card">
+        <div class="ql-icon">⚡</div>
+        <div class="ql-title">PTW Dashboard</div>
+        <div class="ql-desc">Active & pending permits</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'observations:archived_list' %}" class="ql-card">
+        <div class="ql-icon">🗃️</div>
+        <div class="ql-title">Archive</div>
+        <div class="ql-desc">Closed records</div>
+      </a>
+    </div>
+    {% if user.is_manager %}
+    <div class="col-6 col-md-3">
+      <a href="{% url 'core:invite_user' %}" class="ql-card">
+        <div class="ql-icon">👥</div>
+        <div class="ql-title">Invite Users</div>
+        <div class="ql-desc">Add team members</div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% else %}
+<!-- ══════════════════════════════════════════════════
+     UNAUTHENTICATED — Marketing Landing Page
+══════════════════════════════════════════════════ -->
+
+<!-- ── HERO ─────────────────────────────────────────────────────────── -->
+<section class="hero-wrap">
+  <div class="container" style="position:relative;z-index:2;">
+    <div class="row align-items-center g-5">
+
+      <!-- Left: Copy -->
+      <div class="col-lg-6">
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          Safety Management Platform · 2026
+        </div>
+
+        <h1 class="hero-h1">
+          Every Hazard Closed.<br>
+          Every Permit <mark>Controlled.</mark><br>
+          Zero Incidents.
+        </h1>
+
+        <p class="hero-sub">
+          Vigilo replaces clipboards, WhatsApp groups and spreadsheets with
+          a single digital system — observation tracking, corrective actions,
+          and high-risk work permits, all in one place.
+        </p>
+
+        <!-- Dual CTA — HubSpot pattern -->
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <a href="{% url 'core:request_demo' %}" class="btn-primary-mkt">
+            Get a Demo
+          </a>
+          <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt">
+            Start Free — No Card Needed
+          </a>
+        </div>
+
+        <!-- Trust signals -->
+        <div class="trust-strip">
+          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> Free 14-day trial</span>
+          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> No credit card</span>
+          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> Setup in minutes</span>
+          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> Cancel anytime</span>
+        </div>
+      </div>
+
+      <!-- Right: Product illustration -->
+      <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center">
+        <div class="hero-visual" style="width:100%;max-width:480px;position:relative;padding:20px 30px;">
+
+          <!-- Main dashboard card -->
+          <div style="background:white;border-radius:16px;border:1px solid var(--border);
+                      box-shadow:0 20px 60px rgba(0,0,0,.12);padding:20px;position:relative;z-index:2;">
+
+            <!-- Top bar -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+              <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.95rem;color:var(--navy);">
+                🦺 Vigilo &nbsp;<span style="color:var(--muted);font-weight:400;font-size:.8rem;">/ Observations</span>
+              </div>
+              <span style="background:var(--green-bg);color:var(--green);font-size:.72rem;
+                           font-weight:700;padding:3px 10px;border-radius:100px;border:1px solid #bbf7d0;">
+                Live
+              </span>
+            </div>
+
+            <!-- KPI row -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+              <div style="background:var(--off);border-radius:8px;padding:10px;text-align:center;">
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--navy);">14</div>
+                <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">Open</div>
+              </div>
+              <div style="background:#fff7ed;border-radius:8px;padding:10px;text-align:center;">
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--orange);">3</div>
+                <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">Overdue</div>
+              </div>
+              <div style="background:var(--green-bg);border-radius:8px;padding:10px;text-align:center;">
+                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--green);">52</div>
+                <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">Closed</div>
+              </div>
+            </div>
+
+            <!-- Observation items -->
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fef2f2;border-radius:8px;border-left:3px solid var(--red);">
+                <span style="font-size:1rem;">🔴</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;font-size:.82rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Exposed live wire — Block C</div>
+                  <div style="font-size:.72rem;color:var(--muted);">HIGH · Assigned → John D. · Due Today</div>
+                </div>
+                <span style="background:#fecaca;color:var(--red);font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">Overdue</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff7ed;border-radius:8px;border-left:3px solid var(--orange);">
+                <span style="font-size:1rem;">🟡</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;font-size:.82rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Slippery walkway — Warehouse 2</div>
+                  <div style="font-size:.72rem;color:var(--muted);">MEDIUM · In Progress · Due 20 Feb</div>
+                </div>
+                <span style="background:#fed7aa;color:var(--orange);font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">In Progress</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--green-bg);border-radius:8px;border-left:3px solid var(--green);">
+                <span style="font-size:1rem;">✅</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;font-size:.82rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Missing PPE signage — Gate 3</div>
+                  <div style="font-size:.72rem;color:var(--muted);">LOW · Verified & Closed</div>
+                </div>
+                <span style="background:#bbf7d0;color:var(--green);font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">Closed</span>
+              </div>
+            </div>
+
+            <!-- PTW badge at bottom -->
+            <div style="margin-top:12px;padding:10px 14px;background:linear-gradient(135deg,#eff6ff,#f0fdf4);
+                        border-radius:8px;border:1px solid #bfdbfe;display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:.8rem;font-weight:600;color:#1e40af;">🔐 PTW-20260217-0003 Active</div>
+              <div style="font-size:.72rem;color:var(--muted);">Hot Work · Boiler Room · Exp 17:00</div>
+            </div>
+          </div>
+
+          <!-- Floating cards -->
+          <div class="card-float float-1">
+            <div style="font-size:.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">
+              ✅ Rectification Verified
+            </div>
+            <div style="font-size:.78rem;color:var(--slate);font-weight:500;">Floor hazard cleared & signed off</div>
+            <div style="font-size:.68rem;color:var(--muted);margin-top:4px;">Safety Manager · 2 mins ago</div>
+          </div>
+
+          <div class="card-float float-2">
+            <div style="font-size:.7rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">
+              🔴 High Risk Alert Sent
+            </div>
+            <div style="font-size:.78rem;color:var(--slate);font-weight:500;">Email dispatched to action owner</div>
+            <div style="font-size:.68rem;color:var(--muted);margin-top:4px;">Automated · Just now</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── SOCIAL PROOF NUMBERS ──────────────────────────────────────────── -->
+<section class="proof-strip">
+  <div class="container">
+    <div class="row g-4 text-center">
+      <div class="col-6 col-md-3 reveal">
+        <div class="proof-num"><span class="countup" data-to="3">3</span> min</div>
+        <div class="proof-label">Average time to report a hazard</div>
+      </div>
+      <div class="col-6 col-md-3 reveal" style="transition-delay:.1s;">
+        <div class="proof-num"><span class="countup" data-to="8">8</span></div>
+        <div class="proof-label">Permit to Work categories supported</div>
+      </div>
+      <div class="col-6 col-md-3 reveal" style="transition-delay:.2s;">
+        <div class="proof-num"><span class="countup" data-to="5">5</span></div>
+        <div class="proof-label">Workflow stages fully automated</div>
+      </div>
+      <div class="col-6 col-md-3 reveal" style="transition-delay:.3s;">
+        <div class="proof-num"><span class="countup" data-to="100">100</span><span>%</span></div>
+        <div class="proof-label">Audit-ready — every action logged</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES GRID ──────────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--white);">
+  <div class="container">
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-7 reveal">
+        <div class="section-kicker">Why Vigilo</div>
+        <h2 class="section-h">Everything your safety team needs.<br>Nothing they don't.</h2>
+        <p class="section-sub mx-auto mt-3">Built for safety officers on the ground and HSE managers in the office.</p>
+      </div>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4 reveal">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#fef2f2;">🔍</div>
+          <h4>Instant Hazard Reporting</h4>
+          <p>Report any hazard in under 3 minutes — description, photo, severity, location and assignee — from any device on-site.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.08s;">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#fff7ed;">🔔</div>
+          <h4>Automated Alerts</h4>
+          <p>HIGH severity observations trigger an instant email to the assigned owner. Overdue items send daily reminders automatically.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.16s;">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#eff6ff;">🔐</div>
+          <h4>Digital Permit to Work</h4>
+          <p>Full PTW workflow — draft, submit, approve, activate and close. Eight work categories with hazard, controls and isolation capture.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.24s;">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#f0fdf4;">✅</div>
+          <h4>Verification Gate</h4>
+          <p>No observation closes without Safety Manager sign-off. No permit activates without formal approval. Built-in governance, every time.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.32s;">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#faf5ff;">📊</div>
+          <h4>Analytics Dashboard</h4>
+          <p>Live KPIs, severity trends, location hotspots, action owner performance and overdue tracking — all in one view.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.4s;">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#fefce8;">📁</div>
+          <h4>Audit-Ready Exports</h4>
+          <p>Download your complete observation record as CSV or Excel in one click. Organised, timestamped, attribution-complete.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MODULE DEEP DIVE ───────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--off);">
+  <div class="container">
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-7 reveal">
+        <div class="section-kicker">Core Modules</div>
+        <h2 class="section-h">Two modules.<br>One safety ecosystem.</h2>
+      </div>
+    </div>
+    <div class="module-showcase reveal">
+      <div class="module-tab-nav d-flex px-3" style="background:var(--white);">
+        <button class="module-tab active" onclick="switchTab('obs')">📋 Safety Observations</button>
+        <button class="module-tab" onclick="switchTab('ptw')">🔐 Permit to Work</button>
+      </div>
+
+      <!-- Observations pane -->
+      <div class="module-pane active" id="pane-obs">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-6">
+            <h3 style="font-size:1.5rem;font-weight:800;margin-bottom:6px;">Safety Observation Module</h3>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px;">
+              Digitise your entire hazard lifecycle — from initial report to verified closure — with photo evidence and a full audit trail.
+            </p>
+            <div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fef2f2;">🔴</div>
+                <div><div class="mfi-title">Severity-based alerting</div><div class="mfi-desc">HIGH severity triggers instant email alert to action owner</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fff7ed;">📸</div>
+                <div><div class="mfi-title">Photo evidence capture</div><div class="mfi-desc">Before & after photos attached directly to each observation</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#f0fdf4;">🔄</div>
+                <div><div class="mfi-title">4-stage workflow</div><div class="mfi-desc">Open → In Progress → Awaiting Verification → Closed</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#eff6ff;">⏰</div>
+                <div><div class="mfi-title">Daily overdue reminders</div><div class="mfi-desc">Automated morning emails for every overdue open item</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#faf5ff;">📊</div>
+                <div><div class="mfi-title">Analytics & CSV/Excel export</div><div class="mfi-desc">Trend charts, severity breakdown, one-click audit export</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+              <div style="background:var(--green);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:white;font-weight:700;font-size:.85rem;">Observation #47 — HIGH</span>
+                <span style="background:rgba(255,255,255,.2);color:white;font-size:.72rem;padding:2px 10px;border-radius:100px;">Open</span>
+              </div>
+              <div style="padding:16px;">
+                <table style="width:100%;font-size:.82rem;border-collapse:collapse;">
+                  <tr><td style="padding:6px 0;color:var(--muted);width:40%;">Title</td><td style="font-weight:600;color:var(--navy);">Exposed live wire — Block C</td></tr>
+                  <tr><td style="padding:6px 0;color:var(--muted);">Location</td><td style="font-weight:600;color:var(--navy);">Building C, Floor 2</td></tr>
+                  <tr><td style="padding:6px 0;color:var(--muted);">Severity</td><td><span style="background:#fef2f2;color:var(--red);font-weight:700;padding:2px 8px;border-radius:4px;">HIGH</span></td></tr>
+                  <tr><td style="padding:6px 0;color:var(--muted);">Assigned To</td><td style="font-weight:600;color:var(--navy);">John Doe</td></tr>
+                  <tr><td style="padding:6px 0;color:var(--muted);">Target Date</td><td style="font-weight:600;color:var(--red);">17 Feb 2026 (Overdue)</td></tr>
+                </table>
+                <div style="margin-top:12px;display:flex;gap:8px;">
+                  <div style="flex:1;background:var(--off);border-radius:6px;height:60px;display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--muted);">📷 Before Photo</div>
+                  <div style="flex:1;background:var(--off);border-radius:6px;height:60px;display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--muted);">📷 After Photo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PTW pane -->
+      <div class="module-pane" id="pane-ptw">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-6">
+            <h3 style="font-size:1.5rem;font-weight:800;margin-bottom:6px;">Permit to Work Module</h3>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px;">
+              Ensure every high-risk task is formally authorised before work begins — with full hazard documentation, approval gates and closure confirmation.
+            </p>
+            <div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#eff6ff;">📝</div>
+                <div><div class="mfi-title">Auto-numbered permits</div><div class="mfi-desc">PTW-YYYYMMDD-#### format, unique and traceable</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#f0fdf4;">✅</div>
+                <div><div class="mfi-title">Pre-work checklist</div><div class="mfi-desc">Toolbox talk, barricades, gas test, equipment inspection</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fef2f2;">🔒</div>
+                <div><div class="mfi-title">Isolation / LOTO capture</div><div class="mfi-desc">Energy isolation procedure documented on every applicable permit</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fff7ed;">🛡️</div>
+                <div><div class="mfi-title">Safety Manager approval gate</div><div class="mfi-desc">No work begins without formal sign-off from authorised approver</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#faf5ff;">📌</div>
+                <div><div class="mfi-title">Site restoration confirmation</div><div class="mfi-desc">Mandatory close-out checklist before permit can be marked Closed</div></div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div style="font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Supported Work Categories</div>
+              <div>
+                <span class="permit-chip">🔥 Hot Work</span>
+                <span class="permit-chip">⬇️ Confined Space</span>
+                <span class="permit-chip">⚡ Electrical</span>
+                <span class="permit-chip">⛏️ Excavation</span>
+                <span class="permit-chip">🏗️ Lifting & Rigging</span>
+                <span class="permit-chip">🪜 Work at Height</span>
+                <span class="permit-chip">💧 Breaking Containment</span>
+                <span class="permit-chip">⚠️ General High-Risk</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <!-- PTW workflow visual -->
+            <div class="workflow-wrap">
+              <div style="color:#94a3b8;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px;">Permit Workflow</div>
+              <div style="display:flex;flex-direction:column;gap:20px;">
+                {% for wf in ptw_steps %}
+                <div class="wf-step">
+                  <div class="wf-num">{{ forloop.counter }}</div>
+                  <div>
+                    <div class="wf-title">{{ wf.icon }} {{ wf.title }}</div>
+                    <div class="wf-desc">{{ wf.desc }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ───────────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--white);">
+  <div class="container">
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-7 reveal">
+        <div class="section-kicker">How It Works</div>
+        <h2 class="section-h">From hazard spotted<br>to closure verified.</h2>
+        <p class="section-sub mx-auto mt-3">Five steps. No paper. Unbreakable audit trail.</p>
+      </div>
+    </div>
+    <div class="row g-0 align-items-stretch">
+      {% for step in steps %}
+      <div class="col-md reveal" style="transition-delay:{{ forloop.counter0 }}00ms;">
+        <div style="text-align:center;padding:28px 16px;position:relative;height:100%;
+                    {% if not forloop.last %}border-right:1px dashed var(--border);{% endif %}">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);
+                      border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;
+                      font-size:1.4rem;margin:0 auto 14px;">{{ step.icon }}</div>
+          <div style="position:absolute;top:50px;left:calc(50% + 26px);right:0;
+                      height:2px;background:repeating-linear-gradient(90deg,#bbf7d0 0,#bbf7d0 6px,transparent 6px,transparent 12px);
+                      {% if forloop.last %}display:none;{% endif %}"></div>
+          <div style="background:var(--green);color:white;font-family:'Plus Jakarta Sans',sans-serif;
+                      font-weight:800;font-size:.7rem;width:20px;height:20px;border-radius:50%;
+                      display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+            {{ forloop.counter }}
+          </div>
+          <h5 style="font-size:.95rem;font-weight:700;margin-bottom:6px;">{{ step.title }}</h5>
+          <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin:0;">{{ step.desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ───────────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--off);">
+  <div class="container">
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-6 reveal">
+        <div class="section-kicker">Trusted by Safety Teams</div>
+        <h2 class="section-h">Built for the field.<br>Loved by managers.</h2>
+      </div>
+    </div>
+    <div class="row g-4">
+      <div class="col-lg-4 reveal">
+        <div class="testimonial-card h-100">
+          <div class="stars">★★★★★</div>
+          <div class="testi-text">"We eliminated paper permits completely within a week. The approval workflow is exactly how a PTW system should work — no shortcuts possible."</div>
+          <div class="testi-author">Rajesh Kumar</div>
+          <div class="testi-role">HSE Manager, Manufacturing Plant</div>
+        </div>
+      </div>
+      <div class="col-lg-4 reveal" style="transition-delay:.1s;">
+        <div class="testimonial-card h-100">
+          <div class="stars">★★★★★</div>
+          <div class="testi-text">"The automated overdue alerts changed everything. Action owners actually respond now because the system follows up — not me chasing them on WhatsApp."</div>
+          <div class="testi-author">Priya Nair</div>
+          <div class="testi-role">Safety Officer, Construction Site</div>
+        </div>
+      </div>
+      <div class="col-lg-4 reveal" style="transition-delay:.2s;">
+        <div class="testimonial-card h-100">
+          <div class="stars">★★★★★</div>
+          <div class="testi-text">"Our audit took 10 minutes. I exported the CSV, shared it with the inspector, and done. Before Vigilo it was a two-day exercise pulling records from emails."</div>
+          <div class="testi-author">Ahmed Al-Rashid</div>
+          <div class="testi-role">QHSE Director, Oil & Gas Services</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICING TEASER ─────────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--white);">
+  <div class="container">
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-6 reveal">
+        <div class="section-kicker">Pricing</div>
+        <h2 class="section-h">Start free.<br>Scale when you're ready.</h2>
+        <p class="section-sub mx-auto mt-3">No contracts. No surprises. Cancel anytime.</p>
+      </div>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-6 col-lg-4 reveal">
+        <div class="plan-card h-100">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Trial</div>
+          <div class="plan-price mt-2"><sup>₹</sup>0<small>/mo</small></div>
+          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For teams getting started</p>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 3 users</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 5 observations</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
+          <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt d-block text-center mt-4">Get Started Free</a>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.1s;">
+        <div class="plan-card featured h-100">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-weight:700;font-size:1rem;">Pro</span>
+            <span class="plan-badge">Most Popular</span>
+          </div>
+          <div class="plan-price mt-2"><sup>₹</sup>2,499<small>/mo</small></div>
+          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For growing safety teams</p>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 25 users</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 500 observations</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Full PTW module</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV & Excel export</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Priority support</div>
+          <a href="{% url 'core:organization_signup' %}" class="btn-primary-mkt d-block text-center mt-4">Start Free Trial</a>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.2s;">
+        <div class="plan-card h-100">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Enterprise</div>
+          <div class="plan-price mt-2" style="font-size:2rem;">Custom</div>
+          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For large organisations</p>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Unlimited users</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Unlimited observations</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Everything in Pro</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Dedicated onboarding</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> SLA guarantee</div>
+          <a href="{% url 'core:request_demo' %}" class="btn-secondary-mkt d-block text-center mt-4">Talk to Sales</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINAL CTA ──────────────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--off);">
+  <div class="container">
+    <div class="final-cta reveal">
+      <div class="section-kicker justify-content-center" style="justify-content:center;">Get Started Today</div>
+      <h2 class="section-h mt-2" style="font-size:clamp(1.8rem,4vw,3rem);">
+        Your next incident is<br>still preventable.
+      </h2>
+      <p style="color:var(--muted);font-size:1rem;max-width:440px;margin:16px auto 32px;line-height:1.75;">
+        Join safety teams replacing clipboards and spreadsheets with Vigilo —
+        the system that actually closes hazards.
+      </p>
+      <div class="d-flex justify-content-center flex-wrap gap-3">
+        <a href="{% url 'core:request_demo' %}" class="btn-primary-mkt" style="font-size:1rem;padding:15px 36px;">
+          Get a Demo
+        </a>
+        <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt" style="font-size:1rem;padding:15px 36px;">
+          Start Free
+        </a>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:16px;">
+        No credit card required &nbsp;·&nbsp; 14-day free trial &nbsp;·&nbsp; Cancel anytime
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────────────── -->
+<footer class="mkt-footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="footer-brand">🦺 Vigilo</div>
+        <div class="footer-tagline">Safety Observation & Permit Management<br>Built for the field. Trusted by managers.</div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Product</div>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Start Free Trial</a>
+        <a href="{% url 'core:billing' %}" class="footer-link">Pricing</a>
+        <a href="{% url 'core:request_demo' %}" class="footer-link">Request Demo</a>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Features</div>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Safety Observations</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Permit to Work</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Analytics</a>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Account</div>
+        <a href="{% url 'users:login' %}" class="footer-link">Login</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Sign Up</a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="footer-copy">© 2026 Vigilo. All rights reserved.</div>
+      <div class="footer-copy">Built with ❤️ for safer workplaces.</div>
+    </div>
+  </div>
+</footer>
+
+{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Scroll reveal ─────────────────────────────────────────────────────
+const revealEls = document.querySelectorAll('.reveal');
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); }
+  });
+}, { threshold: 0.1 });
+revealEls.forEach(el => revealObs.observe(el));
+
+// ── Count-up numbers ──────────────────────────────────────────────────
+const countEls = document.querySelectorAll('.countup');
+const countObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target, target = parseInt(el.dataset.to), dur = 1400;
+    const step = target / (dur / 16);
+    let cur = 0;
+    const t = setInterval(() => {
+      cur += step;
+      if (cur >= target) { el.textContent = target; clearInterval(t); }
+      else { el.textContent = Math.floor(cur); }
+    }, 16);
+    countObs.unobserve(el);
+  });
+}, { threshold: 0.5 });
+countEls.forEach(el => countObs.observe(el));
+
+// ── Module tabs ───────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.module-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.module-pane').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('pane-' + tab).classList.add('active');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Invite Contractor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3><i class="bi bi-person-plus-fill me-2"></i>Invite Contractor User</h3>
+        <p class="text-muted mb-0">Grant limited Permit-to-Work access to external contractors</p>
+      </div>
+      <a href="{% url 'core:invite_user' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back to Staff Invites
+      </a>
+    </div>
+
+    <!-- Info alert -->
+    <div class="alert alert-info mb-4">
+      <strong><i class="bi bi-info-circle me-2"></i>Contractor Access Restrictions</strong>
+      <ul class="mb-0 mt-2 small">
+        <li>Contractors can <strong>only</strong> access the Permit to Work module</li>
+        <li>They can create, edit and submit their own permit requests</li>
+        <li>They <strong>cannot</strong> approve, activate or close permits (your safety team does this)</li>
+        <li>They <strong>cannot</strong> see Safety Observations, Billing, Analytics or other modules</li>
+        <li>They can only view their own permits, not others'</li>
+        <li>Their company name and contact will auto-populate in all permits they create</li>
+      </ul>
+    </div>
+
+    <!-- Invite form -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-primary text-white fw-semibold">
+        <i class="bi bi-person-plus me-2"></i>Create Contractor Account
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          {{ form|crispy }}
+          <button type="submit" class="btn btn-primary px-4 mt-3">
+            <i class="bi bi-send me-1"></i>Send Invite & Create Account
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Existing contractors list -->
+    {% if contractors %}
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-people me-2"></i>Active Contractor Accounts ({{ contractors|length }})
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Company</th>
+              <th>Contact Person</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Expires</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in contractors %}
+            <tr>
+              <td class="fw-semibold">{{ c.contractor_company }}</td>
+              <td>{{ c.full_name }}</td>
+              <td><small>{{ c.email }}</small></td>
+              <td><small>{{ c.contractor_phone|default:"—" }}</small></td>
+              <td>
+                {% if c.contractor_access_expiry %}
+                  <small class="{% if c.is_contractor_expired %}text-danger fw-bold{% endif %}">
+                    {{ c.contractor_access_expiry|date:"d M Y" }}
+                    {% if c.is_contractor_expired %}
+                      <span class="badge bg-danger ms-1">Expired</span>
+                    {% endif %}
+                  </small>
+                {% else %}
+                  <small class="text-muted">No expiry</small>
+                {% endif %}
+              </td>
+              <td>
+                {% if c.is_active and not c.is_contractor_expired %}
+                  <span class="badge bg-success">Active</span>
+                {% else %}
+                  <span class="badge bg-secondary">Disabled</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

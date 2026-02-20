@@ -31,19 +31,21 @@
     </a>
     {% endif %}
 
-    {% if permit.status == "SUBMITTED" and request.user.is_safety_manager or permit.status == "SUBMITTED" and request.user.is_manager %}
-    <a href="{% url 'permits:approve' permit.pk %}" class="btn btn-success btn-sm">
-      <i class="bi bi-check-circle"></i> Review & Approve
-    </a>
+    {% if permit.status == "SUBMITTED" and not request.user.is_contractor %}
+      {% if request.user.is_safety_manager or request.user.is_manager %}
+      <a href="{% url 'permits:approve' permit.pk %}" class="btn btn-success btn-sm">
+        <i class="bi bi-check-circle"></i> Review & Approve
+      </a>
+      {% endif %}
     {% endif %}
 
-    {% if permit.status == "APPROVED" and permit.requestor == request.user %}
+    {% if permit.status == "APPROVED" and permit.requestor == request.user and not request.user.is_contractor %}
     <a href="{% url 'permits:activate' permit.pk %}" class="btn btn-info btn-sm">
       <i class="bi bi-play-circle"></i> Confirm Work Started
     </a>
     {% endif %}
 
-    {% if permit.status == "ACTIVE" %}
+    {% if permit.status == "ACTIVE" and not request.user.is_contractor %}
     {% if permit.requestor == request.user or request.user.is_safety_manager or request.user.is_manager %}
     <a href="{% url 'permits:close' permit.pk %}" class="btn btn-dark btn-sm">
       <i class="bi bi-lock"></i> Close Permit

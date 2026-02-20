@@ -55,6 +55,10 @@ def permit_list(request):
         .order_by("-created_at")
     )
 
+    # Contractors can only see their own permits
+    if request.user.is_contractor:
+        qs = qs.filter(requestor=request.user)
+
     if q:
         qs = qs.filter(
             Q(title__icontains=q)
@@ -99,6 +103,12 @@ def permit_create(request):
             permit.organization = request.organization
             permit.requestor    = request.user
             permit.status       = "DRAFT"
+
+            # Auto-populate contractor info if user is a contractor
+            if request.user.is_contractor:
+                permit.contractor_name    = request.user.contractor_company
+                permit.contractor_contact = request.user.contractor_phone
+
             permit.save()
             messages.success(
                 request,
@@ -209,6 +219,11 @@ def permit_submit(request, pk):
 def permit_approve(request, pk):
     _org_required(request)
 
+    # Contractors cannot approve permits
+    if request.user.is_contractor:
+        messages.error(request, "Contractor users cannot approve permits.")
+        return redirect("permits:detail", pk=pk)
+
     if not (request.user.is_safety_manager or request.user.is_manager):
         raise PermissionDenied("Only Safety Managers can approve permits.")
 
@@ -263,6 +278,15 @@ def permit_activate(request, pk):
         messages.error(request, "Only Approved permits can be activated.")
         return redirect("permits:detail", pk=pk)
 
+    # Contractors cannot activate permits — client's site team does this
+    if request.user.is_contractor:
+        messages.error(
+            request,
+            "Contractor users cannot activate permits. "
+            "The site team will activate the permit when work begins.",
+        )
+        return redirect("permits:detail", pk=pk)
+
     if permit.requestor != request.user and not request.user.is_manager:
         raise PermissionDenied
 
@@ -299,6 +323,15 @@ def permit_close(request, pk):
 
     if permit.status != "ACTIVE":
         messages.error(request, "Only Active permits can be closed.")
+        return redirect("permits:detail", pk=pk)
+
+    # Contractors cannot close permits — client's safety team does this
+    if request.user.is_contractor:
+        messages.error(
+            request,
+            "Contractor users cannot close permits. "
+            "The Safety Manager will close the permit after verifying site restoration.",
+        )
         return redirect("permits:detail", pk=pk)
 
     if not (

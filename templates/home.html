@@ -1,207 +1,142 @@
-{# templates/home.html #}
 {% extends "base.html" %}
-{% load static %}
-
-{% block title %}Home — Safety Observation{% endblock %}
+{% block title %}Vigilo — Safety Management Platform{% endblock %}
 
 {% block content %}
-<!-- HERO -->
-<section class="py-5 bg-light">
-  <div class="container">
-    <div class="row align-items-center gy-4">
-      <div class="col-lg-6">
-        <h1 class="display-5 fw-bold">Make Safety Visible. Make It Actionable.</h1>
-        <p class="lead text-muted">
-          Capture observations on-site, assign owners, track rectifications and verify closures —
-          all in one lightweight system that scales from one site to the whole enterprise.
-        </p>
-          <div class="mt-4">
-          <a href="{% url 'core:organization_signup' %}" class="btn btn-primary btn-lg px-5 me-3">
-              Start Free Trial
-          </a>
-
-          <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg px-4">
-              Login
-          </a>
-        </div>
-
-
-        <div class="mt-4 d-flex gap-2 flex-wrap">
-          <a href="{% url 'observations:create' %}" class="btn btn-primary btn-lg">Report an Observation</a>
-          <a href="{% url 'observations:dashboard' %}" class="btn btn-outline-secondary btn-lg">View Dashboard</a>
-        </div>
-
-        <ul class="list-unstyled mt-4 text-muted">
-          <li>• Role-based access: observers, action-owners, safety managers</li>
-          <li>• Photo evidence (before / after) & audit-ready export</li>
-          <li>• Mobile-friendly reporting to reduce time-to-action</li>
-        </ul>
-      </div>
-
-      <div class="col-lg-6 text-center">
-        <!-- put an optimized image at static/images/home-hero.jpg -->
-        <img src="{% static 'images/home-hero.jpg' %}"
-             alt="Workers performing safety inspection"
-             class="img-fluid rounded shadow"
-             style="max-height:360px; width:100%; object-fit:cover;">
-      </div>
+{% if user.is_authenticated %}
+<!-- Authenticated: Quick Launch Dashboard -->
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="mb-1">Welcome back, {{ user.get_full_name }}</h3>
+      {% if current_org %}
+      <p class="text-muted mb-0">{{ current_org.name }}</p>
+      {% endif %}
     </div>
   </div>
-</section>
 
-<!-- FEATURES / TOOLS -->
-<section class="py-5">
-  <div class="container">
-    <h2 class="h4 mb-4">Core Tools</h2>
-    <div class="row g-3">
-      <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body d-flex flex-column">
-            <div class="d-flex align-items-center mb-3">
-              <img src="{% static 'images/tool-inspect.jpg' %}" alt=""
-                   style="width:56px;height:56px;object-fit:cover;border-radius:8px;"
-                   class="me-3">
-              <div>
-                <h5 class="mb-0">Safety Observation</h5>
-                <small class="text-muted">Report · Assign · Verify</small>
+  <div class="row g-3">
+    <div class="col-md-3">
+      <a href="{% url 'observations:create' %}" class="card text-decoration-none h-100 shadow-sm border-0" style="transition:transform .2s;">
+        <div class="card-body text-center">
+          <div style="font-size:2rem;margin-bottom:10px;">📋</div>
+          <h6 class="fw-bold mb-1">Report Observation</h6>
+          <small class="text-muted">Log a new safety hazard</small>
+        </div>
+      </a>
+    </div>
+    
+    <div class="col-md-3">
+      <a href="{% url 'observations:observation_list' %}" class="card text-decoration-none h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <div style="font-size:2rem;margin-bottom:10px;">📊</div>
+          <h6 class="fw-bold mb-1">All Observations</h6>
+          <small class="text-muted">View & manage records</small>
+        </div>
+      </a>
+    </div>
+    
+    <div class="col-md-3">
+      <a href="{% url 'observations:dashboard' %}" class="card text-decoration-none h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <div style="font-size:2rem;margin-bottom:10px;">📈</div>
+          <h6 class="fw-bold mb-1">Analytics</h6>
+          <small class="text-muted">KPIs & trends</small>
+        </div>
+      </a>
+    </div>
+    
+    <div class="col-md-3">
+      <a href="{% url 'permits:create' %}" class="card text-decoration-none h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <div style="font-size:2rem;margin-bottom:10px;">🔐</div>
+          <h6 class="fw-bold mb-1">New Permit</h6>
+          <small class="text-muted">Create permit to work</small>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<!-- Unauthenticated: Simple Marketing Page -->
+<div class="container py-5">
+  <div class="row align-items-center min-vh-100">
+    <div class="col-lg-6">
+      <h1 class="display-4 fw-bold mb-4">Safety Management Made Simple</h1>
+      <p class="lead text-muted mb-4">
+        Vigilo digitizes your entire safety ecosystem — from hazard observations 
+        to high-risk work permits — giving every team member clarity to act fast.
+      </p>
+      <div class="d-flex gap-3 mb-4">
+        <a href="{% url 'core:organization_signup' %}" class="btn btn-primary btn-lg px-4">
+          Start Free Trial
+        </a>
+        <a href="{% url 'users:login' %}" class="btn btn-outline-secondary btn-lg px-4">
+          Sign In
+        </a>
+      </div>
+      <ul class="list-unstyled text-muted">
+        <li class="mb-2">✓ No credit card required</li>
+        <li class="mb-2">✓ 14-day free trial</li>
+        <li class="mb-2">✓ Setup in minutes</li>
+      </ul>
+    </div>
+    
+    <div class="col-lg-6 d-none d-lg-block">
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">🦺 Vigilo Dashboard</h5>
+          <div class="row g-2 mb-3">
+            <div class="col-4">
+              <div class="bg-light rounded p-3 text-center">
+                <div class="h4 mb-0">14</div>
+                <small class="text-muted">Open</small>
               </div>
             </div>
-            <p class="text-muted mb-3">Quickly create observation, attach photos and assign corrective owners with target dates.</p>
-            <div class="mt-auto">
-              <a href="{% url 'observations:create' %}" class="btn btn-sm btn-primary">Report Now</a>
-              <a href="{% url 'observations:observation_list' %}" class="btn btn-sm btn-outline-secondary ms-2">View Records</a>
+            <div class="col-4">
+              <div class="bg-danger bg-opacity-10 rounded p-3 text-center">
+                <div class="h4 mb-0 text-danger">3</div>
+                <small class="text-muted">Overdue</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="bg-success bg-opacity-10 rounded p-3 text-center">
+                <div class="h4 mb-0 text-success">52</div>
+                <small class="text-muted">Closed</small>
+              </div>
+            </div>
+          </div>
+          <div class="border-start border-3 border-danger bg-light p-3 rounded mb-2">
+            <div class="d-flex align-items-center">
+              <span class="me-2">🔴</span>
+              <div class="flex-grow-1">
+                <div class="fw-semibold small">Exposed live wire — Block C</div>
+                <small class="text-muted">HIGH · Due today</small>
+              </div>
+            </div>
+          </div>
+          <div class="border-start border-3 border-warning bg-light p-3 rounded mb-2">
+            <div class="d-flex align-items-center">
+              <span class="me-2">🟡</span>
+              <div class="flex-grow-1">
+                <div class="fw-semibold small">Slippery walkway</div>
+                <small class="text-muted">MEDIUM · In Progress</small>
+              </div>
+            </div>
+          </div>
+          <div class="border-start border-3 border-success bg-light p-3 rounded">
+            <div class="d-flex align-items-center">
+              <span class="me-2">✅</span>
+              <div class="flex-grow-1">
+                <div class="fw-semibold small">Missing PPE signage</div>
+                <small class="text-muted">LOW · Closed</small>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Placeholder tool cards -->
-      <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body d-flex flex-column">
-            <div class="mb-3 d-flex align-items-center">
-              <div class="me-3 p-2 rounded" style="background:#eef6ff;">
-                <i class="bi bi-graph-up" style="font-size:24px;color:#0d6efd"></i>
-              </div>
-              <div>
-                <h5 class="mb-0">Analytics (coming)</h5>
-                <small class="text-muted">KPI cards, trends, exports</small>
-              </div>
-            </div>
-            <p class="text-muted mb-3">Advanced dashboards and drill-downs for safety performance analysis.</p>
-            <div class="mt-auto">
-              <a href="{% url 'observations:dashboard' %}" class="btn btn-sm btn-outline-primary">Open Dashboard</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body d-flex flex-column">
-            <div class="mb-3 d-flex align-items-center">
-              <div class="me-3 p-2 rounded" style="background:#fff7ed;">
-                <i class="bi bi-people" style="font-size:24px;color:#fd7e14"></i>
-              </div>
-              <div>
-                <h5 class="mb-0">Audit & Archive</h5>
-                <small class="text-muted">Retention & compliance</small>
-              </div>
-            </div>
-            <p class="text-muted mb-3">Maintain audit-ready records and restore archived items when needed.</p>
-            <div class="mt-auto">
-              <a href="{% url 'observations:archived_list' %}" class="btn btn-sm btn-outline-secondary">View Archived</a>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
-</section>
-
-<!-- WORKFLOW -->
-<section class="py-5 bg-white">
-  <div class="container">
-    <h2 class="h4 mb-4">How it works</h2>
-    <div class="row text-center">
-      <div class="col-md-3 mb-3">
-        <div class="p-3 border rounded">
-          <div class="mb-2 display-6">1</div>
-          <h6>Observe</h6>
-          <p class="small text-muted">Record hazard with description and photo.</p>
-        </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="p-3 border rounded">
-          <div class="mb-2 display-6">2</div>
-          <h6>Assign</h6>
-          <p class="small text-muted">Assign owner and set a target date.</p>
-        </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="p-3 border rounded">
-          <div class="mb-2 display-6">3</div>
-          <h6>Rectify</h6>
-          <p class="small text-muted">Action owner updates rectification with photo.</p>
-        </div>
-      </div>
-      <div class="col-md-3 mb-3">
-        <div class="p-3 border rounded">
-          <div class="mb-2 display-6">4</div>
-          <h6>Verify</h6>
-          <p class="small text-muted">Manager verifies closure and archives.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- BENEFITS + QUOTES -->
-<section class="py-5">
-  <div class="container">
-    <div class="row align-items-start">
-      <div class="col-md-6">
-        <h2 class="h5">Why organizations choose this system</h2>
-        <ul class="mt-3">
-          <li><strong>Reduce incidents:</strong> Faster visibility and accountability help prevent repeat hazards.</li>
-          <li><strong>Speed up fixes:</strong> Assign and act — fewer meetings and emails.</li>
-          <li><strong>Audit-ready:</strong> Exportable reports for compliance and leadership review.</li>
-          <li><strong>Drive culture:</strong> Transparent ownership builds safer habits.</li>
-        </ul>
-      </div>
-
-      <div class="col-md-6">
-        <h6 class="text-muted">Trusted safety wisdom</h6>
-
-        <blockquote class="blockquote">
-          <p class="mb-0">“Safety work is today recognized as an economic necessity. It is the study of the right way to do things.”</p>
-          <p>                                                 </p>
-          <footer class="blockquote-footer small">Robert W. Campbell </footer>
-        </blockquote>
-
-        <blockquote class="blockquote mt-3">
-          <p class="mb-0">“Safety doesn't happen by accident.”</p>
-          <p>                                                 </p>
-          <footer class="blockquote-footer small">Safety Mantra</footer>
-        </blockquote>
-
-        <!-- <small class="text-muted d-block mt-2">Use these quotes in your marketing: attribute responsibly if used externally.</small> -->
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER CTA -->
-<section class="py-4 bg-light">
-  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div>
-      <h5 class="mb-0">Ready to improve safety performance?</h5>
-      <small class="text-muted">Start reporting today — minimal setup.</small>
-    </div>
-    <div class="ms-auto">
-      <a href="{% url 'observations:create' %}" class="btn btn-primary">Report Observation</a>
-      <a href="{% url 'core:request_demo' %}" class="btn btn-outline-secondary ms-2">Request Demo / Register</a>
-    </div>
-  </div>
-</section>
+</div>
+{% endif %}
 {% endblock %}

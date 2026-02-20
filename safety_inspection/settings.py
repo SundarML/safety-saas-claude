@@ -59,6 +59,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.OrganizationMiddleware",
     "core.middleware.SubscriptionMiddleware",
+    "core.middleware.ContractorAccessMiddleware",      # restrict contractors to permits only
 ]
 
 ROOT_URLCONF = "safety_inspection.urls"
