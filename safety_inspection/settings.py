@@ -119,7 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LOGIN_URL          = "/users/accounts/login/"
-LOGIN_REDIRECT_URL = "/observations/"
+LOGIN_REDIRECT_URL = "/"  # Home page with quick-launch dashboard
 LOGOUT_REDIRECT_URL = "home"
 
 # ---------------------------------------------------------------------------
