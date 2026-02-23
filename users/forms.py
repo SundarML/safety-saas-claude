@@ -17,4 +17,4 @@ class CustomUserChangeForm(UserChangeForm):
     """Used in admin to edit existing users."""
     class Meta:
         model = CustomUser
-        fields = ("email", "full_name", "is_observer", "is_action_owner", "is_safety_manager")
+        fields = ("email", "full_name", "role")

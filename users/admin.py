@@ -14,13 +14,13 @@ class CustomUserAdmin(UserAdmin):
         "email",
         "full_name",
         "organization",
-        "is_manager",
+        "role",
         "is_active",
         "is_staff",
     )
 
     list_filter = (
-        "is_manager",
+        "role",
         "is_active",
         "is_staff",
         "is_superuser",
@@ -33,17 +33,7 @@ class CustomUserAdmin(UserAdmin):
         (None, {"fields": ("email", "password")}),
         ("Personal Info", {"fields": ("full_name",)}),
         ("Organization", {"fields": ("organization",)}),
-        (
-            "Roles",
-            {
-                "fields": (
-                    "is_manager",
-                    "is_observer",
-                    "is_action_owner",
-                    "is_safety_manager",
-                )
-            },
-        ),
+        ("Role", {"fields": ("role",)}),
         (
             "Permissions",
             {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")},
@@ -61,7 +51,7 @@ class CustomUserAdmin(UserAdmin):
                     "password1",
                     "password2",
                     "organization",
-                    "is_manager",
+                    "role",
                 ),
             },
         ),

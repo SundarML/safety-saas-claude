@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Request Free Plan{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 600px;">
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <h3 class="mb-2">Request Free Plan</h3>
+      <p class="text-muted">
+        Fill in your details. Our team will review and get back to you.
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+
+        <div class="d-flex justify-content-between mt-3">
+          <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+            Cancel
+          </a>
+          <button type="submit" class="btn btn-primary">
+            Submit Request
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

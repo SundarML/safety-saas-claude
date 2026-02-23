@@ -23,6 +23,7 @@ from django.views.generic import CreateView, DetailView, UpdateView
 
 from .forms import LocationForm, ObservationCreateForm, RectificationForm, VerificationForm
 from .models import Location, Observation
+from core.utils.guards import org_required as _org_required
 
 
 # ---------------------------------------------------------------------------
@@ -50,11 +51,6 @@ class OrgQuerySetMixin:
             raise PermissionDenied("You are not associated with any organization.")
         return Observation.objects.filter(organization=self.request.organization)
 
-
-def _org_required(request):
-    """Shared guard for function-based views."""
-    if not request.organization:
-        raise PermissionDenied("You are not associated with any organization.")
 
 
 # ---------------------------------------------------------------------------
@@ -152,16 +148,16 @@ class ObservationDetailView(LoginRequiredMixin, OrgRequiredMixin, OrgQuerySetMix
 class RectificationUpdateView(LoginRequiredMixin, OrgRequiredMixin, OrgQuerySetMixin, UpdateView):
     model = Observation
     form_class = RectificationForm
-    template_name = "observations/observation_form.html"
+    template_name = "observations/observation_rectify.html"
     success_url = reverse_lazy("observations:observation_list")
 
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        # Only the assigned action owner may rectify
-        obs = self.get_object()
-        if request.user != obs.assigned_to:
+    def get_object(self, queryset=None):
+        # Cache the object and check permission here — avoids a second DB hit
+        # that the old dispatch() override caused.
+        obj = super().get_object(queryset)
+        if self.request.user != obj.assigned_to:
             raise PermissionDenied("Only the assigned action owner can submit rectification.")
-        return response
+        return obj
 
     def form_valid(self, form):
         observation = form.save(commit=False)
@@ -405,22 +401,20 @@ def observations_dashboard(request):
     labels = [row["period"].strftime("%Y-%m-%d") for row in trend_qs if row["period"]]
     values = [row["count"] for row in trend_qs]
 
+    trend_df = pd.DataFrame({"Date": labels, "Observations": values})
     fig = px.line(
-        x=labels, y=values, markers=True,
+        trend_df, x="Date", y="Observations", markers=True,
         title=f"{trend.capitalize()} Observation Trend",
-        labels={"x": "Date", "y": "Observations"},
     )
     fig.update_layout(modebar_add=["toImage"])
     chart_html = fig.to_html(full_html=False)
 
     # Severity breakdown
     severity_qs = qs.values("severity").annotate(count=Count("id")).order_by("severity")
-    severity_fig = px.bar(
-        x=[r["severity"] for r in severity_qs],
-        y=[r["count"]    for r in severity_qs],
-        title="Observations by Severity",
-        labels={"x": "Severity", "y": "Count"},
-    )
+    sev_df = pd.DataFrame({"Severity": [r["severity"] for r in severity_qs],
+                           "Count":    [r["count"]    for r in severity_qs]})
+    severity_fig = px.bar(sev_df, x="Severity", y="Count",
+                          title="Observations by Severity")
     severity_fig.update_layout(modebar_add=["toImage"])
 
     # Status pie
@@ -433,72 +427,42 @@ def observations_dashboard(request):
     status_fig.update_layout(modebar_add=["toImage"])
 
     # Observer performance (org-scoped)
-    observer_qs = (
+    observer_qs = list(
         Observation.objects.filter(organization=org)
         .values(Observer=F("observer__email"))
         .annotate(total=Count("id"))
         .filter(observer__isnull=False)
         .order_by("-total")
     )
-    observer_df = pd.DataFrame(list(observer_qs))
-    if not observer_df.empty:
-        observer_fig = px.bar(
-            observer_df, x="Observer", y="total",
-            title="Observers – Observations Reported",
-            labels={"Observer": "Observer", "total": "Observations"},
-            color="total",
-        )
-    else:
-        observer_fig = px.bar(
-            pd.DataFrame(columns=["Observer", "total"]),
-            x="Observer", y="total",
-            title="Observers – Observations Reported",
-        )
+    obs_df = pd.DataFrame({"Observer": [d["Observer"] for d in observer_qs],
+                           "Observations": [d["total"] for d in observer_qs]})
+    observer_fig = px.bar(obs_df, x="Observer", y="Observations",
+                          title="Observers – Observations Reported")
 
     # Action owner performance (org-scoped)
-    owner_qs = (
+    owner_qs = list(
         Observation.objects.filter(organization=org)
         .values(owner=F("assigned_to__email"))
         .annotate(total=Count("id"))
         .filter(assigned_to__isnull=False)
         .order_by("-total")
     )
-    owner_df = pd.DataFrame(list(owner_qs))
-    if not owner_df.empty:
-        owner_fig = px.bar(
-            owner_df, x="owner", y="total",
-            title="Action Owners – Tasks Assigned",
-            labels={"owner": "Action Owner", "total": "Assigned Tasks"},
-            color="total",
-        )
-    else:
-        owner_fig = px.bar(
-            pd.DataFrame(columns=["owner", "total"]),
-            x="owner", y="total",
-            title="Action Owners – Tasks Assigned",
-        )
+    owner_df = pd.DataFrame({"Action Owner": [d["owner"] for d in owner_qs],
+                             "Assigned Tasks": [d["total"] for d in owner_qs]})
+    owner_fig = px.bar(owner_df, x="Action Owner", y="Assigned Tasks",
+                       title="Action Owners – Tasks Assigned")
 
     # Safety manager close performance (org-scoped)
-    manager_qs = (
+    manager_qs = list(
         Observation.objects.filter(organization=org, status="CLOSED")
         .values(safety_manager=F("assigned_to__email"))
         .annotate(total=Count("id"))
         .order_by("-total")
     )
-    manager_df = pd.DataFrame(list(manager_qs))
-    if not manager_df.empty:
-        manager_fig = px.bar(
-            manager_df, x="safety_manager", y="total",
-            title="Safety Managers – Observations Closed",
-            labels={"safety_manager": "Manager", "total": "Closed Observations"},
-            color="total",
-        )
-    else:
-        manager_fig = px.bar(
-            pd.DataFrame(columns=["safety_manager", "total"]),
-            x="safety_manager", y="total",
-            title="Safety Managers – Observations Closed",
-        )
+    manager_df = pd.DataFrame({"Manager": [d["safety_manager"] for d in manager_qs],
+                               "Closed Observations": [d["total"] for d in manager_qs]})
+    manager_fig = px.bar(manager_df, x="Manager", y="Closed Observations",
+                         title="Safety Managers – Observations Closed")
 
     return render(request, "observations/dashboard.html", {
         "total_obs":      total_obs,

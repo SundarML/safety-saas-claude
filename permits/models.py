@@ -152,13 +152,24 @@ class Permit(models.Model):
 
     def save(self, *args, **kwargs):
         # Auto-generate permit number on first save: PTW-YYYYMMDD-XXXXX
+        # Uses select_for_update() inside a transaction to prevent race conditions
+        # when two permits are created simultaneously on the same day.
         if not self.permit_number:
-            today = timezone.now().strftime("%Y%m%d")
-            # Count today's permits + 1 for sequence
-            seq = Permit.objects.filter(
-                permit_number__startswith=f"PTW-{today}-"
-            ).count() + 1
-            self.permit_number = f"PTW-{today}-{seq:04d}"
+            from django.db import transaction
+            with transaction.atomic():
+                today = timezone.now().strftime("%Y%m%d")
+                prefix = f"PTW-{today}-"
+                last = (
+                    Permit.objects.select_for_update()
+                    .filter(permit_number__startswith=prefix)
+                    .order_by("permit_number")
+                    .last()
+                )
+                if last:
+                    seq = int(last.permit_number.split("-")[-1]) + 1
+                else:
+                    seq = 1
+                self.permit_number = f"{prefix}{seq:04d}"
         super().save(*args, **kwargs)
 
     @property

@@ -1,138 +1,409 @@
 {% extends "base.html" %}
+
 {% block title %}Permits to Work{% endblock %}
 
+{% block extra_head %}
+<style>
+  .obs-table th {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #6c757d;
+    border-bottom: 2px solid #e9ecef;
+    white-space: nowrap;
+    padding: 10px 14px;
+    background: #f8f9fb;
+  }
+  .obs-table td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: .92rem;
+  }
+  .obs-table tbody tr {
+    transition: background .12s;
+  }
+  .obs-table tbody tr:hover {
+    background: #f5f7ff;
+  }
+  .obs-table tbody tr.overdue {
+    background: #fff8f8;
+  }
+  .obs-table tbody tr.overdue:hover {
+    background: #ffefef;
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .wtype-badge {
+    display: inline-block;
+    font-size: .73rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .permit-num-link {
+    font-family: monospace;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #0d6efd;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .permit-num-link:hover { text-decoration: underline; }
+  .title-link {
+    font-weight: 600;
+    color: #212529;
+    text-decoration: none;
+  }
+  .title-link:hover {
+    color: #0d6efd;
+    text-decoration: underline;
+  }
+  .overdue-tag {
+    font-size: .68rem;
+    font-weight: 700;
+    color: #dc3545;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-left: 6px;
+  }
+  .table-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    overflow: hidden;
+  }
+  .filter-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #adb5bd;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2><i class="bi bi-file-earmark-check me-2"></i>Permits to Work</h2>
-  <div class="d-flex gap-2">
-    <a href="{% url 'permits:dashboard' %}" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-bar-chart me-1"></i>Dashboard
-    </a>
-    <a href="{% url 'permits:create' %}" class="btn btn-success btn-sm">
-      <i class="bi bi-plus-circle me-1"></i>New Permit
-    </a>
-  </div>
-</div>
+<div class="container-fluid px-3 px-lg-4 py-3">
 
-<!-- Filters -->
-<form method="get" class="row g-2 mb-3">
-  <div class="col-md-4">
-    <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
-           placeholder="Search permit no., title, contractor…">
+  <!-- ── HEADER ───────────────────────────────────── -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <h4 class="fw-bold mb-0">
+      <i class="bi bi-file-earmark-check text-muted me-2"></i>Permits to Work
+    </h4>
+    <div class="d-flex gap-2">
+      <a href="{% url 'permits:dashboard' %}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-bar-chart me-1"></i>Dashboard
+      </a>
+      <a href="{% url 'permits:create' %}" class="btn btn-sm btn-success">
+        <i class="bi bi-plus-lg me-1"></i>New Permit
+      </a>
+    </div>
   </div>
-  <div class="col-md-2">
-    <select name="status" class="form-select form-select-sm">
-      <option value="">All Statuses</option>
-      {% for val, label in status_choices %}
-      <option value="{{ val }}" {% if status_f == val %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-3">
-    <select name="work_type" class="form-select form-select-sm">
-      <option value="">All Work Types</option>
-      {% for val, label in type_choices %}
-      <option value="{{ val }}" {% if type_f == val %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-2">
-    <button class="btn btn-primary btn-sm w-100">Filter</button>
-  </div>
-  <div class="col-md-1">
-    <a href="{% url 'permits:permit_list' %}" class="btn btn-outline-secondary btn-sm w-100">Clear</a>
-  </div>
-</form>
 
-<div class="table-responsive">
-  <table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark">
-      <tr>
-        <th>Permit No.</th>
-        <th>Work Type</th>
-        <th>Title</th>
-        <th>Location</th>
-        <th>Requestor</th>
-        <th>Planned Start</th>
-        <th>Planned End</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for permit in permits %}
-      <tr class="{% if permit.is_overdue %}table-danger{% endif %}">
-        <td><a href="{% url 'permits:detail' permit.pk %}">{{ permit.permit_number }}</a></td>
-        <td>
-          <span class="badge bg-secondary">{{ permit.get_work_type_display }}</span>
-        </td>
-        <td>{{ permit.title }}</td>
-        <td>{{ permit.location }}</td>
-        <td>{{ permit.requestor.get_full_name }}</td>
-        <td>{{ permit.planned_start|date:"d M Y H:i" }}</td>
-        <td>{{ permit.planned_end|date:"d M Y H:i" }}</td>
-        <td>
-          {% if permit.status == "DRAFT" %}
-            <span class="badge bg-secondary">Draft</span>
-          {% elif permit.status == "SUBMITTED" %}
-            <span class="badge bg-warning text-dark">Submitted</span>
-          {% elif permit.status == "APPROVED" %}
-            <span class="badge bg-info text-dark">Approved</span>
-          {% elif permit.status == "ACTIVE" %}
-            <span class="badge bg-success">Active</span>
-          {% elif permit.status == "CLOSED" %}
-            <span class="badge bg-dark">Closed</span>
-          {% elif permit.status == "REJECTED" %}
-            <span class="badge bg-danger">Rejected</span>
-          {% elif permit.status == "CANCELLED" %}
-            <span class="badge bg-light text-dark border">Cancelled</span>
-          {% endif %}
-          {% if permit.is_overdue %}
-            <span class="badge bg-danger ms-1">Overdue</span>
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'permits:detail' permit.pk %}" class="btn btn-sm btn-outline-primary" title="View">
-            <i class="bi bi-eye"></i>
+  <!-- ── FILTERS ───────────────────────────────────── -->
+  <div class="card filter-card mb-3">
+    <div class="card-body py-3">
+      <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
+
+        <div class="flex-grow-1" style="min-width:180px; max-width:320px;">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" name="q" value="{{ q }}"
+                   class="form-control border-start-0 ps-0"
+                   placeholder="Permit no., title, contractor…">
+          </div>
+        </div>
+
+        <div style="min-width:150px;">
+          <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status_f == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="min-width:190px;">
+          <select name="work_type" class="form-select">
+            <option value="">All Work Types</option>
+            {% for val, label in type_choices %}
+            <option value="{{ val }}" {% if type_f == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button class="btn btn-primary px-4" type="submit">Filter</button>
+
+        {% if q or status_f or type_f %}
+          <a href="{% url 'permits:permit_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x me-1"></i>Clear
           </a>
-          {% if permit.status == "DRAFT" and permit.requestor == request.user %}
-          <a href="{% url 'permits:edit' permit.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
-            <i class="bi bi-pencil"></i>
-          </a>
-          {% endif %}
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="9" class="text-center text-muted py-4">No permits found.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+        {% endif %}
 
-<!-- Pagination -->
-<nav>
-  <ul class="pagination pagination-sm justify-content-center">
-    {% if page_obj.has_previous %}
-    <li class="page-item">
-      <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page=1">First</a>
-    </li>
-    <li class="page-item">
-      <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page={{ page_obj.previous_page_number }}">Prev</a>
-    </li>
-    {% endif %}
-    <li class="page-item active">
-      <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-    </li>
-    {% if page_obj.has_next %}
-    <li class="page-item">
-      <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page={{ page_obj.next_page_number }}">Next</a>
-    </li>
-    <li class="page-item">
-      <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page={{ page_obj.paginator.num_pages }}">Last</a>
-    </li>
-    {% endif %}
-  </ul>
-</nav>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── TABLE ─────────────────────────────────────── -->
+  <div class="card table-card">
+    <div class="table-responsive">
+      <table class="table obs-table mb-0">
+        <thead>
+          <tr>
+            <th>Permit No.</th>
+            <th>Work Type</th>
+            <th>Title</th>
+            <th>Location</th>
+            <th>Requestor</th>
+            <th>Approved By</th>
+            <th>Planned Start</th>
+            <th>Planned End</th>
+            <th>Status</th>
+            <th style="width:90px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for permit in permits %}
+          <tr class="{% if permit.is_overdue %}overdue{% endif %}">
+
+            <!-- Permit number -->
+            <td>
+              <a href="{% url 'permits:detail' permit.pk %}" class="permit-num-link">
+                {{ permit.permit_number }}
+              </a>
+            </td>
+
+            <!-- Work type -->
+            <td>
+              {% if permit.work_type == 'hot_work' %}
+                <span class="wtype-badge bg-danger-subtle text-danger border border-danger-subtle">
+                  <i class="bi bi-fire me-1"></i>Hot Work
+                </span>
+              {% elif permit.work_type == 'confined_space' %}
+                <span class="wtype-badge bg-warning-subtle text-warning border border-warning-subtle">
+                  <i class="bi bi-door-closed me-1"></i>Confined Space
+                </span>
+              {% elif permit.work_type == 'electrical' %}
+                <span class="wtype-badge bg-info-subtle text-info border border-info-subtle">
+                  <i class="bi bi-lightning me-1"></i>Electrical
+                </span>
+              {% elif permit.work_type == 'excavation' %}
+                <span class="wtype-badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                  <i class="bi bi-layers me-1"></i>Excavation
+                </span>
+              {% elif permit.work_type == 'lifting_rigging' %}
+                <span class="wtype-badge" style="background:#f3e8ff;color:#7c3aed;border:1px solid #c4b5fd;">
+                  <i class="bi bi-box-arrow-up me-1"></i>Lifting
+                </span>
+              {% elif permit.work_type == 'work_at_height' %}
+                <span class="wtype-badge" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80;">
+                  <i class="bi bi-ladder me-1"></i>At Height
+                </span>
+              {% elif permit.work_type == 'breaking_containment' %}
+                <span class="wtype-badge" style="background:#fce4ec;color:#b71c1c;border:1px solid #ef9a9a;">
+                  <i class="bi bi-exclamation-octagon me-1"></i>Containment
+                </span>
+              {% else %}
+                <span class="wtype-badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                  {{ permit.get_work_type_display }}
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Title -->
+            <td>
+              <a href="{% url 'permits:detail' permit.pk %}" class="title-link">
+                {{ permit.title }}
+              </a>
+              {% if permit.is_overdue %}
+                <span class="overdue-tag"><i class="bi bi-clock me-1"></i>Overdue</span>
+              {% endif %}
+            </td>
+
+            <!-- Location -->
+            <td class="text-muted">{{ permit.location }}</td>
+
+            <!-- Requestor -->
+            <td class="text-muted">
+              {{ permit.requestor.get_full_name|default:permit.requestor }}
+            </td>
+
+            <!-- Approved By -->
+            <td class="text-muted">
+              {{ permit.approved_by.get_full_name|default:permit.approved_by|default:"—" }}
+            </td>
+
+            <!-- Planned start -->
+            <td class="text-muted" style="white-space:nowrap;">
+              {{ permit.planned_start|date:"d M Y" }}<br>
+              <span style="font-size:.8rem;">{{ permit.planned_start|date:"H:i" }}</span>
+            </td>
+
+            <!-- Planned end -->
+            <td style="white-space:nowrap;">
+              {% if permit.is_overdue %}
+                <span class="text-danger fw-semibold">{{ permit.planned_end|date:"d M Y" }}</span><br>
+                <span style="font-size:.8rem;" class="text-danger">{{ permit.planned_end|date:"H:i" }}</span>
+              {% else %}
+                <span class="text-muted">{{ permit.planned_end|date:"d M Y" }}</span><br>
+                <span style="font-size:.8rem;" class="text-muted">{{ permit.planned_end|date:"H:i" }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Status -->
+            <td>
+              {% if permit.status == 'DRAFT' %}
+                <span class="status-badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                  <i class="bi bi-pencil" style="font-size:.65rem;"></i>Draft
+                </span>
+              {% elif permit.status == 'SUBMITTED' %}
+                <span class="status-badge bg-warning-subtle text-warning border border-warning-subtle">
+                  <i class="bi bi-send" style="font-size:.65rem;"></i>Submitted
+                </span>
+              {% elif permit.status == 'APPROVED' %}
+                <span class="status-badge bg-info-subtle text-info border border-info-subtle">
+                  <i class="bi bi-check-circle" style="font-size:.65rem;"></i>Approved
+                </span>
+              {% elif permit.status == 'ACTIVE' %}
+                <span class="status-badge bg-success-subtle text-success border border-success-subtle">
+                  <i class="bi bi-play-circle" style="font-size:.65rem;"></i>Active
+                </span>
+              {% elif permit.status == 'CLOSED' %}
+                <span class="status-badge bg-dark text-white border border-dark">
+                  <i class="bi bi-lock" style="font-size:.65rem;"></i>Closed
+                </span>
+              {% elif permit.status == 'REJECTED' %}
+                <span class="status-badge bg-danger-subtle text-danger border border-danger-subtle">
+                  <i class="bi bi-x-circle" style="font-size:.65rem;"></i>Rejected
+                </span>
+              {% elif permit.status == 'CANCELLED' %}
+                <span class="status-badge bg-light text-muted border">
+                  <i class="bi bi-slash-circle" style="font-size:.65rem;"></i>Cancelled
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{% url 'permits:detail' permit.pk %}"
+                   class="btn btn-sm btn-outline-primary"
+                   title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                {% if permit.status == 'DRAFT' and permit.requestor == request.user %}
+                  <a href="{% url 'permits:edit' permit.pk %}"
+                     class="btn btn-sm btn-outline-secondary"
+                     title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <i class="bi bi-file-earmark-x" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.25;"></i>
+                {% if q or status_f or type_f %}
+                  No permits match the current filters.
+                  <br><a href="{% url 'permits:permit_list' %}" class="mt-2 d-inline-block">Clear filters</a>
+                {% else %}
+                  No permits yet. <a href="{% url 'permits:create' %}">Request the first one.</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PAGINATION ─────────────────────────────────── -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
+    <span class="text-muted small">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      &nbsp;·&nbsp; {{ page_obj.paginator.count }} total
+    </span>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page=1">
+              <i class="bi bi-chevron-double-left"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page={{ page_obj.previous_page_number }}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-double-left"></i></span>
+          </li>
+          <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+          </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <li class="page-item active">
+              <span class="page-link">{{ num }}</span>
+            </li>
+          {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page={{ num }}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page={{ page_obj.next_page_number }}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?q={{ q }}&status={{ status_f }}&work_type={{ type_f }}&page={{ page_obj.paginator.num_pages }}">
+              <i class="bi bi-chevron-double-right"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+          </li>
+          <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-double-right"></i></span>
+          </li>
+        {% endif %}
+
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+</div>
 {% endblock %}

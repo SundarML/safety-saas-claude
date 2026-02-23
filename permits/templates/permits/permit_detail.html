@@ -1,237 +1,615 @@
 {% extends "base.html" %}
+
 {% block title %}{{ permit.permit_number }}{% endblock %}
 
+{% block extra_head %}
+<style>
+  .section-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  }
+  .info-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 3px;
+  }
+  .info-value {
+    font-size: .95rem;
+    color: #212529;
+  }
+  .card-section-title {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: #6c757d;
+    margin-bottom: 16px;
+  }
+  .wtype-badge {
+    display: inline-block;
+    font-size: .8rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .status-badge-lg {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .82rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  /* Workflow stepper */
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 70px;
+    position: relative;
+  }
+  .step-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem;
+    font-weight: 700;
+    border: 2px solid #dee2e6;
+    background: #fff;
+    color: #adb5bd;
+    z-index: 1;
+    position: relative;
+  }
+  .step-dot.done {
+    background: #198754;
+    border-color: #198754;
+    color: #fff;
+  }
+  .step-dot.active {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(13,110,253,.15);
+  }
+  .step-dot.rejected {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+  }
+  .step-dot.cancelled {
+    background: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+  }
+  .step-label {
+    font-size: .68rem;
+    font-weight: 600;
+    color: #adb5bd;
+    margin-top: 5px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .step-label.active { color: #0d6efd; }
+  .step-label.done   { color: #198754; }
+  .step-label.rejected { color: #dc3545; }
+  .step-connector {
+    flex: 1;
+    height: 2px;
+    background: #dee2e6;
+    margin-top: -22px;
+  }
+  .step-connector.done { background: #198754; }
+  /* Hazard / control sections */
+  .hazard-block {
+    background: #fff5f5;
+    border-left: 3px solid #dc3545;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .control-block {
+    background: #f0fff4;
+    border-left: 3px solid #198754;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .ppe-block {
+    background: #f0f4ff;
+    border-left: 3px solid #0d6efd;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .isolation-block {
+    background: #fffbf0;
+    border-left: 3px solid #fd7e14;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .emergency-block {
+    background: #fdf0ff;
+    border-left: 3px solid #6f42c1;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+  }
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: .93rem;
+  }
+  .checklist-item:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
 
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
-  <div>
-    <h3 class="mb-1">
-      <i class="bi bi-file-earmark-check me-2"></i>{{ permit.permit_number }}
-    </h3>
-    <small class="text-muted">{{ permit.get_work_type_display }} &nbsp;·&nbsp; Created {{ permit.created_at|date:"d M Y H:i" }}</small>
-  </div>
-  <div class="d-flex gap-2 flex-wrap">
-    <a href="{% url 'permits:permit_list' %}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left"></i> Back
-    </a>
+  <!-- ── HEADER ───────────────────────────────────── -->
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-3">
 
-    {% if permit.status == "DRAFT" and permit.requestor == request.user %}
-    <a href="{% url 'permits:edit' permit.pk %}" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-pencil"></i> Edit
-    </a>
-    <form method="post" action="{% url 'permits:submit' permit.pk %}" class="d-inline">
-      {% csrf_token %}
-      <button class="btn btn-primary btn-sm" onclick="return confirm('Submit this permit for approval?')">
-        <i class="bi bi-send"></i> Submit for Approval
-      </button>
-    </form>
-    <a href="{% url 'permits:cancel' permit.pk %}" class="btn btn-outline-danger btn-sm">
-      <i class="bi bi-x-circle"></i> Cancel
-    </a>
-    {% endif %}
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <a href="{% url 'permits:permit_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+      <div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <h4 class="fw-bold mb-0" style="font-family:monospace;">
+            {{ permit.permit_number }}
+          </h4>
 
-    {% if permit.status == "SUBMITTED" and request.user.is_safety_manager or permit.status == "SUBMITTED" and request.user.is_manager %}
-    <a href="{% url 'permits:approve' permit.pk %}" class="btn btn-success btn-sm">
-      <i class="bi bi-check-circle"></i> Review & Approve
-    </a>
-    {% endif %}
-
-    {% if permit.status == "APPROVED" and permit.requestor == request.user %}
-    <a href="{% url 'permits:activate' permit.pk %}" class="btn btn-info btn-sm">
-      <i class="bi bi-play-circle"></i> Confirm Work Started
-    </a>
-    {% endif %}
-
-    {% if permit.status == "ACTIVE" %}
-    {% if permit.requestor == request.user or request.user.is_safety_manager or request.user.is_manager %}
-    <a href="{% url 'permits:close' permit.pk %}" class="btn btn-dark btn-sm">
-      <i class="bi bi-lock"></i> Close Permit
-    </a>
-    {% endif %}
-    {% endif %}
-  </div>
-</div>
-
-<!-- Status banner -->
-<div class="alert
-  {% if permit.status == 'DRAFT' %}alert-secondary
-  {% elif permit.status == 'SUBMITTED' %}alert-warning
-  {% elif permit.status == 'APPROVED' %}alert-info
-  {% elif permit.status == 'ACTIVE' %}alert-success
-  {% elif permit.status == 'CLOSED' %}alert-dark
-  {% elif permit.status == 'REJECTED' %}alert-danger
-  {% elif permit.status == 'CANCELLED' %}alert-light border
-  {% endif %} d-flex justify-content-between align-items-center">
-  <span>
-    <strong>Status:</strong> {{ permit.get_status_display }}
-    {% if permit.is_overdue %}
-      &nbsp;<span class="badge bg-danger">Overdue</span>
-    {% endif %}
-  </span>
-  <small>Duration: {{ permit.duration_hours }} hrs</small>
-</div>
-
-<div class="row g-4">
-
-  <!-- Left column -->
-  <div class="col-lg-7">
-
-    <!-- Work Details -->
-    <div class="card mb-3 shadow-sm">
-      <div class="card-header fw-semibold bg-dark text-white">Work Details</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-4">Title</dt>
-          <dd class="col-sm-8">{{ permit.title }}</dd>
-
-          <dt class="col-sm-4">Work Type</dt>
-          <dd class="col-sm-8">{{ permit.get_work_type_display }}</dd>
-
-          <dt class="col-sm-4">Location</dt>
-          <dd class="col-sm-8">{{ permit.location }}</dd>
-
-          <dt class="col-sm-4">Work Area</dt>
-          <dd class="col-sm-8">{{ permit.work_area|default:"—" }}</dd>
-
-          <dt class="col-sm-4">Description</dt>
-          <dd class="col-sm-8">{{ permit.description|linebreaks }}</dd>
-        </dl>
-      </div>
-    </div>
-
-    <!-- Schedule -->
-    <div class="card mb-3 shadow-sm">
-      <div class="card-header fw-semibold bg-dark text-white">Schedule</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-4">Planned Start</dt>
-          <dd class="col-sm-8">{{ permit.planned_start|date:"d M Y H:i" }}</dd>
-          <dt class="col-sm-4">Planned End</dt>
-          <dd class="col-sm-8">{{ permit.planned_end|date:"d M Y H:i" }}</dd>
-          {% if permit.actual_start %}
-          <dt class="col-sm-4">Actual Start</dt>
-          <dd class="col-sm-8">{{ permit.actual_start|date:"d M Y H:i" }}</dd>
-          {% endif %}
-          {% if permit.actual_end %}
-          <dt class="col-sm-4">Actual End</dt>
-          <dd class="col-sm-8">{{ permit.actual_end|date:"d M Y H:i" }}</dd>
-          {% endif %}
-        </dl>
-      </div>
-    </div>
-
-    <!-- Hazards & Controls -->
-    <div class="card mb-3 shadow-sm border-warning">
-      <div class="card-header fw-semibold bg-warning text-dark">Hazards & Controls</div>
-      <div class="card-body">
-        <h6 class="text-danger">Hazards Identified</h6>
-        <p>{{ permit.hazards_identified|linebreaks }}</p>
-        <h6 class="text-success">Risk Controls</h6>
-        <p>{{ permit.risk_controls|linebreaks }}</p>
-        {% if permit.ppe_required %}
-        <h6>PPE Required</h6>
-        <p>{{ permit.ppe_required|linebreaks }}</p>
-        {% endif %}
-        {% if permit.isolation_required %}
-        <h6>Isolation / LOTO</h6>
-        <p>{{ permit.isolation_details|linebreaks }}</p>
-        {% endif %}
-        {% if permit.emergency_procedure %}
-        <h6>Emergency Procedure</h6>
-        <p>{{ permit.emergency_procedure|linebreaks }}</p>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Right column -->
-  <div class="col-lg-5">
-
-    <!-- Personnel -->
-    <div class="card mb-3 shadow-sm">
-      <div class="card-header fw-semibold bg-dark text-white">Personnel</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-5">Requestor</dt>
-          <dd class="col-sm-7">{{ permit.requestor.get_full_name }}</dd>
-          <dt class="col-sm-5">Contractor</dt>
-          <dd class="col-sm-7">{{ permit.contractor_name|default:"—" }}</dd>
-          <dt class="col-sm-5">Contact</dt>
-          <dd class="col-sm-7">{{ permit.contractor_contact|default:"—" }}</dd>
-          <dt class="col-sm-5">Workers</dt>
-          <dd class="col-sm-7">{{ permit.workers_count }}</dd>
-          {% if permit.approved_by %}
-          <dt class="col-sm-5">Approved by</dt>
-          <dd class="col-sm-7">{{ permit.approved_by.get_full_name }}</dd>
-          <dt class="col-sm-5">Approved at</dt>
-          <dd class="col-sm-7">{{ permit.approved_at|date:"d M Y H:i" }}</dd>
-          {% endif %}
-          {% if permit.closed_by %}
-          <dt class="col-sm-5">Closed by</dt>
-          <dd class="col-sm-7">{{ permit.closed_by.get_full_name }}</dd>
-          <dt class="col-sm-5">Closed at</dt>
-          <dd class="col-sm-7">{{ permit.closed_at|date:"d M Y H:i" }}</dd>
-          {% endif %}
-        </dl>
-      </div>
-    </div>
-
-    <!-- Pre-work Checklist -->
-    <div class="card mb-3 shadow-sm">
-      <div class="card-header fw-semibold bg-info text-dark">Pre-work Checklist</div>
-      <div class="card-body">
-        {% for label, value in checklist %}
-        <div class="d-flex align-items-center mb-1">
-          {% if value %}
-            <i class="bi bi-check-circle-fill text-success me-2"></i>
+          <!-- Work type badge -->
+          {% if permit.work_type == 'hot_work' %}
+            <span class="wtype-badge bg-danger-subtle text-danger border border-danger-subtle">
+              <i class="bi bi-fire me-1"></i>Hot Work
+            </span>
+          {% elif permit.work_type == 'confined_space' %}
+            <span class="wtype-badge bg-warning-subtle text-warning border border-warning-subtle">
+              <i class="bi bi-door-closed me-1"></i>Confined Space
+            </span>
+          {% elif permit.work_type == 'electrical' %}
+            <span class="wtype-badge bg-info-subtle text-info border border-info-subtle">
+              <i class="bi bi-lightning me-1"></i>Electrical
+            </span>
+          {% elif permit.work_type == 'excavation' %}
+            <span class="wtype-badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+              <i class="bi bi-layers me-1"></i>Excavation
+            </span>
+          {% elif permit.work_type == 'lifting_rigging' %}
+            <span class="wtype-badge" style="background:#f3e8ff;color:#7c3aed;border:1px solid #c4b5fd;">
+              <i class="bi bi-box-arrow-up me-1"></i>Lifting & Rigging
+            </span>
+          {% elif permit.work_type == 'work_at_height' %}
+            <span class="wtype-badge" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80;">
+              <i class="bi bi-ladder me-1"></i>Work at Height
+            </span>
+          {% elif permit.work_type == 'breaking_containment' %}
+            <span class="wtype-badge" style="background:#fce4ec;color:#b71c1c;border:1px solid #ef9a9a;">
+              <i class="bi bi-exclamation-octagon me-1"></i>Breaking Containment
+            </span>
           {% else %}
-            <i class="bi bi-x-circle-fill text-danger me-2"></i>
+            <span class="wtype-badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+              {{ permit.get_work_type_display }}
+            </span>
           {% endif %}
-          <span>{{ label }}</span>
+
+          {% if permit.is_overdue %}
+            <span class="status-badge-lg bg-danger text-white">
+              <i class="bi bi-clock"></i>Overdue
+            </span>
+          {% endif %}
         </div>
-        {% endfor %}
-        {% if permit.gas_test_done and permit.gas_test_result %}
-        <small class="text-muted ms-4">Result: {{ permit.gas_test_result }}</small>
-        {% endif %}
+        <div class="text-muted small mt-1">
+          Created {{ permit.created_at|date:"d M Y H:i" }}
+          &nbsp;·&nbsp; {{ permit.duration_hours }} hrs planned
+        </div>
       </div>
     </div>
 
-    <!-- Approval / Rejection note -->
-    {% if permit.approval_comment %}
-    <div class="card mb-3 shadow-sm border-success">
-      <div class="card-header fw-semibold bg-success text-white">Approval Note</div>
-      <div class="card-body">{{ permit.approval_comment }}</div>
-    </div>
-    {% endif %}
-
-    {% if permit.rejection_reason %}
-    <div class="card mb-3 shadow-sm border-danger">
-      <div class="card-header fw-semibold bg-danger text-white">Rejection Reason</div>
-      <div class="card-body">{{ permit.rejection_reason }}</div>
-    </div>
-    {% endif %}
-
-    {% if permit.closure_comment %}
-    <div class="card mb-3 shadow-sm border-dark">
-      <div class="card-header fw-semibold bg-dark text-white">Closure Note</div>
-      <div class="card-body">{{ permit.closure_comment }}</div>
-    </div>
-    {% endif %}
-
-    <!-- Attachment -->
-    {% if permit.attachment %}
-    <div class="card mb-3 shadow-sm">
-      <div class="card-header fw-semibold bg-dark text-white">Attachment</div>
-      <div class="card-body">
-        <a href="{{ permit.attachment.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
-          <i class="bi bi-file-earmark-arrow-down me-1"></i>Download
+    <!-- Action buttons -->
+    <div class="d-flex gap-2 flex-wrap">
+      {% if permit.status == "DRAFT" and permit.requestor == request.user %}
+        <a href="{% url 'permits:edit' permit.pk %}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-pencil me-1"></i>Edit
         </a>
-      </div>
-    </div>
-    {% endif %}
+        <form method="post" action="{% url 'permits:submit' permit.pk %}" class="d-inline">
+          {% csrf_token %}
+          <button class="btn btn-primary btn-sm"
+                  onclick="return confirm('Submit this permit for approval?')">
+            <i class="bi bi-send me-1"></i>Submit for Approval
+          </button>
+        </form>
+        <a href="{% url 'permits:cancel' permit.pk %}" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-x-circle me-1"></i>Cancel
+        </a>
+      {% endif %}
 
+      {% if permit.status == "SUBMITTED" and request.user.is_safety_manager or permit.status == "SUBMITTED" and request.user.is_manager %}
+        <a href="{% url 'permits:approve' permit.pk %}" class="btn btn-success btn-sm">
+          <i class="bi bi-check-circle me-1"></i>Review & Approve
+        </a>
+      {% endif %}
+
+      {% if permit.status == "APPROVED" and permit.requestor == request.user %}
+        <a href="{% url 'permits:activate' permit.pk %}" class="btn btn-info btn-sm">
+          <i class="bi bi-play-circle me-1"></i>Confirm Work Started
+        </a>
+      {% endif %}
+
+      {% if permit.status == "ACTIVE" %}
+        {% if permit.requestor == request.user or request.user.is_safety_manager or request.user.is_manager %}
+          <a href="{% url 'permits:close' permit.pk %}" class="btn btn-dark btn-sm">
+            <i class="bi bi-lock me-1"></i>Close Permit
+          </a>
+        {% endif %}
+      {% endif %}
+    </div>
   </div>
+
+  <!-- ── STATUS STEPPER ───────────────────────────── -->
+  <div class="card section-card mb-4">
+    <div class="card-body py-3 px-4">
+      {% if permit.status == "CANCELLED" %}
+        <div class="d-flex align-items-center gap-2 text-muted">
+          <i class="bi bi-slash-circle-fill text-secondary" style="font-size:1.1rem;"></i>
+          <span class="fw-semibold">Permit Cancelled</span>
+        </div>
+      {% elif permit.status == "REJECTED" %}
+        <div class="d-flex align-items-center gap-2 text-danger">
+          <i class="bi bi-x-circle-fill" style="font-size:1.1rem;"></i>
+          <span class="fw-semibold">Permit Rejected</span>
+          {% if permit.rejection_reason %}
+            <span class="text-muted fw-normal small ms-2">— {{ permit.rejection_reason|truncatechars:80 }}</span>
+          {% endif %}
+        </div>
+      {% else %}
+        {% with s=permit.status %}
+        <div class="stepper">
+
+          <!-- Draft -->
+          <div class="step">
+            <div class="step-dot {% if s == 'DRAFT' %}active{% elif s != 'DRAFT' %}done{% endif %}">
+              {% if s == 'DRAFT' %}<i class="bi bi-pencil"></i>{% else %}<i class="bi bi-check"></i>{% endif %}
+            </div>
+            <div class="step-label {% if s == 'DRAFT' %}active{% elif s != 'DRAFT' %}done{% endif %}">Draft</div>
+          </div>
+          <div class="step-connector {% if s != 'DRAFT' %}done{% endif %}"></div>
+
+          <!-- Submitted -->
+          <div class="step">
+            <div class="step-dot {% if s == 'SUBMITTED' %}active{% elif s in 'APPROVED,ACTIVE,CLOSED' %}done{% endif %}">
+              {% if s == 'SUBMITTED' %}<i class="bi bi-send"></i>
+              {% elif s == 'APPROVED' or s == 'ACTIVE' or s == 'CLOSED' %}<i class="bi bi-check"></i>
+              {% else %}2{% endif %}
+            </div>
+            <div class="step-label {% if s == 'SUBMITTED' %}active{% elif s == 'APPROVED' or s == 'ACTIVE' or s == 'CLOSED' %}done{% endif %}">Submitted</div>
+          </div>
+          <div class="step-connector {% if s == 'APPROVED' or s == 'ACTIVE' or s == 'CLOSED' %}done{% endif %}"></div>
+
+          <!-- Approved -->
+          <div class="step">
+            <div class="step-dot {% if s == 'APPROVED' %}active{% elif s == 'ACTIVE' or s == 'CLOSED' %}done{% endif %}">
+              {% if s == 'APPROVED' %}<i class="bi bi-check-circle"></i>
+              {% elif s == 'ACTIVE' or s == 'CLOSED' %}<i class="bi bi-check"></i>
+              {% else %}3{% endif %}
+            </div>
+            <div class="step-label {% if s == 'APPROVED' %}active{% elif s == 'ACTIVE' or s == 'CLOSED' %}done{% endif %}">Approved</div>
+          </div>
+          <div class="step-connector {% if s == 'ACTIVE' or s == 'CLOSED' %}done{% endif %}"></div>
+
+          <!-- Active -->
+          <div class="step">
+            <div class="step-dot {% if s == 'ACTIVE' %}active{% elif s == 'CLOSED' %}done{% endif %}">
+              {% if s == 'ACTIVE' %}<i class="bi bi-play-circle"></i>
+              {% elif s == 'CLOSED' %}<i class="bi bi-check"></i>
+              {% else %}4{% endif %}
+            </div>
+            <div class="step-label {% if s == 'ACTIVE' %}active{% elif s == 'CLOSED' %}done{% endif %}">Active</div>
+          </div>
+          <div class="step-connector {% if s == 'CLOSED' %}done{% endif %}"></div>
+
+          <!-- Closed -->
+          <div class="step">
+            <div class="step-dot {% if s == 'CLOSED' %}done{% endif %}">
+              {% if s == 'CLOSED' %}<i class="bi bi-lock"></i>{% else %}5{% endif %}
+            </div>
+            <div class="step-label {% if s == 'CLOSED' %}done{% endif %}">Closed</div>
+          </div>
+
+        </div>
+        {% endwith %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── MAIN CONTENT ──────────────────────────────── -->
+  <div class="row g-4">
+
+    <!-- ── LEFT: Work details ─────────────────────── -->
+    <div class="col-lg-7">
+
+      <!-- Work Details -->
+      <div class="card section-card mb-3">
+        <div class="card-body">
+          <p class="card-section-title"><i class="bi bi-file-text me-1"></i>Work Details</p>
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="info-label">Title</div>
+              <div class="info-value fw-semibold">{{ permit.title }}</div>
+            </div>
+            <div class="col-sm-6">
+              <div class="info-label">Location</div>
+              <div class="info-value">
+                <i class="bi bi-geo-alt text-danger me-1"></i>{{ permit.location }}
+              </div>
+            </div>
+            {% if permit.work_area %}
+            <div class="col-sm-6">
+              <div class="info-label">Work Area / Equipment</div>
+              <div class="info-value">{{ permit.work_area }}</div>
+            </div>
+            {% endif %}
+            <div class="col-12">
+              <div class="info-label">Description</div>
+              <div class="info-value" style="white-space:pre-line;line-height:1.75;">{{ permit.description }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="card section-card mb-3">
+        <div class="card-body">
+          <p class="card-section-title"><i class="bi bi-calendar-range me-1"></i>Schedule</p>
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <div class="info-label">Planned Start</div>
+              <div class="info-value">{{ permit.planned_start|date:"d M Y" }}</div>
+              <div class="text-muted small">{{ permit.planned_start|date:"H:i" }}</div>
+            </div>
+            <div class="col-sm-6">
+              <div class="info-label">Planned End</div>
+              <div class="info-value {% if permit.is_overdue %}text-danger fw-semibold{% endif %}">
+                {{ permit.planned_end|date:"d M Y" }}
+              </div>
+              <div class="small {% if permit.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                {{ permit.planned_end|date:"H:i" }}
+              </div>
+            </div>
+            {% if permit.actual_start %}
+            <div class="col-sm-6">
+              <div class="info-label">Actual Start</div>
+              <div class="info-value">{{ permit.actual_start|date:"d M Y H:i" }}</div>
+            </div>
+            {% endif %}
+            {% if permit.actual_end %}
+            <div class="col-sm-6">
+              <div class="info-label">Actual End</div>
+              <div class="info-value">{{ permit.actual_end|date:"d M Y H:i" }}</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Hazards & Controls -->
+      <div class="card section-card mb-3">
+        <div class="card-body">
+          <p class="card-section-title">
+            <i class="bi bi-shield-exclamation me-1"></i>Hazards &amp; Controls
+          </p>
+
+          <div class="hazard-block">
+            <div class="info-label text-danger mb-1">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>Hazards Identified
+            </div>
+            <div style="white-space:pre-line;font-size:.93rem;line-height:1.75;">{{ permit.hazards_identified }}</div>
+          </div>
+
+          <div class="control-block">
+            <div class="info-label text-success mb-1">
+              <i class="bi bi-shield-check me-1"></i>Risk Controls
+            </div>
+            <div style="white-space:pre-line;font-size:.93rem;line-height:1.75;">{{ permit.risk_controls }}</div>
+          </div>
+
+          {% if permit.ppe_required %}
+          <div class="ppe-block">
+            <div class="info-label text-primary mb-1">
+              <i class="bi bi-person-check me-1"></i>PPE Required
+            </div>
+            <div style="white-space:pre-line;font-size:.93rem;line-height:1.75;">{{ permit.ppe_required }}</div>
+          </div>
+          {% endif %}
+
+          {% if permit.isolation_required %}
+          <div class="isolation-block">
+            <div class="info-label mb-1" style="color:#e65100;">
+              <i class="bi bi-lock me-1"></i>Isolation / LOTO Required
+            </div>
+            <div style="white-space:pre-line;font-size:.93rem;line-height:1.75;">
+              {{ permit.isolation_details|default:"See permit conditions." }}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if permit.emergency_procedure %}
+          <div class="emergency-block">
+            <div class="info-label mb-1" style="color:#6f42c1;">
+              <i class="bi bi-alarm me-1"></i>Emergency Procedure
+            </div>
+            <div style="white-space:pre-line;font-size:.93rem;line-height:1.75;">{{ permit.emergency_procedure }}</div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── RIGHT: People, Checklist, Notes ────────── -->
+    <div class="col-lg-5">
+
+      <!-- Personnel -->
+      <div class="card section-card mb-3">
+        <div class="card-body">
+          <p class="card-section-title"><i class="bi bi-people me-1"></i>Personnel</p>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="info-label">Requestor</div>
+              <div class="info-value">
+                {{ permit.requestor.get_full_name|default:permit.requestor }}
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="info-label">Workers</div>
+              <div class="info-value">{{ permit.workers_count }}</div>
+            </div>
+            {% if permit.contractor_name %}
+            <div class="col-6">
+              <div class="info-label">Contractor</div>
+              <div class="info-value">{{ permit.contractor_name }}</div>
+            </div>
+            {% endif %}
+            {% if permit.contractor_contact %}
+            <div class="col-6">
+              <div class="info-label">Contact</div>
+              <div class="info-value">{{ permit.contractor_contact }}</div>
+            </div>
+            {% endif %}
+            {% if permit.approved_by %}
+            <div class="col-6">
+              <div class="info-label">Approved By</div>
+              <div class="info-value">
+                {{ permit.approved_by.get_full_name|default:permit.approved_by }}
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="info-label">Approved At</div>
+              <div class="info-value">{{ permit.approved_at|date:"d M Y H:i" }}</div>
+            </div>
+            {% endif %}
+            {% if permit.closed_by %}
+            <div class="col-6">
+              <div class="info-label">Closed By</div>
+              <div class="info-value">
+                {{ permit.closed_by.get_full_name|default:permit.closed_by }}
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="info-label">Closed At</div>
+              <div class="info-value">{{ permit.closed_at|date:"d M Y H:i" }}</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-work Checklist -->
+      <div class="card section-card mb-3">
+        <div class="card-body">
+          <p class="card-section-title">
+            <i class="bi bi-list-check me-1"></i>Pre-work Checklist
+          </p>
+          {% for label, value in checklist %}
+          <div class="checklist-item">
+            {% if value %}
+              <i class="bi bi-check-circle-fill text-success" style="font-size:1.1rem;flex-shrink:0;"></i>
+            {% else %}
+              <i class="bi bi-x-circle-fill text-danger" style="font-size:1.1rem;flex-shrink:0;"></i>
+            {% endif %}
+            <span style="font-size:.93rem;">{{ label }}</span>
+          </div>
+          {% endfor %}
+          {% if permit.gas_test_done and permit.gas_test_result %}
+          <div class="mt-2 ps-1">
+            <span class="text-muted small">
+              <i class="bi bi-flask me-1"></i>Gas test result: <strong>{{ permit.gas_test_result }}</strong>
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Approval note -->
+      {% if permit.approval_comment %}
+      <div class="card section-card mb-3" style="border-left:3px solid #198754 !important;">
+        <div class="card-body">
+          <div class="info-label text-success mb-2">
+            <i class="bi bi-check-circle me-1"></i>Approval Note
+          </div>
+          <div style="white-space:pre-line;font-size:.93rem;line-height:1.75;">{{ permit.approval_comment }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Rejection reason -->
+      {% if permit.rejection_reason %}
+      <div class="card section-card mb-3" style="border-left:3px solid #dc3545 !important;">
+        <div class="card-body">
+          <div class="info-label text-danger mb-2">
+            <i class="bi bi-x-circle me-1"></i>Rejection Reason
+          </div>
+          <div style="white-space:pre-line;font-size:.93rem;line-height:1.75;">{{ permit.rejection_reason }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Closure note -->
+      {% if permit.closure_comment %}
+      <div class="card section-card mb-3" style="border-left:3px solid #212529 !important;">
+        <div class="card-body">
+          <div class="info-label mb-2">
+            <i class="bi bi-lock me-1"></i>Closure Note
+          </div>
+          <div style="white-space:pre-line;font-size:.93rem;line-height:1.75;">{{ permit.closure_comment }}</div>
+          {% if permit.site_restored %}
+          <div class="mt-2">
+            <span class="text-success small fw-semibold">
+              <i class="bi bi-check-circle-fill me-1"></i>Site cleaned &amp; restored
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Attachment -->
+      {% if permit.attachment %}
+      <div class="card section-card mb-3">
+        <div class="card-body">
+          <div class="info-label mb-2">
+            <i class="bi bi-paperclip me-1"></i>Attachment
+          </div>
+          <a href="{{ permit.attachment.url }}" target="_blank"
+             class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-arrow-down me-1"></i>Download File
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
 </div>
 {% endblock %}

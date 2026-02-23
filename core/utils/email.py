@@ -2,6 +2,7 @@
 import logging
 
 from django.conf import settings
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -151,10 +152,7 @@ def send_overdue_alert(observation) -> bool:
     detail_url  = f"{base}/observations/{observation.pk}/"
     rectify_url = f"{base}/observations/{observation.pk}/rectify/"
 
-    days_overdue = (
-        __import__("django.utils.timezone", fromlist=["timezone"]).timezone.now().date()
-        - observation.target_date
-    ).days
+    days_overdue = (timezone.now().date() - observation.target_date).days
 
     severity_color = {
         "HIGH":   "#dc3545",

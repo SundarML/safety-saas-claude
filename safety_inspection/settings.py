@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     # Third-party
     "crispy_forms",
     "crispy_bootstrap5",
-    "anymail",
+    # Note: Email is sent via the Brevo SDK directly (core/utils/email.py).
+    # django-anymail is not configured and has been removed to avoid confusion.
     # Local apps
     "users.apps.UsersConfig",
     "observations.apps.ObservationsConfig",
@@ -118,7 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LOGIN_URL          = "/users/accounts/login/"
-LOGIN_REDIRECT_URL = "/observations/"
+LOGIN_REDIRECT_URL = "/"  # Home page with quick-launch dashboard
 LOGOUT_REDIRECT_URL = "home"
 
 # ---------------------------------------------------------------------------

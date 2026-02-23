@@ -1,89 +1,275 @@
 {% extends 'base.html' %}
+
+{% block title %}Archived Observations{% endblock %}
+
+{% block extra_head %}
+<style>
+  .obs-table th {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #6c757d;
+    border-bottom: 2px solid #e9ecef;
+    white-space: nowrap;
+    padding: 10px 14px;
+    background: #f8f9fb;
+  }
+  .obs-table td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: .92rem;
+  }
+  .obs-table tbody tr {
+    transition: background .12s;
+  }
+  .obs-table tbody tr:hover {
+    background: #f5f7ff;
+  }
+  .sev-dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .obs-title-link {
+    font-weight: 600;
+    color: #212529;
+    text-decoration: none;
+  }
+  .obs-title-link:hover {
+    color: #0d6efd;
+    text-decoration: underline;
+  }
+  .table-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    overflow: hidden;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #adb5bd;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2><i class="bi bi-archive-fill"></i> Archived Observations</h2>
+  <!-- ── HEADER ───────────────────────────────────── -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+      <a href="{% url 'observations:observation_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Active
+      </a>
+      <h4 class="fw-bold mb-0">
+        <i class="bi bi-archive text-muted me-2"></i>Archived Observations
+      </h4>
+    </div>
+  </div>
 
-    <a href="{% url 'observations:observation_list' %}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left-circle"></i> Back to Active List
-    </a>
-</div>
-
-<table class="table table-bordered table-striped">
-    <thead class="table-dark">
-        <tr>
-            <th>ID</th>
+  <!-- ── TABLE ─────────────────────────────────────── -->
+  <div class="card table-card">
+    <div class="table-responsive">
+      <table class="table obs-table mb-0">
+        <thead>
+          <tr>
+            <th style="width:90px;">Severity</th>
             <th>Title</th>
             <th>Location</th>
+            <th>Observer</th>
             <th>Status</th>
-            <th>Created On</th>
+            <th>Observed</th>
             <th>Target Date</th>
-            <th>Action</th>
-        </tr>
-    </thead>
+            <th style="width:90px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for obs in observations %}
+          <tr>
 
-    <tbody>
-        {% for obs in observations %}
-            <tr class="{% if obs.target_date and obs.target_date < today %}table-danger{% endif %}">
-                <td>{{ obs.id }}</td>
-                <td>{{ obs.title }}</td>
-                <td>{{ obs.location.name }}</td>
-                <td>{{ obs.status }}</td>
-                <td>{{ obs.date_observed|date:"Y-m-d" }}</td>
-                <td>{{ obs.target_date }}</td>
+            <!-- Severity -->
+            <td>
+              {% if obs.severity == 'HIGH' %}
+                <span class="d-inline-flex align-items-center" style="color:#dc3545;font-weight:700;font-size:.82rem;">
+                  <span class="sev-dot" style="background:#dc3545;"></span>High
+                </span>
+              {% elif obs.severity == 'MEDIUM' %}
+                <span class="d-inline-flex align-items-center" style="color:#fd7e14;font-weight:700;font-size:.82rem;">
+                  <span class="sev-dot" style="background:#fd7e14;"></span>Medium
+                </span>
+              {% else %}
+                <span class="d-inline-flex align-items-center" style="color:#198754;font-weight:700;font-size:.82rem;">
+                  <span class="sev-dot" style="background:#198754;"></span>Low
+                </span>
+              {% endif %}
+            </td>
 
-                <td>
-                    <!-- View -->
-                    <a href="{% url 'observations:detail' obs.id %}"
-                       class="btn btn-sm btn-info">
-                        <i class="bi bi-eye-fill"></i>
-                    </a>
+            <!-- Title -->
+            <td>
+              <a href="{% url 'observations:detail' obs.id %}" class="obs-title-link">
+                {{ obs.title }}
+              </a>
+            </td>
 
-                    <!-- Restore -->
-                     
-                     {% if request.user.is_manager or request.user.is_superuser %}
-                        <a href="{% url 'observations:restore' obs.id %}"
-                        class="btn btn-sm btn-success"
-                        title="Restore"
-                        onclick="return confirm('Restore this observation?');">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </a>
-                    {% endif %}
-                </td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="7" class="text-center">No archived observations</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            <!-- Location -->
+            <td class="text-muted">{{ obs.location.name }}</td>
 
-<!-- Pagination -->
-<nav aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
+            <!-- Observer -->
+            <td class="text-muted">{{ obs.observer|default:"—" }}</td>
+
+            <!-- Status -->
+            <td>
+              {% if obs.status == 'OPEN' %}
+                <span class="status-badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                  <i class="bi bi-circle" style="font-size:.65rem;"></i>Open
+                </span>
+              {% elif obs.status == 'IN_PROGRESS' %}
+                <span class="status-badge bg-primary-subtle text-primary border border-primary-subtle">
+                  <i class="bi bi-arrow-repeat" style="font-size:.65rem;"></i>In Progress
+                </span>
+              {% elif obs.status == 'AWAITING_VERIFICATION' %}
+                <span class="status-badge bg-warning-subtle text-warning border border-warning-subtle">
+                  <i class="bi bi-hourglass-split" style="font-size:.65rem;"></i>Awaiting
+                </span>
+              {% elif obs.status == 'CLOSED' %}
+                <span class="status-badge bg-success-subtle text-success border border-success-subtle">
+                  <i class="bi bi-check-circle" style="font-size:.65rem;"></i>Closed
+                </span>
+              {% else %}
+                <span class="status-badge bg-secondary-subtle text-secondary">{{ obs.get_status_display }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Date observed -->
+            <td class="text-muted" style="white-space:nowrap;">
+              {{ obs.date_observed|date:"d M Y" }}
+            </td>
+
+            <!-- Target date -->
+            <td class="text-muted" style="white-space:nowrap;">
+              {{ obs.target_date|date:"d M Y"|default:"—" }}
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{% url 'observations:detail' obs.id %}"
+                   class="btn btn-sm btn-outline-primary"
+                   title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                {% if request.user.is_manager or request.user.is_superuser %}
+                  <a href="{% url 'observations:restore' obs.id %}"
+                     class="btn btn-sm btn-outline-success"
+                     title="Restore"
+                     onclick="return confirm('Restore this observation to the active list?');">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8">
+              <div class="empty-state">
+                <i class="bi bi-archive" style="font-size:2.5rem;display:block;margin-bottom:12px;opacity:.25;"></i>
+                No archived observations.
+                <br>
+                <a href="{% url 'observations:observation_list' %}" class="mt-2 d-inline-block">
+                  Go to active observations
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PAGINATION ─────────────────────────────────── -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
+    <span class="text-muted small">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      &nbsp;·&nbsp; {{ page_obj.paginator.count }} total
+    </span>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
 
         {% if page_obj.has_previous %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-        </li>
+          <li class="page-item">
+            <a class="page-link" href="?page=1" title="First">
+              <i class="bi bi-chevron-double-left"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-double-left"></i></span>
+          </li>
+          <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+          </li>
         {% endif %}
 
         {% for num in page_obj.paginator.page_range %}
-            {% if num == page_obj.number %}
-                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% else %}
-                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-            {% endif %}
+          {% if num == page_obj.number %}
+            <li class="page-item active">
+              <span class="page-link">{{ num }}</span>
+            </li>
+          {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+          {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-        </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" title="Last">
+              <i class="bi bi-chevron-double-right"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+          </li>
+          <li class="page-item disabled">
+            <span class="page-link"><i class="bi bi-chevron-double-right"></i></span>
+          </li>
         {% endif %}
 
-    </ul>
-</nav>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
 
+</div>
 {% endblock %}

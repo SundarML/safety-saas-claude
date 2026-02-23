@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Rectify — {{ form.instance.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .obs-photo-preview {
+    width: 100%;
+    border-radius: 10px;
+    object-fit: contain;
+    background: #f0f2f5;
+    cursor: zoom-in;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    display: block;
+  }
+  .obs-photo-preview:hover {
+    transform: scale(1.01);
+    box-shadow: 0 6px 20px rgba(0,0,0,.14);
+  }
+  .section-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  }
+  .info-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 3px;
+  }
+  .field-section-title {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: #6c757d;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
+
+  <!-- ── HEADER ───────────────────────────────────── -->
+  <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+    <a href="{% url 'observations:detail' form.instance.pk %}"
+       class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back to Observation
+    </a>
+    <div>
+      <h5 class="mb-0 fw-bold">Rectify: {{ form.instance.title }}</h5>
+      <span class="text-muted small">Observation #{{ form.instance.pk }}</span>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ── LEFT: Original hazard context (read-only) ── -->
+    <div class="col-lg-5">
+
+      <!-- Info summary -->
+      <div class="card section-card mb-3">
+        <div class="card-body">
+          <p class="field-section-title mb-3">
+            <i class="bi bi-exclamation-circle me-1 text-danger"></i>Original Hazard
+          </p>
+
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            {% if form.instance.severity == 'HIGH' %}
+              <span class="badge bg-danger px-2 py-1" style="font-size:.8rem;">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>High
+              </span>
+            {% elif form.instance.severity == 'MEDIUM' %}
+              <span class="badge bg-warning text-dark px-2 py-1" style="font-size:.8rem;">
+                Medium
+              </span>
+            {% else %}
+              <span class="badge bg-success px-2 py-1" style="font-size:.8rem;">Low</span>
+            {% endif %}
+            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1" style="font-size:.8rem;">
+              {{ form.instance.get_status_display }}
+            </span>
+          </div>
+
+          <div class="mb-3">
+            <div class="info-label">Location</div>
+            <div><i class="bi bi-geo-alt text-danger me-1"></i>{{ form.instance.location }}</div>
+          </div>
+
+          <div class="mb-3">
+            <div class="info-label">Target Date</div>
+            <div>{{ form.instance.target_date|default:"Not set" }}</div>
+          </div>
+
+          <div>
+            <div class="info-label mb-1">Description</div>
+            <div style="white-space: pre-line; font-size: .93rem; line-height: 1.75; color: #343a40;">{{ form.instance.description }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Before photo (large) -->
+      {% if form.instance.photo_before %}
+      <div class="card section-card">
+        <div class="card-body p-3">
+          <p class="field-section-title mb-2">
+            <i class="bi bi-camera me-1 text-danger"></i>Before Photo
+          </p>
+          <img src="{{ form.instance.photo_before.url }}"
+               alt="Before"
+               class="obs-photo-preview"
+               style="max-height: 380px;"
+               data-bs-toggle="modal"
+               data-bs-target="#beforeImageModal">
+          <p class="text-muted small mt-2 mb-0">
+            <i class="bi bi-zoom-in me-1"></i>Click to enlarge
+          </p>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── RIGHT: Rectification form ─────────────────── -->
+    <div class="col-lg-7">
+      <div class="card section-card">
+        <div class="card-body p-4">
+          <p class="field-section-title mb-4">
+            <i class="bi bi-tools me-1 text-primary"></i>Submit Rectification
+          </p>
+
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Primary: what was done -->
+            {{ form.rectification_details|as_crispy_field }}
+
+            <!-- Photo after -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                Photo After Rectification
+                <span class="text-muted fw-normal" style="font-size:.85rem;">(upload evidence of fix)</span>
+              </label>
+              {% if form.instance.photo_after %}
+                <div class="mb-2 d-flex align-items-center gap-3">
+                  <img src="{{ form.instance.photo_after.url }}"
+                       class="rounded"
+                       style="max-height: 80px; cursor: zoom-in; box-shadow: 0 1px 5px rgba(0,0,0,.1);"
+                       data-bs-toggle="modal"
+                       data-bs-target="#afterImageModal"
+                       alt="Current after photo">
+                  <span class="text-muted small">Current photo — upload new to replace</span>
+                </div>
+              {% endif %}
+              {{ form.photo_after }}
+            </div>
+
+            <!-- Secondary fields -->
+            <hr class="my-4">
+            <p class="text-muted small mb-3" style="font-size:.83rem;">
+              <i class="bi bi-pencil me-1"></i>Update the following if needed:
+            </p>
+
+            {{ form.target_date|as_crispy_field }}
+
+            <div class="mb-3">
+              <div class="d-flex align-items-end gap-2">
+                <div class="flex-grow-1">{{ form.location|as_crispy_field }}</div>
+                <button type="button"
+                        class="btn btn-outline-primary btn-sm mb-3"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addLocationModal">
+                  + Add
+                </button>
+              </div>
+            </div>
+
+            {{ form.description|as_crispy_field }}
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                Update Before Photo
+                <span class="text-muted fw-normal" style="font-size:.85rem;">(optional)</span>
+              </label>
+              {{ form.photo_before }}
+            </div>
+
+            <div class="d-flex gap-2 pt-2">
+              <button class="btn btn-success px-4" type="submit">
+                <i class="bi bi-check-circle me-1"></i>Submit Rectification
+              </button>
+              <a class="btn btn-outline-secondary"
+                 href="{% url 'observations:observation_list' %}">Cancel</a>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BEFORE IMAGE MODAL -->
+{% if form.instance.photo_before %}
+<div class="modal fade" id="beforeImageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content border-0" style="background:#111;">
+      <div class="modal-header border-0 pb-1">
+        <span class="text-white fw-semibold">
+          <i class="bi bi-camera me-1 text-danger"></i>Before Rectification
+        </span>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-2">
+        <img src="{{ form.instance.photo_before.url }}" alt="before"
+             class="img-fluid rounded" style="max-height:85vh;">
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- AFTER IMAGE MODAL -->
+{% if form.instance.photo_after %}
+<div class="modal fade" id="afterImageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content border-0" style="background:#111;">
+      <div class="modal-header border-0 pb-1">
+        <span class="text-white fw-semibold">
+          <i class="bi bi-camera-fill me-1 text-success"></i>After Rectification
+        </span>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-2">
+        <img src="{{ form.instance.photo_after.url }}" alt="after"
+             class="img-fluid rounded" style="max-height:85vh;">
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ADD LOCATION MODAL -->
+<div class="modal fade" id="addLocationModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Location</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addLocationForm">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Location Name</label>
+            <input name="name" type="text" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+          </div>
+        </form>
+        <div id="locationErrors" class="text-danger small"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveLocationBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById("saveLocationBtn").addEventListener("click", function () {
+  const form = document.getElementById("addLocationForm");
+  const formData = new FormData(form);
+  fetch("{% url 'observations:ajax_add_location' %}", {
+    method: "POST",
+    headers: { "X-CSRFToken": formData.get("csrfmiddlewaretoken") },
+    body: formData
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      const select = document.getElementById("id_location");
+      const opt = document.createElement("option");
+      opt.value = data.id;
+      opt.text = data.name;
+      opt.selected = true;
+      select.appendChild(opt);
+      bootstrap.Modal.getInstance(document.getElementById("addLocationModal")).hide();
+      form.reset();
+      document.getElementById("locationErrors").innerHTML = "";
+    } else {
+      const box = document.getElementById("locationErrors");
+      box.innerHTML = "";
+      for (let f in data.errors) {
+        box.innerHTML += `${f}: ${data.errors[f][0]}<br>`;
+      }
+    }
+  });
+});
+</script>
+
+{% endblock %}
