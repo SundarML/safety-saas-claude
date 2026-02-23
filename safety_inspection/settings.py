@@ -155,7 +155,8 @@ if AWS_STORAGE_BUCKET_NAME:
         else f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
     )
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    AWS_DEFAULT_ACL = None  # use bucket policy / ACLs disabled
+    AWS_DEFAULT_ACL = None        # use bucket policy / ACLs disabled
+    AWS_QUERYSTRING_AUTH = False  # public bucket — use plain permanent URLs
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
