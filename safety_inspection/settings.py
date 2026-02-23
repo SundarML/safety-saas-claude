@@ -14,13 +14,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 # Core
 # ---------------------------------------------------------------------------
-# SECRET_KEY = os.environ.get(
-#     "SECRET_KEY",
-#     "django-insecure-change-me-before-production-do-not-use-this-key",
-# )
-SECRET_KEY = 'django-insecure-6cu)q-5rpqrf6*q(!uu%rwc(ip!p60003#km7whdf*usf*8p0f'
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is not set. "
+        "Set it before starting the server."
+    )
 
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1").split()
 
@@ -142,6 +143,23 @@ MEDIA_URL  = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ---------------------------------------------------------------------------
+# AWS S3 — media file storage (used in production when AWS_STORAGE_BUCKET_NAME is set)
+# ---------------------------------------------------------------------------
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
+AWS_S3_REGION_NAME      = os.environ.get("AWS_S3_REGION_NAME", "ap-south-1")
+AWS_S3_CUSTOM_DOMAIN    = os.environ.get("AWS_S3_CUSTOM_DOMAIN", "")
+
+if AWS_STORAGE_BUCKET_NAME:
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    MEDIA_URL = (
+        f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+        if AWS_S3_CUSTOM_DOMAIN
+        else f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+    )
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+    AWS_DEFAULT_ACL = None  # use bucket policy / ACLs disabled
+
+# ---------------------------------------------------------------------------
 # Crispy Forms
 # ---------------------------------------------------------------------------
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -168,8 +186,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Email — Brevo (Sendinblue)
 # ---------------------------------------------------------------------------
 BREVO_API_KEY     = os.environ.get("BREVO_API_KEY", "")
-# DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "SafetySuite <noreply@yourdomain.com>")
-DEFAULT_FROM_EMAIL = "Safety app <alset010@gmail.com>"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "SafetySuite <noreply@yourdomain.com>")
 
 
 # ---------------------------------------------------------------------------
@@ -186,6 +203,12 @@ RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "")
 # ---------------------------------------------------------------------------
 # Security headers (only active when DEBUG=False)
 # ---------------------------------------------------------------------------
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 if not DEBUG:
     SECURE_HSTS_SECONDS            = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True

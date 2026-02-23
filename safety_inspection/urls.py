@@ -6,9 +6,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
+from django.http import JsonResponse
 from core.views import home_view
 
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 urlpatterns = [
+    path("health/", health_check, name="health_check"),
     path("admin/", admin.site.urls),
 
     # Home page (marketing + authenticated redirect)
