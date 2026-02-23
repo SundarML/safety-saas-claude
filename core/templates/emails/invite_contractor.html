@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 0;">
+
+  <div style="max-width: 600px; margin: auto; padding: 24px;">
+
+    <div style="background: linear-gradient(135deg, #f97316, #ef4444); border-radius: 8px 8px 0 0;
+                padding: 20px 28px;">
+      <h2 style="color: white; margin: 0; font-size: 1.2rem;">
+        🪪 Contractor Invitation — {{ organization.name }}
+      </h2>
+    </div>
+
+    <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none;
+                border-radius: 0 0 8px 8px; padding: 28px;">
+
+      <p>Hello,</p>
+
+      <p>
+        You have been invited to join <strong>{{ organization.name }}</strong> as a
+        <strong>Contractor</strong> on <strong>Vigilo</strong> — a safety management platform
+        for Permit to Work (PTW) management.
+      </p>
+
+      {% if access_validity_days %}
+      <p style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px;
+                padding: 12px 16px; font-size: 0.9rem;">
+        ⏳ Your access will be valid for <strong>{{ access_validity_days }} day{{ access_validity_days|pluralize }}</strong>
+        from the date you register.
+      </p>
+      {% endif %}
+
+      <p>As a contractor you will be able to:</p>
+      <ul style="padding-left: 20px; line-height: 1.8;">
+        <li>Create Permit to Work requests</li>
+        <li>Edit and submit your draft permits for approval</li>
+      </ul>
+
+      <p style="margin-top: 28px; text-align: center;">
+        <a href="{{ invite_link }}"
+           style="background: #16a34a; color: white; padding: 12px 32px;
+                  text-decoration: none; border-radius: 6px; font-weight: bold;
+                  display: inline-block; font-size: 1rem;">
+          Accept Invitation &amp; Register
+        </a>
+      </p>
+
+      <p style="font-size: 0.85rem; color: #6b7280; margin-top: 24px;">
+        This invite link expires in <strong>7 days</strong>. If you did not expect this invitation,
+        you can safely ignore this email.
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+      <p style="font-size: 0.8rem; color: #9ca3af; margin: 0;">
+        Vigilo — Safety Observation &amp; Permit to Work Management
+      </p>
+
+    </div>
+  </div>
+
+</body>
+</html>

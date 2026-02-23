@@ -14,15 +14,12 @@ from .forms import (
     PermitRequestForm,
 )
 from .models import Permit
+from core.utils.guards import org_required as _org_required
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _org_required(request):
-    if not request.organization:
-        raise PermissionDenied("You are not associated with any organization.")
 
 
 def _get_permit(pk, org):
@@ -257,6 +254,10 @@ def permit_approve(request, pk):
 @login_required
 def permit_activate(request, pk):
     _org_required(request)
+
+    if request.user.is_contractor:
+        raise PermissionDenied("Contractors cannot activate permits.")
+
     permit = _get_permit(pk, request.organization)
 
     if permit.status != "APPROVED":
@@ -295,6 +296,10 @@ def permit_activate(request, pk):
 @login_required
 def permit_close(request, pk):
     _org_required(request)
+
+    if request.user.is_contractor:
+        raise PermissionDenied("Contractors cannot close permits.")
+
     permit = _get_permit(pk, request.organization)
 
     if permit.status != "ACTIVE":
@@ -338,6 +343,10 @@ def permit_close(request, pk):
 @login_required
 def permit_cancel(request, pk):
     _org_required(request)
+
+    if request.user.is_contractor:
+        raise PermissionDenied("Contractors cannot cancel permits.")
+
     permit = _get_permit(pk, request.organization)
 
     if permit.status not in ("DRAFT", "SUBMITTED"):

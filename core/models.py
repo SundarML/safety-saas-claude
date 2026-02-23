@@ -33,6 +33,27 @@ class UserInvite(models.Model):
 
 
 
+class ContractorInvite(models.Model):
+    organization = models.ForeignKey(
+        "core.Organization",
+        on_delete=models.CASCADE
+    )
+    email = models.EmailField()
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    is_used = models.BooleanField(default=False)
+    # How many days the contractor can access after accepting (null = no expiry)
+    access_validity_days = models.PositiveIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Invite link expiry (7 days after creation)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    def is_valid(self):
+        return not self.is_used and (self.expires_at is None or self.expires_at > timezone.now())
+
+    def __str__(self):
+        return f"Contractor Invite: {self.email} ({self.organization})"
+
+
 class DemoRequest(models.Model):
     full_name = models.CharField(max_length=200)
     email = models.EmailField()
@@ -45,6 +66,27 @@ class DemoRequest(models.Model):
 
     def __str__(self):
         return f"{self.full_name} ({self.company})"
+
+
+class FreePlanRequest(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    ]
+    full_name = models.CharField(max_length=200)
+    email = models.EmailField()
+    whatsapp_number = models.CharField(max_length=20)
+    company = models.CharField(max_length=200)
+    job_title = models.CharField(max_length=200, blank=True)
+    message = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.company})"
+
 
 # core/models.py for saas application
 class Organization(models.Model):
@@ -113,7 +155,7 @@ class Subscription(models.Model):
     razorpay_subscription_id = models.CharField(max_length=120, blank=True)
 
     def is_trial(self):
-        return self.plan == "trial"
+        return self.plan.name.lower() == "trial"
 
     def is_expired(self):
         if self.expires_at is None:
