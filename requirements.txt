@@ -1,4 +1,6 @@
 asgiref==3.8.1
+whitenoise==6.9.0
+sib-api-v3-sdk>=7.6.0
 boto3>=1.35.0
 django-storages[s3]>=1.14.0
 crispy-bootstrap4==2025.6
