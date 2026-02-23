@@ -26,3 +26,11 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Claude Code local settings (may contain secrets)
+.claude/
