@@ -34,6 +34,9 @@ urlpatterns = [
 
     # Permit to Work app
     path("permits/", include("permits.urls", namespace="permits")),
+
+    # Training & Skills app
+    path("training/", include("training.urls", namespace="training")),
 ]
 
 if settings.DEBUG:

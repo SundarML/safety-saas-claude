@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Training Modules{% endblock %}
+
+{% block extra_head %}
+<style>
+  .module-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    transition: box-shadow .15s, transform .15s;
+    height: 100%;
+  }
+  .module-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    transform: translateY(-2px);
+  }
+  .skill-chip {
+    display: inline-block;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #e0e7ff;
+    color: #3730a3;
+    margin: 2px 2px 2px 0;
+  }
+  .page-header-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <h4 class="fw-bold mb-0">
+      <i class="bi bi-mortarboard text-muted me-2"></i>Training Modules
+    </h4>
+    <div class="d-flex gap-2">
+      {% if request.user.is_manager or request.user.is_safety_manager %}
+      <a href="{% url 'training:skill_matrix' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-grid-3x3-gap me-1"></i>Skill Matrix
+      </a>
+      <a href="{% url 'training:module_create' %}" class="btn btn-sm btn-success">
+        <i class="bi bi-plus-lg me-1"></i>New Module
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="card page-header-card mb-4">
+    <div class="card-body py-3">
+      <form method="get" class="d-flex gap-2">
+        <div class="flex-grow-1" style="max-width:400px;">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" name="q" value="{{ q }}"
+                   class="form-control border-start-0 ps-0"
+                   placeholder="Search modules…">
+          </div>
+        </div>
+        <button class="btn btn-primary px-4" type="submit">Search</button>
+        {% if q %}
+          <a href="{% url 'training:module_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x me-1"></i>Clear
+          </a>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- Module Grid -->
+  {% if page_obj.object_list %}
+  <div class="row g-3">
+    {% for module in page_obj %}
+    <div class="col-12 col-sm-6 col-xl-4">
+      <div class="card module-card">
+        <div class="card-body d-flex flex-column p-4">
+
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="fw-bold mb-0" style="font-size:.97rem;">
+              <a href="{% url 'training:module_detail' module.pk %}"
+                 class="text-decoration-none text-dark">
+                {{ module.title }}
+              </a>
+            </h6>
+            {% if module.has_assessment %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle ms-2" style="font-size:.7rem;white-space:nowrap;">
+                <i class="bi bi-check-circle me-1"></i>Has Assessment
+              </span>
+            {% else %}
+              <span class="badge bg-warning-subtle text-warning border border-warning-subtle ms-2" style="font-size:.7rem;white-space:nowrap;">
+                <i class="bi bi-exclamation-circle me-1"></i>No Assessment
+              </span>
+            {% endif %}
+          </div>
+
+          {% if module.description %}
+          <p class="text-muted mb-3" style="font-size:.85rem;line-height:1.4;">
+            {{ module.description|truncatewords:20 }}
+          </p>
+          {% endif %}
+
+          <!-- Skills -->
+          <div class="mb-3">
+            {% for skill in module.skills.all %}
+              <span class="skill-chip">{{ skill.name }}</span>
+            {% empty %}
+              <span class="text-muted" style="font-size:.8rem;">No skills linked</span>
+            {% endfor %}
+          </div>
+
+          <div class="mt-auto d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+              <i class="bi bi-person me-1"></i>
+              {{ module.created_by.full_name|default:module.created_by.email|default:"—" }}
+            </small>
+            <a href="{% url 'training:module_detail' module.pk %}"
+               class="btn btn-sm btn-outline-primary">
+              View <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="d-flex justify-content-center mt-4">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?q={{ q }}&page={{ page_obj.previous_page_number }}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ q }}&page={{ num }}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?q={{ q }}&page={{ page_obj.next_page_number }}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-mortarboard" style="font-size:3rem;opacity:.2;display:block;margin-bottom:16px;"></i>
+    {% if q %}
+      No modules match "<strong>{{ q }}</strong>".
+      <br><a href="{% url 'training:module_list' %}" class="mt-2 d-inline-block">Clear search</a>
+    {% else %}
+      No training modules yet.
+      {% if request.user.is_manager or request.user.is_safety_manager %}
+        <br><a href="{% url 'training:module_create' %}" class="btn btn-primary mt-3">
+          <i class="bi bi-plus-lg me-1"></i>Create First Module
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

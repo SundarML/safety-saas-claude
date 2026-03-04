@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Skills{% endblock %}
+
+{% block extra_head %}
+<style>
+  .section-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    margin-bottom: 24px;
+  }
+  .item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: .9rem;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row:hover { background: #f8f9fb; }
+  .cat-chip {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 20px;
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+  .add-form-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #f8f9fb;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 12px 12px;
+    flex-wrap: wrap;
+  }
+  .empty-msg {
+    padding: 24px 16px;
+    text-align: center;
+    color: #adb5bd;
+    font-size: .88rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-0">
+        <i class="bi bi-tags text-muted me-2"></i>Manage Skills
+      </h4>
+      <p class="text-muted mb-0" style="font-size:.85rem;">
+        Skills and categories are scoped to <strong>{{ request.organization.name }}</strong> only.
+      </p>
+    </div>
+    <a href="{% url 'training:module_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back to Modules
+    </a>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ── LEFT: Skill Categories ──────────────────────────────────────── -->
+    <div class="col-12 col-lg-5">
+      <div class="card section-card">
+        <div class="card-header bg-transparent border-bottom py-3 px-4">
+          <h6 class="fw-bold mb-0">
+            <i class="bi bi-folder2 text-primary me-2"></i>
+            Skill Categories
+            <span class="badge bg-secondary ms-2">{{ categories|length }}</span>
+          </h6>
+        </div>
+
+        <!-- Category list -->
+        <div>
+          {% for cat in categories %}
+          <div class="item-row">
+            <div>
+              <span class="fw-semibold">{{ cat.name }}</span>
+              {% if cat.description %}
+                <div class="text-muted" style="font-size:.8rem;">{{ cat.description|truncatewords:10 }}</div>
+              {% endif %}
+              <div class="text-muted" style="font-size:.78rem;">
+                {{ cat.skill_count }} skill{{ cat.skill_count|pluralize }}
+              </div>
+            </div>
+            <form method="post" action="{% url 'training:category_delete' cat.pk %}"
+                  onsubmit="return confirm('Delete category \'{{ cat.name }}\'? Skills in this category will become uncategorised.');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger border-0"
+                      title="Delete category">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
+          {% empty %}
+          <div class="empty-msg">
+            <i class="bi bi-folder-x" style="font-size:1.8rem;display:block;margin-bottom:8px;opacity:.3;"></i>
+            No categories yet. Add one below.
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Add category form -->
+        <form method="post" action="{% url 'training:category_create' %}">
+          {% csrf_token %}
+          <div class="add-form-row">
+            <input type="text" name="name" class="form-control form-control-sm"
+                   placeholder="Category name…" required style="flex:1;min-width:140px;">
+            <input type="text" name="description" class="form-control form-control-sm"
+                   placeholder="Description (optional)" style="flex:2;min-width:160px;">
+            <button type="submit" class="btn btn-sm btn-primary px-3">
+              <i class="bi bi-plus-lg me-1"></i>Add
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Skills ───────────────────────────────────────────────── -->
+    <div class="col-12 col-lg-7">
+      <div class="card section-card">
+        <div class="card-header bg-transparent border-bottom py-3 px-4">
+          <h6 class="fw-bold mb-0">
+            <i class="bi bi-award text-success me-2"></i>
+            Skills
+            <span class="badge bg-secondary ms-2">{{ skills|length }}</span>
+          </h6>
+        </div>
+
+        <!-- Skill list -->
+        <div>
+          {% for skill in skills %}
+          <div class="item-row">
+            <div>
+              <span class="fw-semibold">{{ skill.name }}</span>
+              {% if skill.category %}
+                <span class="cat-chip ms-2">{{ skill.category.name }}</span>
+              {% endif %}
+              {% if skill.description %}
+                <div class="text-muted" style="font-size:.8rem;">{{ skill.description|truncatewords:12 }}</div>
+              {% endif %}
+            </div>
+            <form method="post" action="{% url 'training:skill_delete' skill.pk %}"
+                  onsubmit="return confirm('Delete skill \'{{ skill.name }}\'? This will also remove all proficiency records for this skill.');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger border-0"
+                      title="Delete skill">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
+          {% empty %}
+          <div class="empty-msg">
+            <i class="bi bi-award" style="font-size:1.8rem;display:block;margin-bottom:8px;opacity:.3;"></i>
+            No skills yet. Add one below.
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Add skill form -->
+        <form method="post" action="{% url 'training:skill_create' %}">
+          {% csrf_token %}
+          <div class="add-form-row">
+            <input type="text" name="name" class="form-control form-control-sm"
+                   placeholder="Skill name…" required style="flex:2;min-width:140px;">
+            <select name="category" class="form-select form-select-sm" style="flex:1;min-width:130px;">
+              <option value="">— No category —</option>
+              {% for cat in categories %}
+                <option value="{{ cat.pk }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="description" class="form-control form-control-sm"
+                   placeholder="Description (optional)" style="flex:2;min-width:140px;">
+            <button type="submit" class="btn btn-sm btn-success px-3">
+              <i class="bi bi-plus-lg me-1"></i>Add
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

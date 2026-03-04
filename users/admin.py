@@ -13,6 +13,7 @@ class CustomUserAdmin(UserAdmin):
     list_display = (
         "email",
         "full_name",
+        "employee_id",
         "organization",
         "role",
         "is_active",
@@ -27,11 +28,11 @@ class CustomUserAdmin(UserAdmin):
         "organization",
     )
 
-    search_fields = ("email", "full_name")
+    search_fields = ("email", "full_name", "employee_id")
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Personal Info", {"fields": ("full_name",)}),
+        ("Personal Info", {"fields": ("full_name", "employee_id")}),
         ("Organization", {"fields": ("organization",)}),
         ("Role", {"fields": ("role",)}),
         (

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Result — {{ attempt.assessment.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .result-circle {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 1.8rem; font-weight: 800;
+    margin: 0 auto 20px;
+  }
+  .result-pass { background: #dcfce7; color: #16a34a; border: 4px solid #86efac; }
+  .result-fail { background: #fee2e2; color: #dc2626; border: 4px solid #fca5a5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-7 col-lg-5">
+
+      <div class="card border-0 rounded-3 shadow-sm text-center p-4 mt-3">
+
+        <!-- Score circle -->
+        <div class="result-circle {% if attempt.passed %}result-pass{% else %}result-fail{% endif %}">
+          <span>{{ attempt.score|floatformat:0 }}%</span>
+          <span style="font-size:.65rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-top:2px;">
+            {% if attempt.passed %}Pass{% else %}Fail{% endif %}
+          </span>
+        </div>
+
+        <h5 class="fw-bold mb-1">
+          {% if attempt.passed %}
+            <i class="bi bi-trophy-fill text-warning me-2"></i>Well done!
+          {% else %}
+            <i class="bi bi-x-circle-fill text-danger me-2"></i>Not quite — keep trying!
+          {% endif %}
+        </h5>
+
+        <p class="text-muted mb-4" style="font-size:.9rem;">
+          {{ attempt.assessment.title }}
+          <br>
+          Pass mark: <strong>{{ attempt.assessment.passing_score }}%</strong>
+        </p>
+
+        <!-- Result details -->
+        <div class="row g-2 mb-4 text-start">
+          <div class="col-6">
+            <div class="rounded-3 p-3" style="background:#f8f9fb;">
+              <div class="text-muted" style="font-size:.75rem;">Your Score</div>
+              <div class="fw-bold fs-5">{{ attempt.score }}%</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="rounded-3 p-3" style="background:#f8f9fb;">
+              <div class="text-muted" style="font-size:.75rem;">Pass Mark</div>
+              <div class="fw-bold fs-5">{{ attempt.assessment.passing_score }}%</div>
+            </div>
+          </div>
+          {% if attempt.passed and attempt.assessment.skill %}
+          <div class="col-12">
+            <div class="rounded-3 p-3" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+              <div class="text-success fw-semibold" style="font-size:.85rem;">
+                <i class="bi bi-award-fill me-1"></i>
+                Skill proficiency updated: <strong>{{ attempt.assessment.skill.name }}</strong>
+                → Level {{ attempt.assessment.grants_proficiency_level }}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex gap-2 justify-content-center">
+          <a href="{% url 'training:module_detail' attempt.assessment.training_module.pk %}"
+             class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Module
+          </a>
+          <a href="{% url 'training:take_assessment' attempt.assessment.pk %}"
+             class="btn btn-primary">
+            <i class="bi bi-arrow-repeat me-1"></i>Retake
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

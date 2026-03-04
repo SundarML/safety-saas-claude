@@ -409,6 +409,31 @@
 
     <hr class="sb-divider">
 
+    <!-- ── TRAINING & SKILLS ── -->
+    <div class="sidebar-section">Training &amp; Skills</div>
+
+    <a href="{% url 'training:dashboard' %}"
+       class="sb-link {% if 'training' in request.path and 'dashboard' in request.path %}active{% endif %}">
+      <i class="bi bi-bar-chart-line"></i> Dashboard
+    </a>
+    <a href="{% url 'training:module_list' %}"
+       class="sb-link {% if 'training' in request.path and 'dashboard' not in request.path and 'matrix' not in request.path and 'manage' not in request.path %}active{% endif %}">
+      <i class="bi bi-mortarboard"></i> Modules
+    </a>
+
+    {% if user.is_manager or user.is_safety_manager %}
+    <a href="{% url 'training:skill_matrix' %}"
+       class="sb-link {% if 'training' in request.path and 'matrix' in request.path %}active{% endif %}">
+      <i class="bi bi-grid-3x3-gap"></i> Skill Matrix
+    </a>
+    <a href="{% url 'training:manage_skills' %}"
+       class="sb-link {% if 'training' in request.path and 'manage' in request.path %}active{% endif %}">
+      <i class="bi bi-tags"></i> Manage Skills
+    </a>
+    {% endif %}
+
+    <hr class="sb-divider">
+
     <!-- ── ADMINISTRATION (hidden for contractors) ── -->
     {% if not user.is_contractor and user.is_manager or not user.is_contractor and user.is_safety_manager %}
     <div class="sidebar-section">Administration</div>

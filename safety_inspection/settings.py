@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "observations.apps.ObservationsConfig",
     "core.apps.CoreConfig",
     "permits.apps.PermitsConfig",
+    "training.apps.TrainingConfig",
 ]
 
 # ---------------------------------------------------------------------------

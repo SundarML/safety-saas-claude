@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% load training_tags %}
+
+{% block title %}Edit Questions — {{ assessment.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .question-block {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    margin-bottom: 16px;
+    transition: box-shadow .15s;
+  }
+  .question-block:hover { box-shadow: 0 2px 10px rgba(0,0,0,.09); }
+  .question-block.deleted { opacity: .4; pointer-events: none; }
+
+  .question-header {
+    background: #f8f9fb;
+    border-radius: 12px 12px 0 0;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .question-body { padding: 16px; }
+
+  .choice-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f2f5;
+  }
+  .choice-row:last-child { border-bottom: none; }
+  .choice-row.deleted { opacity: .35; text-decoration: line-through; }
+
+  .choice-letter {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: .72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .correct-label { font-size: .8rem; font-weight: 600; color: #16a34a; white-space: nowrap; }
+
+  .add-btn {
+    font-size: .82rem;
+    border: 1px dashed #cbd5e1;
+    color: #64748b;
+    background: transparent;
+    border-radius: 8px;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: background .12s, color .12s;
+  }
+  .add-btn:hover { background: #f1f5f9; color: #334155; }
+
+  .save-bar {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid #e9ecef;
+    padding: 12px 0;
+    z-index: 100;
+    margin-top: 24px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
+
+  <!-- Breadcrumb -->
+  <div class="mb-3" style="font-size:.88rem;">
+    <a href="{% url 'training:module_list' %}" class="text-muted text-decoration-none">Modules</a>
+    <span class="text-muted mx-1">/</span>
+    <a href="{% url 'training:module_detail' assessment.training_module.pk %}" class="text-muted text-decoration-none">
+      {{ assessment.training_module.title }}
+    </a>
+    <span class="text-muted mx-1">/</span>
+    <span class="text-dark">Edit Questions</span>
+  </div>
+
+  <!-- Page header -->
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1">
+        <i class="bi bi-ui-checks text-primary me-2"></i>Question Builder
+      </h4>
+      <p class="text-muted mb-0" style="font-size:.88rem;">
+        Assessment: <strong>{{ assessment.title }}</strong> &nbsp;·&nbsp;
+        Pass mark: <strong>{{ assessment.passing_score }}%</strong>
+        {% if assessment.skill %}
+          &nbsp;·&nbsp; Certifies: <strong>{{ assessment.skill.name }}</strong> Level {{ assessment.grants_proficiency_level }}
+        {% endif %}
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <div class="alert alert-info py-1 px-3 mb-0" style="font-size:.8rem;">
+        <i class="bi bi-info-circle me-1"></i>
+        Mark exactly one choice as <strong>Correct</strong> per question.
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       THE FORM
+       ===================================================================== -->
+  <form method="post" id="questions-form">
+    {% csrf_token %}
+
+    <!-- Question management form (Django hidden fields) -->
+    {{ q_formset.management_form }}
+
+    <!-- ── Existing + empty questions ──────────────────────────────────── -->
+    <div id="questions-container">
+      {% for qform, c_formset, q_idx in question_choice_pairs %}
+
+      <div class="question-block" id="question-block-{{ q_idx }}" data-qidx="{{ q_idx }}">
+
+        <!-- Hidden Django fields for this question -->
+        {{ qform.id }}
+        <div style="display:none;">{{ qform.DELETE }}</div>
+
+        <!-- Question Header -->
+        <div class="question-header">
+          <span class="fw-semibold text-muted" style="font-size:.82rem;">
+            Question <span class="q-number">{{ forloop.counter }}</span>
+          </span>
+          <button type="button" class="btn btn-sm btn-outline-danger border-0"
+                  onclick="removeQuestion({{ q_idx }}, '{{ qform.instance.pk }}')"
+                  title="Remove question">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+
+        <!-- Question Body -->
+        <div class="question-body">
+
+          <!-- Question text -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.85rem;">Question Text <span class="text-danger">*</span></label>
+            <textarea name="{{ qform.text.html_name }}" class="form-control" rows="2"
+                      placeholder="Type your question here…" required>{{ qform.text.value|default:'' }}</textarea>
+          </div>
+
+          <!-- Hidden order field — set to q_idx so order = position -->
+          <input type="hidden" name="{{ qform.order.html_name }}" value="{{ q_idx }}">
+
+          <!-- ── Choices ──────────────────────────────────────────────── -->
+          <div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label fw-semibold mb-0" style="font-size:.85rem;">Answer Choices</label>
+              <button type="button" class="add-btn" onclick="addChoice({{ q_idx }})">
+                <i class="bi bi-plus-circle me-1"></i>Add Choice
+              </button>
+            </div>
+
+            <!-- Choice management form (Django hidden) -->
+            {{ c_formset.management_form }}
+
+            <div class="choices-container" id="choices-{{ q_idx }}">
+              {% for cform in c_formset %}
+              <div class="choice-row" id="choice-{{ q_idx }}-{{ forloop.counter0 }}"
+                   data-cidx="{{ forloop.counter0 }}">
+                <!-- Django id & DELETE hidden fields -->
+                {{ cform.id }}
+                <div style="display:none;">{{ cform.DELETE }}</div>
+
+                <span class="choice-letter">{{ forloop.counter|add:-1|choice_letter }}</span>
+
+                <input type="text" name="{{ cform.text.html_name }}"
+                       value="{{ cform.text.value|default:'' }}"
+                       class="form-control form-control-sm"
+                       placeholder="Enter choice text…">
+
+                <div class="form-check form-switch mb-0" style="min-width:90px;">
+                  <input class="form-check-input" type="checkbox"
+                         name="{{ cform.is_correct.html_name }}"
+                         id="correct-{{ q_idx }}-{{ forloop.counter0 }}"
+                         {% if cform.is_correct.value %}checked{% endif %}>
+                  <label class="correct-label" for="correct-{{ q_idx }}-{{ forloop.counter0 }}">Correct</label>
+                </div>
+
+                <button type="button" class="btn btn-sm btn-outline-danger border-0 flex-shrink-0"
+                        onclick="removeChoice({{ q_idx }}, {{ forloop.counter0 }}, '{{ cform.instance.pk }}')"
+                        title="Remove choice">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div><!-- /question-body -->
+      </div><!-- /question-block -->
+
+      {% endfor %}
+    </div><!-- /#questions-container -->
+
+    <!-- ── Add Question button ─────────────────────────────────────────── -->
+    <button type="button" id="add-question-btn" class="add-btn w-100 py-3 mb-3">
+      <i class="bi bi-plus-circle-fill me-2"></i>Add Question
+    </button>
+
+    <!-- ── Sticky save bar ──────────────────────────────────────────────── -->
+    <div class="save-bar">
+      <div class="d-flex gap-2 justify-content-between align-items-center">
+        <a href="{% url 'training:module_detail' assessment.training_module.pk %}"
+           class="btn btn-outline-secondary">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-primary px-5">
+          <i class="bi bi-check-lg me-1"></i>Save All Questions
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+</div><!-- /container -->
+
+
+<!-- =========================================================================
+     EMPTY QUESTION TEMPLATE  (hidden, cloned by JS)
+     All `__prefix__` placeholders are replaced with the real index by JS.
+     ========================================================================= -->
+<div id="empty-question-template" style="display:none;">
+  <!-- Django id & DELETE hidden fields (for a brand-new question: id is empty) -->
+  <input type="hidden" name="questions-__prefix__-id" value="">
+  <input type="hidden" name="questions-__prefix__-DELETE" value="">
+
+  <!-- Question Header -->
+  <div class="question-header">
+    <span class="fw-semibold text-muted" style="font-size:.82rem;">
+      Question <span class="q-number"></span>
+    </span>
+    <button type="button" class="btn btn-sm btn-outline-danger border-0"
+            onclick="removeQuestion(__prefix__, '')" title="Remove question">
+      <i class="bi bi-trash"></i>
+    </button>
+  </div>
+
+  <!-- Question Body -->
+  <div class="question-body">
+    <div class="mb-3">
+      <label class="form-label fw-semibold" style="font-size:.85rem;">Question Text <span class="text-danger">*</span></label>
+      <textarea name="questions-__prefix__-text" class="form-control" rows="2"
+                placeholder="Type your question here…" required></textarea>
+    </div>
+    <input type="hidden" name="questions-__prefix__-order" value="__prefix__">
+
+    <!-- Choice management form for a brand-new question -->
+    <input type="hidden" name="q__prefix___choices-TOTAL_FORMS" value="0" class="choice-total-forms">
+    <input type="hidden" name="q__prefix___choices-INITIAL_FORMS" value="0">
+    <input type="hidden" name="q__prefix___choices-MIN_NUM_FORMS" value="0">
+    <input type="hidden" name="q__prefix___choices-MAX_NUM_FORMS" value="1000">
+
+    <div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <label class="form-label fw-semibold mb-0" style="font-size:.85rem;">Answer Choices</label>
+        <button type="button" class="add-btn" onclick="addChoice('__prefix__')">
+          <i class="bi bi-plus-circle me-1"></i>Add Choice
+        </button>
+      </div>
+      <div class="choices-container" id="choices-__prefix__"></div>
+    </div>
+  </div>
+</div><!-- /#empty-question-template -->
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// ─── State ─────────────────────────────────────────────────────────────────
+// Total question forms managed by Django's management form
+const qTotalFormsInput = document.getElementById("id_questions-TOTAL_FORMS");
+let questionCount = parseInt(qTotalFormsInput.value);
+
+// ─── Add a new question ────────────────────────────────────────────────────
+document.getElementById("add-question-btn").addEventListener("click", function () {
+  const idx = questionCount;
+  const templateHTML = document.getElementById("empty-question-template").innerHTML
+    // Replace all __prefix__ occurrences — including inside onclick attributes
+    .replace(/__prefix__/g, idx);
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "question-block";
+  wrapper.id = `question-block-${idx}`;
+  wrapper.dataset.qidx = idx;
+  wrapper.innerHTML = templateHTML;
+
+  document.getElementById("questions-container").appendChild(wrapper);
+
+  // Tell Django one more form exists
+  qTotalFormsInput.value = ++questionCount;
+  updateQuestionNumbers();
+});
+
+
+// ─── Remove a question ────────────────────────────────────────────────────
+// pk: the database PK of the question ("" for a JS-added question with no DB row)
+function removeQuestion(idx, pk) {
+  const block = document.getElementById(`question-block-${idx}`);
+  if (!block) return;
+
+  if (pk && pk !== "None" && pk !== "") {
+    // DB-backed: check Django's DELETE checkbox and visually hide the block
+    const deleteInput = block.querySelector(`[name="questions-${idx}-DELETE"]`);
+    if (deleteInput) deleteInput.checked = true;
+    block.classList.add("deleted");
+    block.style.pointerEvents = "none";
+    block.style.opacity = "0.35";
+  } else {
+    // JS-added: just blank the text field and hide — Django treats it as an empty extra form
+    const textArea = block.querySelector(`[name="questions-${idx}-text"]`);
+    if (textArea) textArea.value = "";
+    block.style.display = "none";
+  }
+  updateQuestionNumbers();
+}
+
+
+// ─── Add a choice to a question ───────────────────────────────────────────
+function addChoice(qIdx) {
+  const container = document.getElementById(`choices-${qIdx}`);
+  const totalInput = document.querySelector(`[name="q${qIdx}_choices-TOTAL_FORMS"]`);
+  if (!container || !totalInput) return;
+
+  const cIdx = parseInt(totalInput.value);
+  const letter = String.fromCharCode(65 + cIdx);   // A, B, C, D …
+
+  const row = document.createElement("div");
+  row.className = "choice-row";
+  row.id = `choice-${qIdx}-${cIdx}`;
+  row.dataset.cidx = cIdx;
+  row.innerHTML = `
+    <input type="hidden" name="q${qIdx}_choices-${cIdx}-id" value="">
+    <input type="hidden" name="q${qIdx}_choices-${cIdx}-DELETE" value="">
+    <span class="choice-letter">${letter}</span>
+    <input type="text"
+           name="q${qIdx}_choices-${cIdx}-text"
+           class="form-control form-control-sm"
+           placeholder="Enter choice text…">
+    <div class="form-check form-switch mb-0" style="min-width:90px;">
+      <input class="form-check-input" type="checkbox"
+             name="q${qIdx}_choices-${cIdx}-is_correct"
+             id="correct-${qIdx}-${cIdx}">
+      <label class="correct-label" for="correct-${qIdx}-${cIdx}">Correct</label>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-danger border-0 flex-shrink-0"
+            onclick="removeChoice(${qIdx}, ${cIdx}, '')" title="Remove choice">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  `;
+
+  container.appendChild(row);
+  totalInput.value = cIdx + 1;
+}
+
+
+// ─── Remove a choice ──────────────────────────────────────────────────────
+// pk: DB PK of the choice ("" for a JS-added choice)
+function removeChoice(qIdx, cIdx, pk) {
+  const row = document.getElementById(`choice-${qIdx}-${cIdx}`);
+  if (!row) return;
+
+  if (pk && pk !== "None" && pk !== "") {
+    // DB-backed: check Django's DELETE checkbox and visually cross out the row
+    const deleteInput = row.querySelector(`[name="q${qIdx}_choices-${cIdx}-DELETE"]`);
+    if (deleteInput) deleteInput.checked = true;
+    row.classList.add("deleted");
+  } else {
+    // JS-added: blank the text so Django skips it as an empty extra form
+    const textInput = row.querySelector(`[name="q${qIdx}_choices-${cIdx}-text"]`);
+    if (textInput) textInput.value = "";
+    row.style.display = "none";
+  }
+}
+
+
+// ─── Re-number visible question headers ───────────────────────────────────
+function updateQuestionNumbers() {
+  let num = 1;
+  document.querySelectorAll("#questions-container .question-block").forEach(function (block) {
+    if (block.style.display === "none" || block.classList.contains("deleted")) return;
+    const label = block.querySelector(".q-number");
+    if (label) label.textContent = num++;
+  });
+}
+
+
+// ─── Initialise numbering on page load ────────────────────────────────────
+updateQuestionNumbers();
+</script>
+{% endblock %}

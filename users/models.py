@@ -55,6 +55,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         default=ROLE_OBSERVER,
     )
 
+    # Employee ID — optional, unique within organisation (blank values are exempt)
+    employee_id = models.CharField(max_length=50, blank=True)
+
     # Contractor access expiry (null = no expiry / not a contractor)
     access_expires_at = models.DateTimeField(null=True, blank=True)
 
@@ -66,6 +69,15 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "employee_id"],
+                condition=models.Q(employee_id__gt=""),
+                name="unique_employee_id_per_org",
+            )
+        ]
 
     def __str__(self):
         return self.full_name or self.email

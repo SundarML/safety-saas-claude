@@ -178,5 +178,69 @@
     {% endif %}
 
   </div>
+
+  <!-- ── TRAINING & SKILLS ────────────────────────── -->
+  <div class="mt-4 mb-3 d-flex align-items-center gap-3">
+    <span class="fw-bold" style="font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;white-space:nowrap;">
+      Training &amp; Skills
+    </span>
+    <hr class="flex-grow-1 m-0" style="border-color:#e9ecef;">
+  </div>
+
+  <div class="row g-3">
+
+    <!-- Training Dashboard -->
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'training:dashboard' %}" class="qa-card">
+        <div class="qa-icon" style="background:#eef2ff;">
+          <i class="bi bi-bar-chart-line" style="color:#4338ca;"></i>
+        </div>
+        <div class="qa-title">Training Dashboard</div>
+        <div class="qa-desc">
+          {% if user.is_manager or user.is_safety_manager %}
+            Org-wide pass rates &amp; trends
+          {% else %}
+            My scores &amp; certified skills
+          {% endif %}
+        </div>
+      </a>
+    </div>
+
+    <!-- Training Modules -->
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'training:module_list' %}" class="qa-card">
+        <div class="qa-icon" style="background:#f0fdf4;">
+          <i class="bi bi-mortarboard" style="color:#16a34a;"></i>
+        </div>
+        <div class="qa-title">Training Modules</div>
+        <div class="qa-desc">Browse &amp; take assessments</div>
+      </a>
+    </div>
+
+    <!-- Skill Matrix (managers only) -->
+    {% if user.is_manager or user.is_safety_manager %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'training:skill_matrix' %}" class="qa-card">
+        <div class="qa-icon" style="background:#fdf4ff;">
+          <i class="bi bi-grid-3x3-gap" style="color:#9333ea;"></i>
+        </div>
+        <div class="qa-title">Skill Matrix</div>
+        <div class="qa-desc">Employee proficiency levels</div>
+      </a>
+    </div>
+
+    <!-- Manage Skills (managers only) -->
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'training:manage_skills' %}" class="qa-card">
+        <div class="qa-icon" style="background:#fff7ed;">
+          <i class="bi bi-tags" style="color:#ea580c;"></i>
+        </div>
+        <div class="qa-title">Manage Skills</div>
+        <div class="qa-desc">Add skill categories &amp; skills</div>
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
 </div>
 {% endblock %}

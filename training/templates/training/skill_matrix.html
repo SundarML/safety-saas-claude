@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Skill Matrix{% endblock %}
+
+{% block extra_head %}
+<style>
+  .matrix-table th {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #6c757d;
+    border-bottom: 2px solid #e9ecef;
+    padding: 10px 14px;
+    white-space: nowrap;
+    background: #f8f9fb;
+  }
+  .matrix-table td {
+    padding: 10px 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: .9rem;
+  }
+  .matrix-table tbody tr:hover { background: #f5f7ff; }
+  .level-pip {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 2px;
+  }
+  .level-filled { background: #6366f1; }
+  .level-empty { background: #e2e8f0; }
+  .table-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    overflow: hidden;
+  }
+  .filter-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-0">
+        <i class="bi bi-grid-3x3-gap text-muted me-2"></i>Skill Matrix
+      </h4>
+      <p class="text-muted mb-0" style="font-size:.85rem;">
+        All employee skill proficiencies across your organisation.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'training:report_skills_csv' %}" class="btn btn-sm btn-outline-success">
+        <i class="bi bi-filetype-csv me-1"></i>Export CSV
+      </a>
+      <a href="{% url 'training:report_effectiveness_pdf' %}" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Effectiveness PDF
+      </a>
+      <a href="{% url 'training:manage_skills' %}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-tags me-1"></i>Manage Skills
+      </a>
+      <a href="{% url 'training:module_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-mortarboard me-1"></i>Modules
+      </a>
+    </div>
+  </div>
+
+  <!-- Level legend -->
+  <div class="card filter-card mb-3">
+    <div class="card-body py-2 px-4 d-flex gap-4 flex-wrap align-items-center" style="font-size:.82rem;">
+      <span class="text-muted fw-semibold">Levels:</span>
+      {% for label in level_labels %}
+        <span>
+          <span style="background:#6366f1;border-radius:50%;width:10px;height:10px;display:inline-block;margin-right:4px;"></span>
+          {{ forloop.counter }} – {{ label }}
+        </span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card table-card">
+    <div class="table-responsive">
+      <table class="table matrix-table mb-0">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Role</th>
+            <th>Skill Category</th>
+            <th>Skill</th>
+            <th>Level</th>
+            <th>Last Assessed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prof in proficiencies %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ prof.user.full_name|default:"—" }}</div>
+              <div class="text-muted" style="font-size:.8rem;">{{ prof.user.email }}</div>
+              {% if prof.user.employee_id %}
+                <div style="font-size:.75rem;color:#adb5bd;">ID: {{ prof.user.employee_id }}</div>
+              {% endif %}
+            </td>
+            <td class="text-muted">{{ prof.user.get_role_display }}</td>
+            <td class="text-muted">{{ prof.skill.category.name|default:"—" }}</td>
+            <td class="fw-semibold">{{ prof.skill.name }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div>
+                  {% for label in level_labels %}
+                  <span class="level-pip {% if forloop.counter <= prof.level %}level-filled{% else %}level-empty{% endif %}"></span>
+                  {% endfor %}
+                </div>
+                <span class="text-muted" style="font-size:.82rem;">{{ prof.get_level_display_label }}</span>
+              </div>
+            </td>
+            <td class="text-muted" style="font-size:.85rem;">
+              {{ prof.last_assessed_at|date:"d M Y"|default:"—" }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">
+              <div class="text-center py-5 text-muted">
+                <i class="bi bi-grid-3x3-gap" style="font-size:2.5rem;opacity:.2;display:block;margin-bottom:12px;"></i>
+                No skill proficiencies recorded yet.<br>
+                <small>Proficiencies are awarded automatically when employees pass assessments.</small>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 
 {% block title %}My Profile{% endblock %}
 
@@ -6,15 +7,24 @@
 <div class="container mt-4" style="max-width: 700px;">
   <h2 class="mb-4">My Profile</h2>
 
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
   <div class="card mb-4">
     <div class="card-header fw-semibold">Account Details</div>
     <div class="card-body">
       <dl class="row mb-0">
-        <dt class="col-sm-4">Name</dt>
-        <dd class="col-sm-8">{{ user.get_full_name }}</dd>
-
         <dt class="col-sm-4">Email</dt>
         <dd class="col-sm-8">{{ user.email }}</dd>
+
+        <dt class="col-sm-4">Employee ID</dt>
+        <dd class="col-sm-8">{{ user.employee_id|default:"—" }}</dd>
 
         <dt class="col-sm-4">Role</dt>
         <dd class="col-sm-8">
@@ -27,6 +37,18 @@
           {% endif %}
         </dd>
       </dl>
+    </div>
+  </div>
+
+  <!-- Edit profile form -->
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Edit Profile</div>
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
     </div>
   </div>
 

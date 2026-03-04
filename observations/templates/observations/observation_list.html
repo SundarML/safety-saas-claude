@@ -182,10 +182,20 @@
             <td class="text-muted">{{ obs.location.name }}</td>
 
             <!-- Observer -->
-            <td class="text-muted">{{ obs.observer|default:"—" }}</td>
+            <td class="text-muted">
+              {{ obs.observer|default:"—" }}
+              {% if obs.observer.employee_id %}
+                <div style="font-size:.75rem;color:#adb5bd;">{{ obs.observer.employee_id }}</div>
+              {% endif %}
+            </td>
 
             <!-- Assigned To -->
-            <td class="text-muted">{{ obs.assigned_to|default:"—" }}</td>
+            <td class="text-muted">
+              {{ obs.assigned_to|default:"—" }}
+              {% if obs.assigned_to.employee_id %}
+                <div style="font-size:.75rem;color:#adb5bd;">{{ obs.assigned_to.employee_id }}</div>
+              {% endif %}
+            </td>
 
             <!-- Status -->
             <td>

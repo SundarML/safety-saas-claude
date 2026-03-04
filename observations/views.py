@@ -287,12 +287,17 @@ def export_observations_excel(request):
     wb = Workbook()
     ws = wb.active
     ws.title = "Observations"
-    ws.append(["ID", "Title", "Description", "Location", "Status", "Observer", "Created At"])
+    ws.append([
+        "ID", "Title", "Description", "Location", "Status",
+        "Observer", "Observer Employee ID",
+        "Assigned To", "Assigned To Employee ID",
+        "Created At",
+    ])
 
     qs = (
         Observation.objects
         .filter(organization=request.organization)
-        .select_related("observer", "location")
+        .select_related("observer", "assigned_to", "location")
         .order_by("-date_observed")
     )
 
@@ -304,6 +309,9 @@ def export_observations_excel(request):
             str(obs.location),
             obs.status,
             obs.observer.email if obs.observer else "",
+            obs.observer.employee_id if obs.observer else "",
+            obs.assigned_to.email if obs.assigned_to else "",
+            obs.assigned_to.employee_id if obs.assigned_to else "",
             obs.date_observed.strftime("%Y-%m-%d %H:%M"),
         ])
 
@@ -323,12 +331,17 @@ def export_observations_csv(request):
     response["Content-Disposition"] = 'attachment; filename="observations.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(["ID", "Title", "Description", "Location", "Status", "Observer", "Created At"])
+    writer.writerow([
+        "ID", "Title", "Description", "Location", "Status",
+        "Observer", "Observer Employee ID",
+        "Assigned To", "Assigned To Employee ID",
+        "Created At",
+    ])
 
     qs = (
         Observation.objects
         .filter(organization=request.organization)
-        .select_related("observer", "location")
+        .select_related("observer", "assigned_to", "location")
         .order_by("-date_observed")
     )
 
@@ -340,6 +353,9 @@ def export_observations_csv(request):
             str(obs.location),
             obs.status,
             obs.observer.email if obs.observer else "",
+            obs.observer.employee_id if obs.observer else "",
+            obs.assigned_to.email if obs.assigned_to else "",
+            obs.assigned_to.employee_id if obs.assigned_to else "",
             obs.date_observed.strftime("%Y-%m-%d %H:%M"),
         ])
 

@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Training Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+  .kpi-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    padding: 20px 22px;
+    background: #fff;
+  }
+  .kpi-label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+  .kpi-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #1a2c52;
+  }
+  .kpi-sub {
+    font-size: .78rem;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+  .kpi-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .chart-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    background: #fff;
+    overflow: hidden;
+  }
+  .chart-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid #f0f2f5;
+    padding: 14px 18px;
+    font-size: .82rem;
+    font-weight: 700;
+    color: #1a2c52;
+  }
+  .chart-card .card-body { padding: 4px 4px 8px; }
+
+  .attempt-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .73rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .pass-badge  { background:#dcfce7; color:#16a34a; border:1px solid #86efac; }
+  .fail-badge  { background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; }
+  .recent-table td { font-size:.88rem; padding:9px 14px; vertical-align:middle; border-bottom:1px solid #f0f2f5; }
+  .recent-table th { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6c757d; padding:9px 14px; background:#f8f9fb; border-bottom:2px solid #e9ecef; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-0">
+        <i class="bi bi-bar-chart-line text-muted me-2"></i>
+        {% if is_manager %}Training Dashboard{% else %}My Training{% endif %}
+      </h4>
+      <p class="text-muted mb-0" style="font-size:.84rem;">
+        {% if is_manager %}
+          Organisation-wide training &amp; skill performance
+        {% else %}
+          Your personal assessments and certified skills
+        {% endif %}
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      {% if is_manager %}
+        <a href="{% url 'training:report_skills_csv' %}" class="btn btn-sm btn-outline-success">
+          <i class="bi bi-filetype-csv me-1"></i>Export CSV
+        </a>
+        <a href="{% url 'training:report_effectiveness_pdf' %}" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-file-earmark-pdf me-1"></i>PDF Report
+        </a>
+      {% endif %}
+      <a href="{% url 'training:module_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-mortarboard me-1"></i>Modules
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       MANAGER VIEW
+       ═══════════════════════════════════════════════════════════════════════ -->
+  {% if is_manager %}
+
+  <!-- ── KPI Row ─────────────────────────────────────────────────────────── -->
+  <div class="row g-3 mb-4">
+
+    <div class="col-6 col-lg-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="kpi-label">Active Modules</div>
+          <div class="kpi-value">{{ total_modules }}</div>
+          <div class="kpi-sub">training modules</div>
+        </div>
+        <div class="kpi-icon" style="background:#e0e7ff;">
+          <i class="bi bi-mortarboard" style="color:#4338ca;"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="kpi-label">Total Attempts</div>
+          <div class="kpi-value">{{ total_attempts }}</div>
+          <div class="kpi-sub">assessments taken</div>
+        </div>
+        <div class="kpi-icon" style="background:#fef9c3;">
+          <i class="bi bi-clipboard-check" style="color:#ca8a04;"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="kpi-label">Overall Pass Rate</div>
+          <div class="kpi-value" style="color:{% if overall_pass_rate >= 70 %}#16a34a{% elif overall_pass_rate >= 50 %}#d97706{% else %}#dc2626{% endif %};">
+            {{ overall_pass_rate }}%
+          </div>
+          <div class="kpi-sub">across all modules</div>
+        </div>
+        <div class="kpi-icon" style="background:#dcfce7;">
+          <i class="bi bi-trophy" style="color:#16a34a;"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="kpi-label">Certified Users</div>
+          <div class="kpi-value">{{ certified_users }}</div>
+          <div class="kpi-sub">with ≥1 skill proficiency</div>
+        </div>
+        <div class="kpi-icon" style="background:#fce7f3;">
+          <i class="bi bi-award" style="color:#be185d;"></i>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /kpi row -->
+
+  <!-- ── Row 2: Pass Rate + Trend ────────────────────────────────────────── -->
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+      <div class="chart-card h-100">
+        <div class="card-header">
+          <i class="bi bi-bar-chart-horizontal me-2 text-primary"></i>Pass Rate by Module
+        </div>
+        <div class="card-body">{{ pass_rate_plot|safe }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="chart-card h-100">
+        <div class="card-header">
+          <i class="bi bi-graph-up me-2 text-success"></i>Attempts Over Time
+        </div>
+        <div class="card-body">{{ trend_plot|safe }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Row 3: Proficiency Distribution + Top Performers ─────────────────── -->
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div class="chart-card h-100">
+        <div class="card-header">
+          <i class="bi bi-people me-2" style="color:#6366f1;"></i>Proficiency Level Distribution
+        </div>
+        <div class="card-body">{{ prof_plot|safe }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="chart-card h-100">
+        <div class="card-header">
+          <i class="bi bi-star me-2 text-warning"></i>Top Performers
+        </div>
+        <div class="card-body">{{ top_plot|safe }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       PERSONAL (non-manager) VIEW
+       ═══════════════════════════════════════════════════════════════════════ -->
+  {% else %}
+
+  <!-- ── KPI Row ─────────────────────────────────────────────────────────── -->
+  <div class="row g-3 mb-4">
+
+    <div class="col-6 col-lg-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="kpi-label">Attempted</div>
+          <div class="kpi-value">{{ total_attempted }}</div>
+          <div class="kpi-sub">assessments taken</div>
+        </div>
+        <div class="kpi-icon" style="background:#e0e7ff;">
+          <i class="bi bi-clipboard" style="color:#4338ca;"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="kpi-label">Passed</div>
+          <div class="kpi-value" style="color:#16a34a;">{{ total_passed }}</div>
+          <div class="kpi-sub">
+            {% if total_attempted %}
+              {{ total_passed|floatformat:0 }} of {{ total_attempted }}
+            {% else %}
+              no attempts yet
+            {% endif %}
+          </div>
+        </div>
+        <div class="kpi-icon" style="background:#dcfce7;">
+          <i class="bi bi-check-circle" style="color:#16a34a;"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="kpi-label">Skills Certified</div>
+          <div class="kpi-value" style="color:#be185d;">{{ my_skills }}</div>
+          <div class="kpi-sub">proficiency records</div>
+        </div>
+        <div class="kpi-icon" style="background:#fce7f3;">
+          <i class="bi bi-award" style="color:#be185d;"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="kpi-card d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="kpi-label">Avg Score</div>
+          <div class="kpi-value" style="color:{% if avg_score >= 70 %}#16a34a{% elif avg_score > 0 %}#d97706{% else %}#94a3b8{% endif %};">
+            {% if avg_score %}{{ avg_score }}%{% else %}—{% endif %}
+          </div>
+          <div class="kpi-sub">across all attempts</div>
+        </div>
+        <div class="kpi-icon" style="background:#fef9c3;">
+          <i class="bi bi-graph-up" style="color:#ca8a04;"></i>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /kpi row -->
+
+  <!-- ── Row 2: Charts ───────────────────────────────────────────────────── -->
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+      <div class="chart-card h-100">
+        <div class="card-header">
+          <i class="bi bi-award me-2 text-primary"></i>My Skill Proficiency Levels
+        </div>
+        <div class="card-body">{{ skill_plot|safe }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="chart-card h-100">
+        <div class="card-header">
+          <i class="bi bi-scatter-chart me-2 text-success"></i>My Assessment Score History
+        </div>
+        <div class="card-body">{{ hist_plot|safe }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Row 3: Recent Attempts Table ──────────────────────────────────────── -->
+  <div class="chart-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-clock-history me-2 text-muted"></i>Recent Attempts</span>
+      <a href="{% url 'training:module_list' %}" class="btn btn-sm btn-outline-primary" style="font-size:.78rem;">
+        Browse Modules
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table mb-0 recent-table">
+        <thead>
+          <tr>
+            <th>Module</th>
+            <th>Assessment</th>
+            <th>Score</th>
+            <th>Result</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for attempt in recent_attempts %}
+          <tr>
+            <td class="fw-semibold">{{ attempt.assessment.training_module.title }}</td>
+            <td class="text-muted">{{ attempt.assessment.title }}</td>
+            <td class="fw-semibold">{{ attempt.score }}%</td>
+            <td>
+              {% if attempt.passed %}
+                <span class="attempt-badge pass-badge"><i class="bi bi-check-circle-fill"></i>Pass</span>
+              {% else %}
+                <span class="attempt-badge fail-badge"><i class="bi bi-x-circle-fill"></i>Fail</span>
+              {% endif %}
+            </td>
+            <td class="text-muted">{{ attempt.submitted_at|date:"d M Y, H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">
+              <i class="bi bi-clipboard-x" style="font-size:1.5rem;display:block;margin-bottom:8px;opacity:.3;"></i>
+              No attempts yet. <a href="{% url 'training:module_list' %}">Browse modules</a> to get started.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}
