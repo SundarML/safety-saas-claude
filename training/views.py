@@ -752,11 +752,39 @@ def report_effectiveness_pdf(request):
         fontSize=10, textColor=colors.HexColor("#6c757d"), spaceAfter=12,
     )
 
-    story = [
-        Paragraph("Training Effectiveness Report", title_style),
-        Paragraph(f"Organisation: {org.name}", sub_style),
-        Spacer(1, 0.3 * cm),
-    ]
+    from core.logo_utils import get_logo_for_pdf as _get_logo
+    from reportlab.platypus import Table as _Table, TableStyle as _TS
+
+    logo_img = _get_logo(org, max_width_pt=5 * cm, max_height_pt=1.4 * cm)
+
+    if logo_img:
+        # Place logo left, title right on the same row
+        hdr_data = [[
+            logo_img,
+            [
+                Paragraph("Training Effectiveness Report", title_style),
+                Paragraph(f"Organisation: {org.name}", sub_style),
+            ],
+        ]]
+        page_content_w = (A4[0] - 4 * cm)   # A4 width minus margins
+        hdr_table = _Table(
+            hdr_data,
+            colWidths=[logo_img.drawWidth + 0.5 * cm, page_content_w - logo_img.drawWidth - 0.5 * cm],
+        )
+        hdr_table.setStyle(_TS([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING",    (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 6),
+        ]))
+        story = [hdr_table, Spacer(1, 0.4 * cm)]
+    else:
+        story = [
+            Paragraph("Training Effectiveness Report", title_style),
+            Paragraph(f"Organisation: {org.name}", sub_style),
+            Spacer(1, 0.3 * cm),
+        ]
 
     header = ["Training Module", "Assessment", "Attempts", "Pass Rate", "Avg Score", "Skill Certified"]
     data = [header]

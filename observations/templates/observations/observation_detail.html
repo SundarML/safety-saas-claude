@@ -139,11 +139,23 @@
             </div>
             <div class="col-6">
               <div class="info-label">Observer</div>
-              <div class="info-value">{{ object.observer|default:"—" }}</div>
+              <div class="info-value">
+                {% if object.observer %}
+                  <a href="{% url 'users:profile_detail' object.observer.pk %}" style="color:inherit;">
+                    {{ object.observer.get_full_name }}
+                  </a>
+                {% else %}—{% endif %}
+              </div>
             </div>
             <div class="col-6">
               <div class="info-label">Assigned To</div>
-              <div class="info-value">{{ object.assigned_to|default:"Not assigned" }}</div>
+              <div class="info-value">
+                {% if object.assigned_to %}
+                  <a href="{% url 'users:profile_detail' object.assigned_to.pk %}" style="color:inherit;">
+                    {{ object.assigned_to.get_full_name }}
+                  </a>
+                {% else %}Not assigned{% endif %}
+              </div>
             </div>
             <div class="col-6">
               <div class="info-label">Target Date</div>

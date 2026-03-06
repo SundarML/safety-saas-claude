@@ -1,0 +1,637 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ profile_user.get_full_name }} — Profile{% endblock %}
+
+{% block extra_head %}
+<style>
+  .profile-header {
+    background: linear-gradient(135deg, #0e1729 0%, #1a2c52 100%);
+    border-radius: 14px;
+    padding: 28px 32px;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  .profile-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .role-badge {
+    font-size: .75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.25);
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .kpi-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    padding: 18px 20px;
+    background: #fff;
+    height: 100%;
+  }
+  .kpi-label {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+  .kpi-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #1a2c52;
+  }
+  .section-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    background: #fff;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .section-card .card-header {
+    background: #f8f9fb;
+    border-bottom: 1px solid #f0f2f5;
+    padding: 12px 18px;
+    font-size: .82rem;
+    font-weight: 700;
+    color: #1a2c52;
+  }
+  .section-card .card-body { padding: 16px 18px; }
+
+  .star-display {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+  }
+  .star-filled { color: #f59e0b; }
+  .star-empty  { color: #d1d5db; }
+  .star-block {
+    background: #f0fdf4;
+    border: 1px solid #99f6e4;
+    border-radius: 10px;
+    padding: 14px 18px;
+    text-align: center;
+  }
+  .star-label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  .star-rank {
+    font-size: .78rem;
+    color: #64748b;
+    margin-top: 4px;
+  }
+
+  .skill-badge-1 { background: #f1f5f9; color: #64748b; }
+  .skill-badge-2 { background: #dbeafe; color: #1d4ed8; }
+  .skill-badge-3 { background: #ccfbf1; color: #0f766e; }
+  .skill-badge-4 { background: #fed7aa; color: #c2410c; }
+  .skill-badge-5 { background: #dcfce7; color: #15803d; }
+  .skill-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 700;
+  }
+
+  .nav-tabs .nav-link {
+    font-size: .85rem;
+    font-weight: 600;
+    color: #64748b;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 18px;
+  }
+  .nav-tabs .nav-link.active {
+    color: #0e1729;
+    border-bottom-color: #0d6efd;
+    background: transparent;
+  }
+  .nav-tabs { border-bottom: 1px solid #e9ecef; margin-bottom: 24px; }
+
+  .dl-info dt { font-size: .72rem; font-weight: 700; text-transform: uppercase;
+                letter-spacing: .06em; color: #94a3b8; margin-bottom: 2px; }
+  .dl-info dd { font-size: .97rem; color: #212529; margin-bottom: 16px; }
+
+  /* Chart containers — fixed height, no overflow into adjacent elements */
+  .chart-label {
+    font-size: .78rem; font-weight: 700; color: #64748b;
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 240px;       /* fixed container height */
+    overflow: hidden;    /* clip any Plotly overflow */
+  }
+  .chart-wrap > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4 py-3" style="max-width: 1100px;">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- ── Profile Header ───────────────────────────────────── -->
+  <div class="profile-header d-flex align-items-center gap-4 flex-wrap">
+    <div class="profile-avatar">
+      {{ profile_user.get_full_name|first|upper|default:"?" }}
+    </div>
+    <div class="flex-grow-1">
+      <h3 class="fw-bold mb-1 text-white">{{ profile_user.get_full_name }}</h3>
+      <div class="text-white opacity-75" style="font-size:.9rem;">{{ profile_user.email }}</div>
+      <span class="role-badge">{{ profile_user.get_role_display }}</span>
+      {% if profile_user.employee_id %}
+        <span class="role-badge ms-2">ID: {{ profile_user.employee_id }}</span>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      {% if profile_user.organization %}
+        <a href="{% url 'users:profile_certificate' profile_user.pk %}"
+           class="btn btn-warning btn-sm fw-semibold">
+          <i class="bi bi-award me-1"></i>Download Certificate
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Tabs ─────────────────────────────────────────────── -->
+  <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-info-btn" data-bs-toggle="tab"
+              data-bs-target="#tab-info" type="button" role="tab">
+        <i class="bi bi-person me-1"></i>Profile Info
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-perf-btn" data-bs-toggle="tab"
+              data-bs-target="#tab-perf" type="button" role="tab">
+        <i class="bi bi-bar-chart me-1"></i>Performance
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-skills-btn" data-bs-toggle="tab"
+              data-bs-target="#tab-skills" type="button" role="tab">
+        <i class="bi bi-patch-check me-1"></i>Skills &amp; Certifications
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="profileTabsContent">
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB 1 — Profile Info                                  -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-pane fade show active" id="tab-info" role="tabpanel">
+      <div class="row g-4">
+
+        <div class="col-lg-6">
+          <div class="section-card">
+            <div class="card-header"><i class="bi bi-info-circle me-1"></i>Account Details</div>
+            <div class="card-body">
+              <dl class="dl-info row mb-0">
+                <dt class="col-sm-4">Full Name</dt>
+                <dd class="col-sm-8">{{ profile_user.full_name|default:"—" }}</dd>
+
+                <dt class="col-sm-4">Email</dt>
+                <dd class="col-sm-8">{{ profile_user.email }}</dd>
+
+                <dt class="col-sm-4">Role</dt>
+                <dd class="col-sm-8">{{ profile_user.get_role_display }}</dd>
+
+                <dt class="col-sm-4">Employee ID</dt>
+                <dd class="col-sm-8">{{ profile_user.employee_id|default:"—" }}</dd>
+
+                <dt class="col-sm-4">Company</dt>
+                <dd class="col-sm-8">{{ profile_user.company|default:"—" }}</dd>
+
+                <dt class="col-sm-4">Trade</dt>
+                <dd class="col-sm-8">{{ profile_user.trade|default:"—" }}</dd>
+
+                <dt class="col-sm-4">Phone</dt>
+                <dd class="col-sm-8">{{ profile_user.phone|default:"—" }}</dd>
+
+                <dt class="col-sm-4">Organisation</dt>
+                <dd class="col-sm-8">{{ profile_user.organization.name|default:"—" }}</dd>
+
+                {% if subscription %}
+                <dt class="col-sm-4">Plan</dt>
+                <dd class="col-sm-8">{{ subscription.plan.name }}</dd>
+                {% endif %}
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        {% if is_own_profile %}
+        <div class="col-lg-6 d-flex flex-column gap-4">
+
+          <!-- Edit profile -->
+          <div class="section-card">
+            <div class="card-header"><i class="bi bi-pencil me-1"></i>Edit Profile</div>
+            <div class="card-body">
+              <form method="post" novalidate>
+                {% csrf_token %}
+                {{ form|crispy }}
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Organisation Logo (managers only) -->
+          {% if logo_form %}
+          <div class="section-card">
+            <div class="card-header"><i class="bi bi-image me-1"></i>Organisation Logo</div>
+            <div class="card-body">
+
+              <!-- Current logo preview -->
+              {% if profile_user.organization.logo %}
+              <div class="mb-3">
+                <div style="background:#f1f5f9;border-radius:10px;padding:16px 20px;
+                            display:flex;align-items:center;justify-content:center;
+                            border:1px solid #e2e8f0;min-height:90px;">
+                  <img src="{% url 'users:org_logo' %}"
+                       alt="{{ profile_user.organization.name }}"
+                       style="max-height:72px;max-width:240px;width:auto;height:auto;
+                              object-fit:contain;display:block;">
+                </div>
+                <div class="mt-2 d-flex align-items-center gap-2">
+                  <i class="bi bi-check-circle-fill text-success" style="font-size:.85rem;"></i>
+                  <span style="font-size:.78rem;color:#64748b;">
+                    Logo active — visible in sidebar, navbar and all exports
+                  </span>
+                </div>
+              </div>
+              {% else %}
+              <div class="mb-3 d-flex align-items-center gap-3 p-3"
+                   style="background:#f8f9fb;border-radius:8px;border:1px dashed #dee2e6;">
+                <i class="bi bi-image" style="font-size:2rem;color:#adb5bd;"></i>
+                <div style="font-size:.85rem;color:#6c757d;">
+                  No logo uploaded yet.<br>
+                  <span style="font-size:.78rem;">Adding a logo makes it visible on every page and in all exports.</span>
+                </div>
+              </div>
+              {% endif %}
+
+              <form method="post" action="{% url 'users:upload_org_logo' %}"
+                    enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="form-label fw-semibold" style="font-size:.85rem;">
+                    Upload New Logo
+                  </label>
+                  <input type="file" name="logo" accept="image/png,image/jpeg,image/webp"
+                         class="form-control form-control-sm">
+                  <div class="form-text">PNG, JPG or WebP · Max 2 MB · Min 200×200 px recommended</div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-upload me-1"></i>Upload Logo
+                  </button>
+                  {% if profile_user.organization.logo %}
+                  <button type="submit" name="remove_logo" value="1"
+                          class="btn btn-outline-danger btn-sm"
+                          onclick="return confirm('Remove the organisation logo?');">
+                    <i class="bi bi-trash me-1"></i>Remove
+                  </button>
+                  {% endif %}
+                </div>
+              </form>
+
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB 2 — Performance Dashboard                         -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="tab-perf" role="tabpanel">
+
+      {% if not profile_user.organization %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-building-x" style="font-size:2.5rem;opacity:.3;display:block;margin-bottom:12px;"></i>
+          This user has no organisation — performance data unavailable.
+        </div>
+      {% else %}
+
+      <!-- KPI Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="kpi-card">
+            <div class="kpi-label">Obs. Reported</div>
+            <div class="kpi-value">{{ obs_stats.total_reported|default:"0" }}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card">
+            <div class="kpi-label">Obs. Assigned</div>
+            <div class="kpi-value">{{ obs_stats.total_assigned|default:"0" }}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card">
+            <div class="kpi-label">Pass Rate</div>
+            <div class="kpi-value">{{ training_stats.pass_rate|default:"0" }}%</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card">
+            <div class="kpi-label">Skills Certified</div>
+            <div class="kpi-value">{{ training_stats.skills_certified|default:"0" }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Observer Performance ─────────────────────────── -->
+      {% if obs_stats.total_reported > 0 %}
+      <div class="section-card">
+        <div class="card-header">
+          <i class="bi bi-eye me-1 text-primary"></i>Observer Performance
+        </div>
+        <div class="card-body">
+
+          <!-- Row 1: charts -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="chart-label">Severity Breakdown</div>
+              <div class="chart-wrap">{{ observer_severity_chart|safe }}</div>
+            </div>
+            <div class="col-md-6">
+              <div class="chart-label">Status Breakdown</div>
+              <div class="chart-wrap">{{ observer_status_chart|safe }}</div>
+            </div>
+          </div>
+
+          <!-- Row 2: metric cards -->
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Closure %</div>
+                <div class="kpi-value">{{ obs_stats.closure_rate_reported }}%</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Last 30 Days</div>
+                <div class="kpi-value">{{ obs_stats.last_30_days }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Total Reported</div>
+                <div class="kpi-value">{{ obs_stats.total_reported }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Closed</div>
+                <div class="kpi-value">{{ obs_stats.reported_by_status.CLOSED }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: star rating -->
+          {% if observer_result %}
+          <div class="star-block">
+            <div class="star-label">Observer Rating</div>
+            <div class="star-display">{{ observer_stars_html }}</div>
+            <div class="star-rank">{{ observer_result.1 }}</div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── Action Owner Performance ──────────────────────── -->
+      {% if obs_stats.total_assigned > 0 %}
+      <div class="section-card">
+        <div class="card-header">
+          <i class="bi bi-tools me-1 text-warning"></i>Action Owner Performance
+        </div>
+        <div class="card-body">
+
+          <!-- Row 1: chart -->
+          <div class="mb-3">
+            <div class="chart-label">Assigned Observations by Status</div>
+            <div class="chart-wrap">{{ action_status_chart|safe }}</div>
+          </div>
+
+          <!-- Row 2: metric cards -->
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Closure %</div>
+                <div class="kpi-value">{{ obs_stats.closure_rate_assigned }}%</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Avg Days to Close</div>
+                <div class="kpi-value">{{ obs_stats.avg_days_to_close }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Total Assigned</div>
+                <div class="kpi-value">{{ obs_stats.total_assigned }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Overdue</div>
+                <div class="kpi-value {% if obs_stats.overdue_count > 0 %}text-danger{% endif %}">
+                  {{ obs_stats.overdue_count }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: star rating -->
+          {% if action_owner_result %}
+          <div class="star-block">
+            <div class="star-label">Action Owner Rating</div>
+            <div class="star-display">{{ action_stars_html }}</div>
+            <div class="star-rank">{{ action_owner_result.1 }}</div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── Training Performance ───────────────────────────── -->
+      {% if training_stats.total_attempts > 0 %}
+      <div class="section-card">
+        <div class="card-header">
+          <i class="bi bi-mortarboard me-1 text-success"></i>Training Performance
+        </div>
+        <div class="card-body">
+
+          <!-- Row 1: chart -->
+          {% if training_skills_chart %}
+          <div class="mb-3">
+            <div class="chart-label">Skills by Proficiency Level</div>
+            <div class="chart-wrap">{{ training_skills_chart|safe }}</div>
+          </div>
+          {% endif %}
+
+          <!-- Row 2: metric cards -->
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Total Attempts</div>
+                <div class="kpi-value">{{ training_stats.total_attempts }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Passed</div>
+                <div class="kpi-value">{{ training_stats.passed_attempts }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Avg Score</div>
+                <div class="kpi-value">{{ training_stats.avg_score }}%</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="kpi-card text-center">
+                <div class="kpi-label">Avg Skill Level</div>
+                <div class="kpi-value">{{ training_stats.avg_skill_level }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: pass rate bar -->
+          <div class="kpi-card mb-3">
+            <div class="kpi-label mb-2">Pass Rate</div>
+            <div class="d-flex align-items-center gap-3">
+              <div class="flex-grow-1">
+                <div class="progress" style="height:10px;border-radius:8px;">
+                  <div class="progress-bar bg-success" role="progressbar"
+                       style="width:{{ training_stats.pass_rate }}%"></div>
+                </div>
+              </div>
+              <span class="fw-bold" style="font-size:1rem;color:#15803d;white-space:nowrap;">
+                {{ training_stats.pass_rate }}%
+              </span>
+            </div>
+          </div>
+
+          <!-- Row 4: star rating -->
+          {% if training_result %}
+          <div class="star-block">
+            <div class="star-label">Training Rating</div>
+            <div class="star-display">{{ training_stars_html }}</div>
+            <div class="star-rank">{{ training_result.1 }}</div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Empty state -->
+      {% if obs_stats.total_reported == 0 and obs_stats.total_assigned == 0 and training_stats.total_attempts == 0 %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-graph-up" style="font-size:2.5rem;opacity:.25;display:block;margin-bottom:12px;"></i>
+        No activity recorded yet. Performance data will appear once observations or assessments are completed.
+      </div>
+      {% endif %}
+
+      {% endif %}{# end if org #}
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB 3 — Skills & Certifications                       -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="tab-skills" role="tabpanel">
+      {% if skill_proficiencies %}
+      <div class="section-card">
+        <div class="card-header"><i class="bi bi-patch-check me-1"></i>Certified Skills</div>
+        <div class="table-responsive">
+          <table class="table mb-0" style="font-size:.9rem;">
+            <thead style="background:#f8f9fb;">
+              <tr>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;padding:10px 16px;border-bottom:2px solid #e9ecef;">Skill</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;padding:10px 16px;border-bottom:2px solid #e9ecef;">Category</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;padding:10px 16px;border-bottom:2px solid #e9ecef;">Level</th>
+                <th style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6c757d;padding:10px 16px;border-bottom:2px solid #e9ecef;">Last Assessed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for prof in skill_proficiencies %}
+              <tr style="border-bottom:1px solid #f0f2f5;">
+                <td style="padding:11px 16px;vertical-align:middle;font-weight:600;">{{ prof.skill.name }}</td>
+                <td style="padding:11px 16px;vertical-align:middle;color:#64748b;">
+                  {{ prof.skill.category.name|default:"—" }}
+                </td>
+                <td style="padding:11px 16px;vertical-align:middle;">
+                  <span class="skill-badge skill-badge-{{ prof.level }}">
+                    {% if prof.level == 1 %}Beginner
+                    {% elif prof.level == 2 %}Basic
+                    {% elif prof.level == 3 %}Intermediate
+                    {% elif prof.level == 4 %}Advanced
+                    {% elif prof.level == 5 %}Expert
+                    {% endif %}
+                    (L{{ prof.level }})
+                  </span>
+                </td>
+                <td style="padding:11px 16px;vertical-align:middle;color:#64748b;">
+                  {{ prof.last_assessed_at|date:"d M Y" }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-patch-exclamation" style="font-size:2.5rem;opacity:.25;display:block;margin-bottom:12px;"></i>
+        No skills certified yet. Complete assessments to earn skill certifications.
+      </div>
+      {% endif %}
+    </div>
+
+  </div>{# end tab-content #}
+</div>
+{% endblock %}

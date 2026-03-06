@@ -93,6 +93,12 @@ class Organization(models.Model):
     name = models.CharField(max_length=255)
     domain = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    logo = models.ImageField(
+        upload_to="org_logos/",
+        blank=True,
+        null=True,
+        help_text="PNG, JPG or WebP. Max 2 MB. Recommended: square or landscape, min 200×200 px.",
+    )
 
     def __str__(self):
         return self.name

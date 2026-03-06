@@ -183,18 +183,26 @@
 
             <!-- Observer -->
             <td class="text-muted">
-              {{ obs.observer|default:"—" }}
-              {% if obs.observer.employee_id %}
-                <div style="font-size:.75rem;color:#adb5bd;">{{ obs.observer.employee_id }}</div>
-              {% endif %}
+              {% if obs.observer %}
+                <a href="{% url 'users:profile_detail' obs.observer.pk %}" style="color:inherit;text-decoration:none;" class="hover-link">
+                  {{ obs.observer.get_full_name }}
+                </a>
+                {% if obs.observer.employee_id %}
+                  <div style="font-size:.75rem;color:#adb5bd;">{{ obs.observer.employee_id }}</div>
+                {% endif %}
+              {% else %}—{% endif %}
             </td>
 
             <!-- Assigned To -->
             <td class="text-muted">
-              {{ obs.assigned_to|default:"—" }}
-              {% if obs.assigned_to.employee_id %}
-                <div style="font-size:.75rem;color:#adb5bd;">{{ obs.assigned_to.employee_id }}</div>
-              {% endif %}
+              {% if obs.assigned_to %}
+                <a href="{% url 'users:profile_detail' obs.assigned_to.pk %}" style="color:inherit;text-decoration:none;" class="hover-link">
+                  {{ obs.assigned_to.get_full_name }}
+                </a>
+                {% if obs.assigned_to.employee_id %}
+                  <div style="font-size:.75rem;color:#adb5bd;">{{ obs.assigned_to.employee_id }}</div>
+                {% endif %}
+              {% else %}—{% endif %}
             </td>
 
             <!-- Status -->

@@ -284,25 +284,64 @@ def restore_observation(request, pk):
 def export_observations_excel(request):
     _org_required(request)
 
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from core.logo_utils import get_logo_for_excel
+
+    org = request.organization
     wb = Workbook()
     ws = wb.active
     ws.title = "Observations"
-    ws.append([
+
+    # ── Logo + header rows ────────────────────────────────────────────────
+    xl_logo = get_logo_for_excel(org)
+    DATA_START_ROW = 1   # will shift down if logo is present
+
+    if xl_logo:
+        # Rows 1–3 reserved for logo / org header; data starts at row 5
+        xl_logo.anchor = "A1"
+        ws.add_image(xl_logo)
+        ws.row_dimensions[1].height = 14
+        ws.row_dimensions[2].height = 14
+        ws.row_dimensions[3].height = 14
+
+        # Org name + export label in column B
+        ws["B1"] = org.name
+        ws["B1"].font = Font(bold=True, size=13, color="0E1729")
+        ws["B2"] = f"Safety Observations Export"
+        ws["B2"].font = Font(size=9, color="64748B")
+        ws["B3"] = f"Exported: {date.today().strftime('%d %b %Y')}"
+        ws["B3"].font = Font(size=9, color="94A3B8")
+
+        ws.row_dimensions[4].height = 6   # spacer row
+        DATA_START_ROW = 5
+    # ── Column headers ────────────────────────────────────────────────────
+    headers = [
         "ID", "Title", "Description", "Location", "Status",
         "Observer", "Observer Employee ID",
         "Assigned To", "Assigned To Employee ID",
         "Created At",
-    ])
+    ]
+    header_fill = PatternFill("solid", fgColor="0E1729")
+    header_font = Font(bold=True, color="FFFFFF", size=9)
 
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=DATA_START_ROW, column=col_idx, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[DATA_START_ROW].height = 18
+
+    # ── Data rows ─────────────────────────────────────────────────────────
     qs = (
         Observation.objects
-        .filter(organization=request.organization)
+        .filter(organization=org)
         .select_related("observer", "assigned_to", "location")
         .order_by("-date_observed")
     )
 
-    for obs in qs:
-        ws.append([
+    for row_offset, obs in enumerate(qs, start=1):
+        row_num = DATA_START_ROW + row_offset
+        row_data = [
             obs.id,
             obs.title,
             obs.description,
@@ -313,7 +352,14 @@ def export_observations_excel(request):
             obs.assigned_to.email if obs.assigned_to else "",
             obs.assigned_to.employee_id if obs.assigned_to else "",
             obs.date_observed.strftime("%Y-%m-%d %H:%M"),
-        ])
+        ]
+        for col_idx, value in enumerate(row_data, start=1):
+            ws.cell(row=row_num, column=col_idx, value=value)
+
+    # ── Column widths ─────────────────────────────────────────────────────
+    col_widths = [6, 30, 50, 20, 16, 28, 16, 28, 16, 18]
+    for i, w in enumerate(col_widths, start=1):
+        ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = w
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

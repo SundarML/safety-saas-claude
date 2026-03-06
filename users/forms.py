@@ -3,6 +3,9 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserChangeForm
 from .models import CustomUser
 
+_2MB = 2 * 1024 * 1024
+_LOGO_TYPES = {"image/png", "image/jpeg", "image/webp"}
+
 
 class EmailLoginForm(AuthenticationForm):
     """Login form using email instead of username."""
@@ -34,7 +37,6 @@ class ProfileUpdateForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # We need the current user to exclude them from the uniqueness check.
         self.current_user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
 
@@ -51,3 +53,23 @@ class ProfileUpdateForm(forms.ModelForm):
                 "This employee ID is already in use within your organisation."
             )
         return eid
+
+
+class OrgLogoForm(forms.Form):
+    """Manager-only form to upload or remove the organisation logo."""
+    logo = forms.ImageField(
+        required=False,
+        label="Organisation Logo",
+        help_text="PNG, JPG or WebP · Max 2 MB · Recommended: at least 200×200 px",
+        widget=forms.ClearableFileInput(attrs={"accept": "image/png,image/jpeg,image/webp"}),
+    )
+    remove_logo = forms.BooleanField(required=False, label="Remove current logo")
+
+    def clean_logo(self):
+        logo = self.cleaned_data.get("logo")
+        if logo:
+            if logo.size > _2MB:
+                raise forms.ValidationError("Logo file must be under 2 MB.")
+            if logo.content_type not in _LOGO_TYPES:
+                raise forms.ValidationError("Only PNG, JPG and WebP formats are accepted.")
+        return logo
