@@ -29,6 +29,11 @@ def home_view(request):
     return render(request, "home.html", {})
 
 
+def help_view(request):
+    """Public help & user guide — accessible without login."""
+    return render(request, "help.html", {})
+
+
 @login_required
 def app_dashboard_view(request):
     """Post-login landing page with quick-action cards."""

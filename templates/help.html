@@ -1,0 +1,964 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Help & User Guide — Vigilo{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:    #16a34a;
+  --green-lt: #22c55e;
+  --green-bg: #f0fdf4;
+  --teal:     #0d9488;
+  --navy:     #0f172a;
+  --slate:    #334155;
+  --muted:    #64748b;
+  --border:   #e2e8f0;
+  --off:      #f8fafc;
+}
+
+/* ── page chrome ── */
+.help-wrap { font-family: 'DM Sans', sans-serif; color: var(--slate); }
+.help-wrap h1,.help-wrap h2,.help-wrap h3 { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--navy); }
+
+/* ── hero strip ── */
+.help-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 48px 0 36px;
+  position: relative; overflow: hidden;
+}
+.help-hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 90% 50%, rgba(22,163,74,.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+.help-hero-inner { position: relative; z-index: 1; }
+.help-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(1.6rem, 4vw, 2.4rem); color: #fff; margin-bottom: .4rem; }
+.help-sub   { color: rgba(255,255,255,.65); font-size: .95rem; }
+
+/* ── search ── */
+.help-search-wrap { position: relative; max-width: 480px; }
+.help-search-wrap i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+#helpSearch { padding-left: 40px; border-radius: 8px; border: 1px solid var(--border); font-size: .9rem; }
+#helpSearch:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.12); outline: none; }
+.no-results { display: none; color: var(--muted); font-size: .9rem; padding: 24px 0; }
+
+/* ── layout ── */
+.help-layout { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: start; }
+@media (max-width: 768px) { .help-layout { grid-template-columns: 1fr; } }
+
+/* ── sticky TOC ── */
+.help-toc {
+  position: sticky; top: 24px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+  max-height: calc(100vh - 80px); overflow-y: auto;
+}
+.toc-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; }
+.toc-link {
+  display: block; padding: 5px 8px; border-radius: 6px;
+  font-size: .82rem; color: var(--slate); text-decoration: none;
+  transition: background .15s, color .15s;
+  border-left: 2px solid transparent;
+}
+.toc-link:hover  { background: var(--green-bg); color: var(--green); }
+.toc-link.active { background: var(--green-bg); color: var(--green); border-left-color: var(--green); font-weight: 600; }
+.toc-link.sub    { padding-left: 20px; font-size: .78rem; color: var(--muted); }
+@media (max-width: 768px) { .help-toc { display: none; } }
+
+/* ── sections ── */
+.help-section {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 12px; padding: 28px 28px 24px;
+  margin-bottom: 20px; scroll-margin-top: 24px;
+}
+.help-section:last-child { margin-bottom: 0; }
+.section-icon { font-size: 1.5rem; margin-right: 10px; }
+.section-h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+  font-size: 1.2rem; color: var(--navy);
+  display: flex; align-items: center;
+  margin-bottom: 16px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.section-h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 1rem; color: var(--navy); margin: 20px 0 8px; }
+
+/* ── step badges ── */
+.step-list { list-style: none; padding: 0; margin: 0; counter-reset: step; }
+.step-list li { display: flex; gap: 12px; margin-bottom: 12px; counter-increment: step; }
+.step-list li::before {
+  content: counter(step);
+  min-width: 26px; height: 26px;
+  background: linear-gradient(135deg, var(--green), var(--teal));
+  color: #fff; font-weight: 700; font-size: .75rem;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+
+/* ── status flow ── */
+.status-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 12px 0; }
+.status-pill {
+  padding: 4px 14px; border-radius: 100px; font-size: .78rem; font-weight: 600; border: 1px solid;
+}
+.s-draft    { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.s-submit   { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.s-approved { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.s-active   { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.s-closed   { background: #0f172a; color: #fff;    border-color: #0f172a; }
+.s-rejected { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.s-cancel   { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+.s-open     { background: #fef9c3; color: #854d0e; border-color: #fef08a; }
+.s-progress { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.s-awaiting { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.flow-arrow { color: var(--muted); font-size: .75rem; }
+
+/* ── role badge ── */
+.role-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 6px; font-size: .77rem; font-weight: 600; border: 1px solid;
+}
+.r-manager  { background: #fef9c3; color: #854d0e; border-color: #fef08a; }
+.r-safety   { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.r-action   { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.r-observer { background: #f5f3ff; color: #5b21b6; border-color: #ddd6fe; }
+.r-contractor { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+
+/* ── callout boxes ── */
+.callout { border-radius: 8px; padding: 12px 16px; font-size: .875rem; margin: 12px 0; border-left: 3px solid; }
+.callout-tip    { background: #f0fdf4; border-color: var(--green); color: #166534; }
+.callout-warn   { background: #fff7ed; border-color: #f97316; color: #9a3412; }
+.callout-info   { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+
+/* ── tables ── */
+.help-table { font-size: .83rem; width: 100%; margin: 12px 0; }
+.help-table th { background: var(--off); font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; }
+.help-table td, .help-table th { padding: 8px 12px; border: 1px solid var(--border); vertical-align: middle; }
+.check-yes { color: #16a34a; font-weight: 700; }
+.check-no  { color: #d1d5db; }
+
+/* ── FAQ items ── */
+.faq-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+.faq-q {
+  width: 100%; background: var(--off); border: none; text-align: left;
+  padding: 14px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600;
+  font-size: .88rem; color: var(--navy); cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  transition: background .15s;
+}
+.faq-q:hover { background: var(--green-bg); }
+.faq-q .faq-icon { transition: transform .25s; font-size: .8rem; color: var(--muted); }
+.faq-q[aria-expanded="true"] .faq-icon { transform: rotate(180deg); color: var(--green); }
+.faq-a { padding: 12px 16px; font-size: .875rem; color: var(--slate); display: none; }
+.faq-a.open { display: block; }
+
+/* ── back to top ── */
+#backToTop {
+  position: fixed; bottom: 28px; right: 28px; z-index: 999;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--navy); color: #fff; border: none;
+  font-size: 1rem; display: none; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25); cursor: pointer; transition: opacity .2s;
+}
+#backToTop:hover { background: var(--green); }
+#backToTop.visible { display: flex; }
+
+/* ── highlight on search ── */
+mark.hl { background: #fef08a; border-radius: 2px; padding: 0 2px; }
+
+/* ── CTA strip ── */
+.help-cta {
+  background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 100%);
+  border-radius: 16px; padding: 36px 32px; text-align: center; margin-top: 32px;
+}
+
+/* ── hide filtered sections ── */
+.help-section.hidden { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="help-wrap" style="margin:-1.5rem;">
+
+<!-- ── HERO ─────────────────────────────────────────────── -->
+<div class="help-hero">
+  <div class="container help-hero-inner">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <span style="font-size:2rem;">📘</span>
+      <div>
+        <div class="help-title">Vigilo Help &amp; User Guide</div>
+        <div class="help-sub">Everything you need to know — from first login to advanced features.</div>
+      </div>
+    </div>
+    <!-- Search -->
+    <div class="help-search-wrap mt-3">
+      <i class="bi bi-search"></i>
+      <input type="search" id="helpSearch" class="form-control" placeholder="Search the guide… (e.g. permit, observation, roles)">
+    </div>
+  </div>
+</div>
+
+<!-- ── BODY ─────────────────────────────────────────────── -->
+<div class="container py-4">
+<div class="help-layout">
+
+  <!-- ── LEFT: STICKY TOC ──────────────────────────── -->
+  <aside class="help-toc" id="helpToc">
+    <div class="toc-title">Contents</div>
+    <a class="toc-link" href="#what-is-vigilo">What is Vigilo?</a>
+    <a class="toc-link" href="#getting-started">Getting Started</a>
+    <a class="toc-link sub" href="#sign-up">Sign Up</a>
+    <a class="toc-link sub" href="#invite-team">Invite Your Team</a>
+    <a class="toc-link sub" href="#invite-contractor">Invite Contractors</a>
+    <a class="toc-link" href="#roles">User Roles</a>
+    <a class="toc-link sub" href="#roles-summary">Role Summary</a>
+    <a class="toc-link sub" href="#access-matrix">Access Matrix</a>
+    <a class="toc-link" href="#observations">Safety Observations</a>
+    <a class="toc-link sub" href="#obs-lifecycle">Lifecycle</a>
+    <a class="toc-link sub" href="#obs-report">Reporting</a>
+    <a class="toc-link sub" href="#obs-rectify">Rectifying</a>
+    <a class="toc-link sub" href="#obs-verify">Verifying</a>
+    <a class="toc-link sub" href="#obs-analytics">Analytics</a>
+    <a class="toc-link sub" href="#obs-export">Exporting</a>
+    <a class="toc-link" href="#permits">Permit to Work</a>
+    <a class="toc-link sub" href="#ptw-lifecycle">Lifecycle</a>
+    <a class="toc-link sub" href="#ptw-raise">Raising a Permit</a>
+    <a class="toc-link sub" href="#ptw-approve">Approving / Rejecting</a>
+    <a class="toc-link sub" href="#ptw-activate">Activating & Closing</a>
+    <a class="toc-link" href="#training">Training &amp; Skills</a>
+    <a class="toc-link sub" href="#training-setup">Setting Up</a>
+    <a class="toc-link sub" href="#training-take">Taking Assessments</a>
+    <a class="toc-link sub" href="#training-matrix">Skills Matrix</a>
+    <a class="toc-link" href="#profiles">Profiles &amp; Performance</a>
+    <a class="toc-link" href="#org-settings">Organisation Settings</a>
+    <a class="toc-link" href="#plans">Subscription &amp; Plans</a>
+    <a class="toc-link" href="#faq">FAQ</a>
+  </aside>
+
+  <!-- ── RIGHT: CONTENT ─────────────────────────────── -->
+  <div id="helpContent">
+    <div class="no-results" id="noResults">No sections match your search. Try different keywords.</div>
+
+    <!-- ════════ 1. WHAT IS VIGILO ════════ -->
+    <div class="help-section" id="what-is-vigilo" data-search="vigilo platform about overview">
+      <h2 class="section-h2"><span class="section-icon">🦺</span>What is Vigilo?</h2>
+      <p>Vigilo is a cloud-based <strong>safety management platform</strong> for industrial and construction organisations. It replaces clipboards, WhatsApp groups, and spreadsheets with a single digital system.</p>
+
+      <div class="row g-3 mt-1">
+        <div class="col-md-4">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:18px;">
+            <div style="font-size:1.6rem;margin-bottom:8px;">📋</div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.95rem;color:var(--navy);">Safety Observations</div>
+            <div style="font-size:.82rem;color:var(--muted);margin-top:4px;">Report hazards, assign corrective actions, track closure — full audit trail.</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:18px;">
+            <div style="font-size:1.6rem;margin-bottom:8px;">🔐</div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.95rem;color:var(--navy);">Permit to Work</div>
+            <div style="font-size:.82rem;color:var(--muted);margin-top:4px;">Raise, approve, and control high-risk work permits digitally — no paper required.</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:18px;">
+            <div style="font-size:1.6rem;margin-bottom:8px;">🎓</div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.95rem;color:var(--navy);">Training &amp; Skills</div>
+            <div style="font-size:.82rem;color:var(--muted);margin-top:4px;">Deliver assessments, track competency levels, build a skills matrix.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info mt-3">
+        <strong>Multi-tenant &amp; secure:</strong> Your organisation's data is fully isolated. No other organisation can see your records.
+      </div>
+    </div>
+
+    <!-- ════════ 2. GETTING STARTED ════════ -->
+    <div class="help-section" id="getting-started" data-search="getting started signup login setup first steps">
+      <h2 class="section-h2"><span class="section-icon">🚀</span>Getting Started</h2>
+
+      <h3 class="section-h3" id="sign-up">2.1 Sign Up (Organisation Admin)</h3>
+      <ol class="step-list">
+        <li>Go to <strong>safety-desk.com</strong> and click <em>Start Free — No Card Needed</em>.</li>
+        <li>Enter your <strong>organisation name</strong>, a unique domain slug, and your account details.</li>
+        <li>You are automatically assigned the <span class="role-badge r-manager">Manager</span> role.</li>
+        <li>Your <strong>14-day free trial</strong> begins immediately — no credit card required.</li>
+      </ol>
+
+      <h3 class="section-h3" id="invite-team">2.2 Invite Your Team</h3>
+      <p>Go to <strong>Administration → Invite Team Members</strong> (Managers only):</p>
+      <ol class="step-list">
+        <li>Enter the team member's email address.</li>
+        <li>Select their <strong>role</strong> — Observer, Action Owner, or Manager.</li>
+        <li>Click <strong>Send Invite</strong>. They receive a secure email link.</li>
+        <li>They click the link, set a password, and are instantly added to your organisation.</li>
+      </ol>
+      <div class="callout callout-tip">The invite screen shows how many seats remain on your plan.</div>
+
+      <h3 class="section-h3" id="invite-contractor">2.3 Invite Contractors (Time-Limited)</h3>
+      <ol class="step-list">
+        <li>Go to <strong>Administration → Invite Contractor</strong>.</li>
+        <li>Enter the contractor's email and set <strong>access validity in days</strong>.</li>
+        <li>They accept, get a Contractor account, and can only access the Permits module.</li>
+        <li>They are automatically logged out when their access period expires.</li>
+      </ol>
+
+      <h3 class="section-h3">2.4 First-Steps Checklist</h3>
+      <ul style="list-style:none;padding:0;" class="mb-0">
+        <li style="margin-bottom:6px;"><i class="bi bi-check2-square text-success me-2"></i>Upload your <strong>organisation logo</strong> — Profile → Upload Logo</li>
+        <li style="margin-bottom:6px;"><i class="bi bi-check2-square text-success me-2"></i>Add <strong>Locations</strong> for your facility (required before creating observations or permits)</li>
+        <li style="margin-bottom:6px;"><i class="bi bi-check2-square text-success me-2"></i>Invite your safety team</li>
+        <li style="margin-bottom:6px;"><i class="bi bi-check2-square text-success me-2"></i>Create your first <strong>Observation</strong> or <strong>Permit</strong></li>
+        <li><i class="bi bi-check2-square text-success me-2"></i>Set up <strong>Training Modules</strong> and Skills</li>
+      </ul>
+    </div>
+
+    <!-- ════════ 3. ROLES ════════ -->
+    <div class="help-section" id="roles" data-search="roles permissions user types manager safety observer action owner contractor">
+      <h2 class="section-h2"><span class="section-icon">👥</span>User Roles &amp; Permissions</h2>
+      <p>Every Vigilo user has exactly one role. Roles are assigned when you invite someone and can be changed by a Manager.</p>
+
+      <h3 class="section-h3" id="roles-summary">3.1 Role Summary</h3>
+      <table class="help-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Who it's for</th>
+            <th>At a glance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="role-badge r-manager">Manager</span></td>
+            <td>Site admin / HSE head</td>
+            <td>Full access — invite users, delete records, manage billing, approve permits</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge r-safety">Safety Manager</span></td>
+            <td>Safety officer / HSE lead</td>
+            <td>Verify observations, approve/reject permits, all training reports</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge r-action">Action Owner</span></td>
+            <td>Supervisor / technician</td>
+            <td>Edit rectifications assigned to them; create permits</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge r-observer">Observer</span></td>
+            <td>Any team member <em>(default)</em></td>
+            <td>Report observations, create permits, take training assessments</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge r-contractor">Contractor</span></td>
+            <td>External / vendor workers</td>
+            <td>Permits only; time-limited; auto-logged out on expiry</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="section-h3" id="access-matrix">3.2 Detailed Access Matrix</h3>
+
+      <p class="fw-semibold mb-1" style="font-size:.85rem;">Observations</p>
+      <div class="table-responsive">
+        <table class="help-table">
+          <thead><tr><th>Action</th><th>Manager</th><th>Safety Mgr</th><th>Action Owner</th><th>Observer</th><th>Contractor</th></tr></thead>
+          <tbody>
+            <tr><td>View all</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Create</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Edit rectification (own assignment)</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Verify &amp; close</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Archive / restore</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Delete permanently</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Export Excel / PDF</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="fw-semibold mb-1 mt-3" style="font-size:.85rem;">Permits to Work</p>
+      <div class="table-responsive">
+        <table class="help-table">
+          <thead><tr><th>Action</th><th>Manager</th><th>Safety Mgr</th><th>Action Owner</th><th>Observer</th><th>Contractor</th></tr></thead>
+          <tbody>
+            <tr><td>View all</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td></tr>
+            <tr><td>Create</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td></tr>
+            <tr><td>Approve / Reject</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Activate work</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td>Own only</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Close permit</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td>Own only</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Cancel permit</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td>Own only</td><td class="check-no text-center">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="fw-semibold mb-1 mt-3" style="font-size:.85rem;">Training &amp; Skills</p>
+      <div class="table-responsive">
+        <table class="help-table">
+          <thead><tr><th>Action</th><th>Manager</th><th>Safety Mgr</th><th>Action Owner</th><th>Observer</th><th>Contractor</th></tr></thead>
+          <tbody>
+            <tr><td>View modules</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Take assessments</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Create modules &amp; assessments</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Manage skills</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+            <tr><td>View all users' results</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+            <tr><td>Skills matrix &amp; PDF report</td><td class="check-yes text-center">✓</td><td class="check-yes text-center">✓</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td><td class="check-no text-center">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════ 4. OBSERVATIONS ════════ -->
+    <div class="help-section" id="observations" data-search="observations hazard report safety severity photo location status rectify verify close archive export">
+      <h2 class="section-h2"><span class="section-icon">🔍</span>Module 1 — Safety Observations</h2>
+      <p>An observation is a reported safety hazard, unsafe act, or near-miss. Vigilo tracks it from report → corrective action → verification → closure.</p>
+
+      <h3 class="section-h3" id="obs-lifecycle">4.1 Observation Lifecycle</h3>
+      <div class="status-flow">
+        <span class="status-pill s-open">Open</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-progress">In Progress</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-awaiting">Awaiting Verification</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-closed">Closed</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">Archived</span>
+      </div>
+      <table class="help-table mt-2">
+        <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><span class="status-pill s-open">Open</span></td><td>Just reported; corrective action not yet started</td></tr>
+          <tr><td><span class="status-pill s-progress">In Progress</span></td><td>Action Owner has begun rectification work</td></tr>
+          <tr><td><span class="status-pill s-awaiting">Awaiting Verification</span></td><td>Rectification submitted; awaiting manager review</td></tr>
+          <tr><td><span class="status-pill s-closed">Closed</span></td><td>Manager / Safety Manager verified and closed</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="section-h3" id="obs-report">4.2 Reporting an Observation</h3>
+      <p>Click <strong>Report New</strong> in the sidebar or <strong>Report Observation</strong> on the dashboard.</p>
+      <ol class="step-list">
+        <li>Enter a short <strong>Title</strong> describing the hazard.</li>
+        <li>Select the <strong>Location</strong> from your facility list.</li>
+        <li>Set the <strong>Date Observed</strong> (defaults to now; change if reporting retrospectively).</li>
+        <li>Choose <strong>Severity</strong> — <span class="badge bg-success-subtle text-success border border-success-subtle">Low</span> <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Medium</span> <span class="badge bg-danger-subtle text-danger border border-danger-subtle">High</span></li>
+        <li>Write a detailed <strong>Description</strong> of the hazard.</li>
+        <li>Optionally attach a <strong>Photo (Before)</strong>.</li>
+        <li>Select the <strong>Assigned To</strong> person responsible for fixing it.</li>
+        <li>Set a <strong>Target Date</strong> for closure.</li>
+        <li>Click <strong>Submit</strong>.</li>
+      </ol>
+      <div class="callout callout-tip">The assigned person is notified. The observation is immediately <strong>Open</strong>.</div>
+
+      <h3 class="section-h3" id="obs-rectify">4.3 Rectifying an Observation (Action Owner)</h3>
+      <p>If you are assigned an observation:</p>
+      <ol class="step-list">
+        <li>Open the observation from <strong>All Observations</strong>.</li>
+        <li>Click <strong>Submit Rectification</strong>.</li>
+        <li>Describe what was done in the <strong>Rectification Details</strong> field.</li>
+        <li>Optionally upload a <strong>Photo After</strong> showing the completed fix.</li>
+        <li>Click <strong>Submit</strong> — status moves to <span class="status-pill s-awaiting" style="font-size:.75rem;">Awaiting Verification</span>.</li>
+      </ol>
+
+      <h3 class="section-h3" id="obs-verify">4.4 Verifying an Observation (Manager / Safety Manager)</h3>
+      <ol class="step-list">
+        <li>Open the observation showing <span class="status-pill s-awaiting" style="font-size:.75rem;">Awaiting Verification</span>.</li>
+        <li>Review the rectification details and after-photo.</li>
+        <li>Click <strong>Verify &amp; Close</strong> — add a verification comment and confirm. Status → <span class="status-pill s-closed" style="font-size:.75rem;">Closed</span>.</li>
+        <li>Or click <strong>Reject Verification</strong> to send it back for re-work.</li>
+      </ol>
+
+      <h3 class="section-h3" id="obs-analytics">4.5 Analytics Dashboard</h3>
+      <p>Go to <strong>Observations → Dashboard</strong> to see:</p>
+      <ul>
+        <li>Open / Overdue / Closed KPI cards</li>
+        <li>Observations by severity and location</li>
+        <li>Trend over time (chart)</li>
+        <li>Top observers and action owners</li>
+      </ul>
+
+      <h3 class="section-h3" id="obs-export">4.6 Exporting Data</h3>
+      <p>From the observations list use the <strong>Export</strong> buttons in the sidebar:</p>
+      <ul>
+        <li><strong>Export Excel (.xlsx)</strong> — full data with org logo header, styled columns</li>
+        <li><strong>Export CSV</strong> — raw data for further analysis</li>
+      </ul>
+      <div class="callout callout-info">Closed observations can be <strong>archived</strong> by Managers/Safety Managers to keep the active list clean. Archived records are still searchable and can be restored.</div>
+    </div>
+
+    <!-- ════════ 5. PERMITS ════════ -->
+    <div class="help-section" id="permits" data-search="permit to work PTW hot work confined space electrical excavation lifting height isolation LOTO approve reject activate close">
+      <h2 class="section-h2"><span class="section-icon">🔐</span>Module 2 — Permit to Work (PTW)</h2>
+      <p>A Permit to Work is a formal document authorising <strong>high-risk work</strong>. No work should begin until an approved permit is in hand.</p>
+
+      <h3 class="section-h3">Supported Work Types</h3>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">🔥 Hot Work</span>
+        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">🚪 Confined Space</span>
+        <span class="badge bg-info-subtle text-info border border-info-subtle">⚡ Electrical</span>
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">⛏ Excavation</span>
+        <span class="badge" style="background:#f3e8ff;color:#7c3aed;border:1px solid #c4b5fd;">🏗 Lifting &amp; Rigging</span>
+        <span class="badge" style="background:#fff3e0;color:#c2410c;border:1px solid #fed7aa;">🪜 Work at Height</span>
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">⚠ Breaking Containment</span>
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">📋 General High-Risk</span>
+      </div>
+
+      <h3 class="section-h3" id="ptw-lifecycle">5.1 Permit Lifecycle</h3>
+      <div class="status-flow">
+        <span class="status-pill s-draft">Draft</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-submit">Submitted</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-approved">Approved</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-active">Active</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-closed">Closed</span>
+      </div>
+      <div class="status-flow mt-1">
+        <span class="status-pill s-submit" style="opacity:.4;">Submitted</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-rejected">Rejected</span>
+        <span style="font-size:.8rem;color:var(--muted);margin-left:4px;">(revise &amp; resubmit)</span>
+      </div>
+      <div class="status-flow mt-1">
+        <span class="status-pill s-draft" style="opacity:.4;">Draft</span>
+        <span class="flow-arrow">→</span>
+        <span class="status-pill s-cancel">Cancelled</span>
+      </div>
+
+      <h3 class="section-h3" id="ptw-raise">5.2 Raising a Permit</h3>
+      <p>Click <strong>New Permit</strong> from the dashboard or sidebar and complete all sections:</p>
+
+      <div class="row g-2 mt-1">
+        <div class="col-md-6">
+          <div style="background:var(--off);border:1px solid var(--border);border-radius:8px;padding:14px;">
+            <div style="font-weight:700;font-size:.82rem;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Work Details</div>
+            <ul class="mb-0" style="font-size:.83rem;padding-left:18px;">
+              <li>Work Type, Title, Description</li>
+              <li>Location, Specific Work Area</li>
+              <li>Planned Start &amp; End date/time</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div style="background:var(--off);border:1px solid var(--border);border-radius:8px;padding:14px;">
+            <div style="font-weight:700;font-size:.82rem;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">People</div>
+            <ul class="mb-0" style="font-size:.83rem;padding-left:18px;">
+              <li>Requestor (auto-filled as you)</li>
+              <li>Contractor Name &amp; Contact (if external)</li>
+              <li>Number of Workers</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div style="background:var(--off);border:1px solid var(--border);border-radius:8px;padding:14px;">
+            <div style="font-weight:700;font-size:.82rem;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Risk &amp; Controls</div>
+            <ul class="mb-0" style="font-size:.83rem;padding-left:18px;">
+              <li>Hazards Identified</li>
+              <li>Risk Controls / Precautions</li>
+              <li>PPE Required</li>
+              <li>Isolation Required? (LOTO details)</li>
+              <li>Emergency Procedure</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div style="background:var(--off);border:1px solid var(--border);border-radius:8px;padding:14px;">
+            <div style="font-weight:700;font-size:.82rem;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Pre-work Checklist</div>
+            <ul class="mb-0" style="font-size:.83rem;padding-left:18px;">
+              <li>Toolbox talk conducted</li>
+              <li>Area barricaded / signed</li>
+              <li>Equipment / tools inspected</li>
+              <li>Gas / atmosphere test done (result)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-tip mt-2">Use <strong>Save as Draft</strong> to save progress, or <strong>Submit for Approval</strong> when ready.</div>
+      <div class="callout callout-info">Every permit is auto-assigned a unique number: <code>PTW-YYYYMMDD-XXXX</code> (e.g. <code>PTW-20260311-0001</code>).</div>
+
+      <h3 class="section-h3" id="ptw-approve">5.3 Approving / Rejecting (Manager / Safety Manager)</h3>
+      <ol class="step-list">
+        <li>Open the permit with status <span class="status-pill s-submit" style="font-size:.75rem;">Submitted</span>.</li>
+        <li>Review all sections, the risk assessment, and any attachments.</li>
+        <li>Click <strong>Approve</strong> — add a comment and confirm. The requestor is notified.</li>
+        <li>Or click <strong>Reject</strong> — provide a rejection reason. The requestor can revise and resubmit.</li>
+      </ol>
+
+      <h3 class="section-h3" id="ptw-activate">5.4 Activating &amp; Closing</h3>
+      <p><strong>Activate:</strong> When on-site and ready to start work, the requestor (or Manager) clicks <strong>Activate</strong>. The actual start time is recorded. Status → <span class="status-pill s-active" style="font-size:.75rem;">Active</span>.</p>
+      <p><strong>Close:</strong> When work is complete:</p>
+      <ol class="step-list">
+        <li>Open the Active permit and click <strong>Close Permit</strong>.</li>
+        <li>Confirm the site has been cleaned and restored.</li>
+        <li>Add a closure comment. Actual end time is recorded. Status → <span class="status-pill s-closed" style="font-size:.75rem;">Closed</span>.</li>
+      </ol>
+    </div>
+
+    <!-- ════════ 6. TRAINING ════════ -->
+    <div class="help-section" id="training" data-search="training skills assessment module questions MCQ competency proficiency matrix report certificate">
+      <h2 class="section-h2"><span class="section-icon">🎓</span>Module 3 — Training &amp; Skills</h2>
+      <p>Create training modules with MCQ assessments, track employee skill levels (1–5), and build a real-time competency matrix.</p>
+
+      <h3 class="section-h3">Skill Proficiency Levels</h3>
+      <table class="help-table">
+        <thead><tr><th>Level</th><th>Label</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1</strong></td><td>Awareness</td><td>Basic exposure to the topic</td></tr>
+          <tr><td><strong>2</strong></td><td>Basic</td><td>Understands core concepts</td></tr>
+          <tr><td><strong>3</strong></td><td>Competent</td><td>Can apply independently</td></tr>
+          <tr><td><strong>4</strong></td><td>Proficient</td><td>Advanced practical ability</td></tr>
+          <tr><td><strong>5</strong></td><td>Expert</td><td>Can train others</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-tip">Proficiency <strong>only increases</strong> — a passed assessment upgrades your level; a failed one never downgrades it.</div>
+
+      <h3 class="section-h3" id="training-setup">6.1 Setting Up Training (Manager / Safety Manager)</h3>
+      <ol class="step-list">
+        <li><strong>Create Skill Categories &amp; Skills</strong> — go to <em>Training → Manage Skills</em>. Add categories (e.g. "Fire Safety") then individual skills within each.</li>
+        <li><strong>Create a Training Module</strong> — go to <em>Training → New Module</em>. Enter title, description, link relevant skills, and save.</li>
+        <li><strong>Create an Assessment</strong> — from the module detail page click <em>Create Assessment</em>. Set a pass mark (%).</li>
+        <li><strong>Add Questions</strong> — click <em>Edit Questions</em>. Add MCQ questions, choices, and mark the correct answer for each.</li>
+        <li><strong>Publish</strong> the assessment so learners can take it.</li>
+      </ol>
+
+      <h3 class="section-h3" id="training-take">6.2 Taking an Assessment</h3>
+      <ol class="step-list">
+        <li>Go to <strong>Training → Modules</strong>.</li>
+        <li>Open a module and click <strong>Take Assessment</strong>.</li>
+        <li>Answer all multiple-choice questions and click <strong>Submit</strong>.</li>
+        <li>Your score and pass/fail result are shown immediately.</li>
+        <li>If you passed: your skill proficiency level is automatically upgraded.</li>
+      </ol>
+
+      <h3 class="section-h3" id="training-matrix">6.3 Skills Matrix &amp; Reports</h3>
+      <ul>
+        <li><strong>Skills Matrix</strong> (<em>Training → Skill Matrix</em>) — grid of all users × all skills showing proficiency levels. Identify training gaps at a glance.</li>
+        <li><strong>Skills CSV</strong> — download the full matrix as a spreadsheet.</li>
+        <li><strong>Effectiveness PDF</strong> — branded report with org logo showing training completion rates and average scores by module.</li>
+      </ul>
+      <div class="callout callout-info">Skills Matrix and Reports are visible to Managers and Safety Managers only.</div>
+    </div>
+
+    <!-- ════════ 7. PROFILES ════════ -->
+    <div class="help-section" id="profiles" data-search="profile performance stars certificate observer action owner training score">
+      <h2 class="section-h2"><span class="section-icon">👤</span>User Profiles &amp; Performance</h2>
+
+      <p>Click your name in the sidebar or go to <strong>Profile</strong> to see your three-tab profile.</p>
+
+      <div class="row g-3 mt-1">
+        <div class="col-md-4">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;">
+            <div style="font-weight:700;font-size:.88rem;color:var(--navy);margin-bottom:6px;">Tab 1 — Profile Info</div>
+            <ul style="font-size:.82rem;padding-left:16px;margin:0;">
+              <li>Name, email, role, organisation</li>
+              <li>Managers: upload/change org logo</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;">
+            <div style="font-weight:700;font-size:.88rem;color:var(--navy);margin-bottom:6px;">Tab 2 — Performance</div>
+            <ul style="font-size:.82rem;padding-left:16px;margin:0;">
+              <li>Observer Stars ★★★★★</li>
+              <li>Action Owner Stars ★★★★★</li>
+              <li>Training Stars ★★★★★</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;">
+            <div style="font-weight:700;font-size:.88rem;color:var(--navy);margin-bottom:6px;">Tab 3 — Skills &amp; Certs</div>
+            <ul style="font-size:.82rem;padding-left:16px;margin:0;">
+              <li>All skills with proficiency levels</li>
+              <li>Download PDF certificate</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info mt-3">
+        <strong>Star ratings</strong> are percentile rankings within your organisation. If you are in the top 20% of observers, you earn 5 Observer Stars.
+      </div>
+
+      <div class="callout callout-tip">
+        <strong>Viewing others' profiles:</strong> Managers and Safety Managers can click any user's name in the observation list to view their profile. Other roles can only view their own.
+      </div>
+    </div>
+
+    <!-- ════════ 8. ORG SETTINGS ════════ -->
+    <div class="help-section" id="org-settings" data-search="organisation settings logo upload location brand">
+      <h2 class="section-h2"><span class="section-icon">🏢</span>Organisation Settings</h2>
+
+      <h3 class="section-h3">Organisation Logo</h3>
+      <p>Managers can upload the org logo at <strong>Profile → Upload Logo</strong>.</p>
+      <ul>
+        <li>Accepted formats: PNG, JPG, WebP</li>
+        <li>Maximum size: 2 MB</li>
+        <li>Recommended: square or landscape, minimum 200×200 px</li>
+      </ul>
+      <p>Once uploaded, the logo appears in:</p>
+      <ul>
+        <li>Sidebar and top navbar</li>
+        <li>All PDF exports (observation reports, training effectiveness, certificates)</li>
+        <li>Excel exports (anchored in the header row)</li>
+      </ul>
+
+      <h3 class="section-h3">Locations</h3>
+      <div class="callout callout-warn">
+        <strong>Locations must be set up before you can create observations or permits.</strong> Contact your Manager or system administrator to add your facility's locations via the admin panel.
+      </div>
+    </div>
+
+    <!-- ════════ 9. PLANS ════════ -->
+    <div class="help-section" id="plans" data-search="subscription plan billing trial pricing seats users observations limit">
+      <h2 class="section-h2"><span class="section-icon">💳</span>Subscription &amp; Plans</h2>
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center;">
+            <div style="font-size:1.6rem;margin-bottom:8px;">🆓</div>
+            <div style="font-weight:700;font-size:.95rem;color:var(--navy);">Free Trial</div>
+            <div style="font-size:.82rem;color:var(--muted);margin-top:6px;">14 days · all features · no credit card</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="border:2px solid var(--green);border-radius:10px;padding:18px;text-align:center;background:var(--green-bg);">
+            <div style="font-size:1.6rem;margin-bottom:8px;">🌱</div>
+            <div style="font-weight:700;font-size:.95rem;color:var(--navy);">Starter</div>
+            <div style="font-size:.82rem;color:var(--muted);margin-top:6px;">Small teams · limited seats &amp; observations</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div style="border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center;">
+            <div style="font-size:1.6rem;margin-bottom:8px;">🏗</div>
+            <div style="font-weight:700;font-size:.95rem;color:var(--navy);">Enterprise</div>
+            <div style="font-size:.82rem;color:var(--muted);margin-top:6px;">Unlimited users &amp; observations · custom pricing</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info mt-3">
+        <strong>Plan limits:</strong> Each plan sets a maximum number of invited users and logged observations. You can see your current usage on the Invite Users screen. Contact us to upgrade.
+      </div>
+      <div class="callout callout-tip">
+        <strong>Contractors</strong> are separate from your regular user seats and do not count against your plan's user limit.
+      </div>
+    </div>
+
+    <!-- ════════ 10. FAQ ════════ -->
+    <div class="help-section" id="faq" data-search="faq frequently asked questions mobile export delete contractor expire password invite">
+      <h2 class="section-h2"><span class="section-icon">❓</span>Frequently Asked Questions</h2>
+
+      <div id="faqList">
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Can I use Vigilo on mobile?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            Yes. Vigilo is fully responsive and works on any smartphone browser — Chrome, Safari, or Edge. No app installation is needed.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            What happens when a contractor's access expires?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            They are automatically logged out on their next request and cannot log in again. Their past permit records are retained and still visible to your managers.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Can I export all my data?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            Yes. Observations can be exported to Excel (.xlsx) or CSV. Training effectiveness reports are available as PDF. Skills data exports to CSV. All exports include your organisation branding.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Who can delete an observation permanently?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            Only Managers can permanently delete observations. Archiving (available to Managers and Safety Managers) is the preferred action as it preserves the full audit trail.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Can a permit be re-submitted after rejection?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            Yes. After rejection the permit returns to Draft status. The requestor can edit it to address the rejection reason and resubmit for approval.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Is LOTO / energy isolation supported in permits?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            Yes. Each permit has an <em>Isolation Required</em> checkbox and a free-text field for your LOTO procedure. This is captured as part of the official permit record.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Can the same user have multiple roles?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            No — each user has exactly one role at a time. A Manager can change a user's role from the admin panel if needed.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How are star ratings on profiles calculated?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            Stars (1–5) are percentile rankings within your organisation. For example: if you are in the top 20% of observers by number of observations reported, you receive 5 Observer Stars. Rankings update as new activity is recorded.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            I didn't receive my invite email. What do I do?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            1. Check your spam / junk folder first. 2. Ask your Manager to re-send the invite. 3. If the problem persists, contact us at <strong>support@safety-desk.com</strong>.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How do I request a demo?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            Click <strong>Get a Demo</strong> on the homepage or visit <strong>safety-desk.com/request-demo/</strong>. A member of our team will contact you via email or WhatsApp within one business day.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Is my organisation's data private and isolated from others?
+            <i class="bi bi-chevron-down faq-icon"></i>
+          </button>
+          <div class="faq-a">
+            Yes. Vigilo is a multi-tenant SaaS application. Every record — observations, permits, users, training data — is fully scoped to your organisation. No other organisation can view or access your data.
+          </div>
+        </div>
+
+      </div><!-- /faqList -->
+    </div>
+
+    <!-- ════════ CTA ════════ -->
+    {% if not user.is_authenticated %}
+    <div class="help-cta">
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.5rem;color:#fff;margin-bottom:8px;">
+        Ready to get started?
+      </div>
+      <p style="color:rgba(255,255,255,.65);font-size:.95rem;margin-bottom:20px;">
+        Free 14-day trial · No credit card · Setup in minutes
+      </p>
+      <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="{% url 'core:organization_signup' %}"
+           style="background:var(--green);color:#fff;padding:12px 28px;border-radius:8px;font-weight:700;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;">
+          Start Free Trial
+        </a>
+        <a href="{% url 'core:request_demo' %}"
+           style="background:rgba(255,255,255,.12);color:#fff;padding:12px 28px;border-radius:8px;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,.25);">
+          Request a Demo
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div><!-- /helpContent -->
+</div><!-- /help-layout -->
+</div><!-- /container -->
+
+</div><!-- /help-wrap -->
+
+<!-- Back to top -->
+<button id="backToTop" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="bi bi-chevron-up"></i>
+</button>
+
+<script>
+// ── FAQ accordion ──
+function toggleFaq(btn) {
+  const answer = btn.nextElementSibling;
+  const isOpen = answer.classList.contains('open');
+  // close all
+  document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+  document.querySelectorAll('.faq-q').forEach(b => b.setAttribute('aria-expanded','false'));
+  if (!isOpen) {
+    answer.classList.add('open');
+    btn.setAttribute('aria-expanded','true');
+  }
+}
+
+// ── Back to top ──
+const btt = document.getElementById('backToTop');
+window.addEventListener('scroll', () => {
+  btt.classList.toggle('visible', window.scrollY > 300);
+});
+
+// ── TOC active link ──
+const sections = document.querySelectorAll('.help-section[id]');
+const tocLinks = document.querySelectorAll('.help-toc .toc-link');
+function updateToc() {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 60) current = s.id;
+  });
+  tocLinks.forEach(a => {
+    const href = a.getAttribute('href').replace('#','');
+    a.classList.toggle('active', href === current);
+  });
+}
+window.addEventListener('scroll', updateToc);
+updateToc();
+
+// ── Search / filter ──
+const searchInput = document.getElementById('helpSearch');
+const noResults   = document.getElementById('noResults');
+
+searchInput.addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  let visibleCount = 0;
+
+  sections.forEach(section => {
+    if (!q) {
+      section.classList.remove('hidden');
+      visibleCount++;
+      return;
+    }
+    const text = (section.textContent + ' ' + (section.dataset.search || '')).toLowerCase();
+    if (text.includes(q)) {
+      section.classList.remove('hidden');
+      visibleCount++;
+    } else {
+      section.classList.add('hidden');
+    }
+  });
+
+  noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+
+  // show/hide CTA with last section
+  const cta = document.querySelector('.help-cta');
+  if (cta) cta.closest('.help-section') ? null : null; // CTA not in a section, always visible
+});
+</script>
+{% endblock %}
