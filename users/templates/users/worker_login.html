@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Worker Login — Vigilo{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+.wl-wrap {
+  min-height: calc(100vh - 56px);
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 24px 16px;
+}
+.wl-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 32px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.30);
+}
+.wl-icon {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; margin: 0 auto 16px;
+}
+.wl-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800; font-size: 1.35rem;
+  color: #0f172a; text-align: center; margin-bottom: 4px;
+}
+.wl-sub { text-align: center; color: #64748b; font-size: .875rem; margin-bottom: 24px; }
+
+.wl-field label { font-size: .82rem; font-weight: 600; color: #334155; margin-bottom: 5px; }
+.wl-field input {
+  border: 1.5px solid #e2e8f0; border-radius: 8px;
+  padding: 10px 14px; font-size: .9rem; width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+}
+.wl-field input:focus {
+  outline: none; border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22,163,74,.12);
+}
+.wl-field { margin-bottom: 14px; }
+
+.wl-hint { font-size: .75rem; color: #94a3b8; margin-top: 4px; }
+.wl-error { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: .82rem; color: #b91c1c; margin-bottom: 14px; }
+
+.wl-btn {
+  width: 100%; padding: 12px;
+  background: linear-gradient(135deg, #16a34a, #0d9488);
+  color: #fff; font-weight: 700; font-size: .95rem;
+  border: none; border-radius: 8px; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: opacity .15s;
+}
+.wl-btn:hover { opacity: .92; }
+
+.wl-divider { border-color: #e2e8f0; margin: 20px 0; }
+.wl-alt { text-align: center; font-size: .82rem; color: #64748b; }
+.wl-alt a { color: #16a34a; font-weight: 600; text-decoration: none; }
+
+.org-locked {
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: .88rem; font-weight: 600; color: #166534;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wl-wrap" style="margin: -1.5rem;">
+  <div class="wl-card">
+
+    <div class="wl-icon">🦺</div>
+    <div class="wl-title">Worker Login</div>
+    <div class="wl-sub">Sign in with your Employee ID and PIN</div>
+
+    {% if form.non_field_errors %}
+      <div class="wl-error">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        {{ form.non_field_errors|join:" " }}
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if prefill_org %}
+        <!-- Org is pre-filled from URL — show as read-only and hide input -->
+        <div class="org-locked">
+          <i class="bi bi-building-check"></i>
+          Organisation: <strong>{{ prefill_org }}</strong>
+        </div>
+        <input type="hidden" name="org_domain" value="{{ prefill_org }}">
+      {% else %}
+        <div class="wl-field">
+          <label for="id_org_domain">{{ form.org_domain.label }}</label>
+          <input type="text" id="id_org_domain" name="org_domain"
+                 value="{{ form.org_domain.value|default:'' }}"
+                 placeholder="e.g. acme-corp" autocomplete="organization">
+          <div class="wl-hint">{{ form.org_domain.help_text }}</div>
+          {% if form.org_domain.errors %}
+            <div class="text-danger" style="font-size:.78rem;margin-top:4px;">{{ form.org_domain.errors|join:" " }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="wl-field">
+        <label for="id_employee_id">{{ form.employee_id.label }}</label>
+        <input type="text" id="id_employee_id" name="employee_id"
+               value="{{ form.employee_id.value|default:'' }}"
+               placeholder="e.g. EMP-001" autofocus autocomplete="username">
+        {% if form.employee_id.errors %}
+          <div class="text-danger" style="font-size:.78rem;margin-top:4px;">{{ form.employee_id.errors|join:" " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="wl-field">
+        <label for="id_pin">{{ form.pin.label }}</label>
+        <input type="password" id="id_pin" name="pin"
+               placeholder="4–6 digit PIN" maxlength="6" inputmode="numeric"
+               autocomplete="current-password">
+        {% if form.pin.errors %}
+          <div class="text-danger" style="font-size:.78rem;margin-top:4px;">{{ form.pin.errors|join:" " }}</div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="wl-btn mt-2">
+        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+      </button>
+    </form>
+
+    <hr class="wl-divider">
+    <div class="wl-alt">
+      Have a company email?
+      <a href="{% url 'users:login' %}">Sign in with Email</a>
+    </div>
+    <div class="wl-alt mt-2">
+      <a href="{% url 'core:help' %}">Need help?</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

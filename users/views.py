@@ -2,12 +2,46 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate, login
 from django.http import HttpResponse, Http404
 
-from users.forms import EmailLoginForm, ProfileUpdateForm, OrgLogoForm
+from users.forms import EmailLoginForm, ProfileUpdateForm, OrgLogoForm, WorkerLoginForm
 
 User = get_user_model()
+
+
+def worker_login_view(request):
+    """
+    Login page for no-email worker accounts.
+    Accepts: org_domain + employee_id + PIN.
+    Managers can share a pre-filled URL: /users/worker-login/?org=<domain>
+    """
+    # Pre-fill org from URL param (shareable link)
+    prefill_org = request.GET.get("org", "")
+
+    if request.method == "POST":
+        form = WorkerLoginForm(request.POST)
+        if form.is_valid():
+            user = authenticate(
+                request,
+                employee_id=form.cleaned_data["employee_id"],
+                pin=form.cleaned_data["pin"],
+                org_domain=form.cleaned_data["org_domain"],
+            )
+            if user is not None:
+                login(request, user, backend="users.backends.EmployeeIdPinBackend")
+                next_url = request.GET.get("next") or "training:module_list"
+                return redirect(next_url)
+            else:
+                form.add_error(None, "Invalid Organisation Code, Employee ID, or PIN.")
+    else:
+        initial = {"org_domain": prefill_org} if prefill_org else {}
+        form = WorkerLoginForm(initial=initial)
+
+    return render(request, "users/worker_login.html", {
+        "form": form,
+        "prefill_org": prefill_org,
+    })
 
 
 @login_required

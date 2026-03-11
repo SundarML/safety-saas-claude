@@ -15,4 +15,8 @@ urlpatterns = [
     path("accept-contractor-invite/<uuid:token>/", views.accept_contractor_invite, name="accept_contractor_invite"),
     path("billing/", views.billing_view, name="billing"),
     path("help/", views.help_view, name="help"),
+    path("workers/", views.worker_list_view, name="worker_list"),
+    path("workers/create/", views.create_worker_view, name="create_worker"),
+    path("workers/<int:worker_id>/reset-pin/", views.reset_worker_pin_view, name="reset_worker_pin"),
+    path("workers/<int:worker_id>/toggle-active/", views.toggle_worker_active_view, name="toggle_worker_active"),
 ]

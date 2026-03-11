@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Add Worker Account — Vigilo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6 col-md-8">
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+      <a href="{% url 'core:worker_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div>
+        <h4 class="fw-bold mb-0">Add Worker Account</h4>
+        <small class="text-muted">Creates a no-email account — worker logs in with Employee ID + PIN</small>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+      <div class="card-body p-4">
+
+        <div class="alert alert-info d-flex gap-2 align-items-start mb-4" style="font-size:.85rem;">
+          <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+          <div>
+            After creating the account, share the <strong>Employee ID</strong> and <strong>PIN</strong>
+            securely with the worker. They will use these to log in at the Worker Login page.
+          </div>
+        </div>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.85rem;">Full Name <span class="text-danger">*</span></label>
+            <input type="text" name="full_name" class="form-control {% if form.full_name.errors %}is-invalid{% endif %}"
+                   value="{{ form.full_name.value|default:'' }}" placeholder="e.g. Raju Kumar" required>
+            {% if form.full_name.errors %}
+              <div class="invalid-feedback">{{ form.full_name.errors|join:" " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.85rem;">Employee ID <span class="text-danger">*</span></label>
+            <input type="text" name="employee_id" class="form-control {% if form.employee_id.errors %}is-invalid{% endif %}"
+                   value="{{ form.employee_id.value|default:'' }}" placeholder="e.g. EMP-001" required>
+            <div class="form-text">{{ form.employee_id.help_text }}</div>
+            {% if form.employee_id.errors %}
+              <div class="invalid-feedback">{{ form.employee_id.errors|join:" " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.85rem;">Role <span class="text-danger">*</span></label>
+            <select name="role" class="form-select">
+              {% for val, label in form.fields.role.choices %}
+                <option value="{{ val }}" {% if form.role.value == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <hr>
+
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">PIN <span class="text-danger">*</span></label>
+              <input type="password" name="pin" class="form-control {% if form.pin.errors %}is-invalid{% endif %}"
+                     placeholder="4–6 digits" maxlength="6" inputmode="numeric" required>
+              <div class="form-text">{{ form.pin.help_text }}</div>
+              {% if form.pin.errors %}
+                <div class="invalid-feedback">{{ form.pin.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold" style="font-size:.85rem;">Confirm PIN <span class="text-danger">*</span></label>
+              <input type="password" name="confirm_pin" class="form-control {% if form.confirm_pin.errors %}is-invalid{% endif %}"
+                     placeholder="Repeat PIN" maxlength="6" inputmode="numeric" required>
+              {% if form.confirm_pin.errors %}
+                <div class="invalid-feedback">{{ form.confirm_pin.errors|join:" " }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mt-3" style="font-size:.85rem;">
+              {{ form.non_field_errors|join:" " }}
+            </div>
+          {% endif %}
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-person-plus me-1"></i> Create Worker Account
+            </button>
+            <a href="{% url 'core:worker_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

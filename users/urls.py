@@ -1,7 +1,7 @@
 # users/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import profile_view, profile_redirect_view, profile_detail_view, profile_certificate_pdf, upload_org_logo_view, org_logo_view
+from .views import profile_view, profile_redirect_view, profile_detail_view, profile_certificate_pdf, upload_org_logo_view, org_logo_view, worker_login_view
 from .forms import EmailLoginForm
 
 app_name = "users"
@@ -13,6 +13,7 @@ urlpatterns = [
     path("profile/<int:user_id>/certificate.pdf", profile_certificate_pdf, name="profile_certificate"),
     path("org/logo/", upload_org_logo_view, name="upload_org_logo"),
     path("org/logo/current/", org_logo_view, name="org_logo"),
+    path("worker-login/", worker_login_view, name="worker_login"),
 
     path(
         "accounts/login/",

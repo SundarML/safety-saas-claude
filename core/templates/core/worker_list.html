@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Worker Accounts — Vigilo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h4 class="fw-bold mb-0">Worker Accounts</h4>
+    <small class="text-muted">No-email accounts that log in with Employee ID + PIN</small>
+  </div>
+  <a href="{% url 'core:create_worker' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-person-plus me-1"></i> Add Worker
+  </a>
+</div>
+
+<!-- Login link card -->
+<div class="card border-0 shadow-sm mb-4" style="background:linear-gradient(135deg,#f0fdf4,#e0f2fe);border-radius:12px;">
+  <div class="card-body py-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div>
+        <div class="fw-bold text-dark mb-1" style="font-size:.9rem;">
+          <i class="bi bi-link-45deg text-success me-1"></i>Share this login link with your workers
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <code id="workerLoginLink" class="px-2 py-1 rounded" style="background:#fff;border:1px solid #e2e8f0;font-size:.8rem;">
+            {{ request.scheme }}://{{ request.get_host }}{% url 'users:worker_login' %}?org={{ org.domain }}
+          </code>
+          <button onclick="copyLoginLink()" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-clipboard"></i> Copy
+          </button>
+        </div>
+        <div class="text-muted mt-1" style="font-size:.75rem;">
+          Workers open this link, enter their Employee ID and PIN to access training assessments.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if workers %}
+<div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" style="font-size:.875rem;">
+      <thead style="background:#f8fafc;">
+        <tr>
+          <th class="ps-4 py-3">Name</th>
+          <th>Employee ID</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th class="text-end pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for worker in workers %}
+        <tr>
+          <td class="ps-4">
+            <div class="d-flex align-items-center gap-2">
+              <span style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                           display:flex;align-items:center;justify-content:center;
+                           font-size:.78rem;font-weight:700;color:#fff;flex-shrink:0;">
+                {{ worker.full_name|first|upper|default:"W" }}
+              </span>
+              <div>
+                <div class="fw-semibold text-dark">{{ worker.full_name|default:"—" }}</div>
+                <div class="text-muted" style="font-size:.75rem;">
+                  {% if worker.trade %}{{ worker.trade }}{% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <code style="background:#f1f5f9;padding:3px 8px;border-radius:5px;font-size:.8rem;">
+              {{ worker.employee_id|default:"—" }}
+            </code>
+          </td>
+          <td>
+            {% if worker.role == "observer" %}
+              <span class="badge" style="background:#f5f3ff;color:#5b21b6;border:1px solid #ddd6fe;">Observer</span>
+            {% elif worker.role == "action_owner" %}
+              <span class="badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;">Action Owner</span>
+            {% else %}
+              <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ worker.get_role_display }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if worker.is_active %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+            {% else %}
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="text-end pe-4">
+            <div class="d-flex gap-2 justify-content-end">
+              <!-- Reset PIN button → opens modal -->
+              <button class="btn btn-sm btn-outline-secondary"
+                      onclick="openResetModal({{ worker.pk }}, '{{ worker.full_name|escapejs }}')"
+                      title="Reset PIN">
+                <i class="bi bi-key"></i> Reset PIN
+              </button>
+              <!-- Activate / Deactivate -->
+              <form method="post" action="{% url 'core:toggle_worker_active' worker.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm {% if worker.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                        title="{% if worker.is_active %}Deactivate{% else %}Activate{% endif %}">
+                  {% if worker.is_active %}
+                    <i class="bi bi-person-dash"></i>
+                  {% else %}
+                    <i class="bi bi-person-check"></i>
+                  {% endif %}
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center py-5" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;">
+  <div style="font-size:2.5rem;margin-bottom:12px;">👷</div>
+  <div class="fw-bold text-dark mb-1">No worker accounts yet</div>
+  <p class="text-muted mb-3" style="font-size:.875rem;">
+    Create accounts for workers who don't have a company email.
+  </p>
+  <a href="{% url 'core:create_worker' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-person-plus me-1"></i> Add First Worker
+  </a>
+</div>
+{% endif %}
+
+<!-- ── Reset PIN Modal ── -->
+<div class="modal fade" id="resetPinModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-key me-2"></i>Reset PIN</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" id="resetPinForm">
+        {% csrf_token %}
+        <div class="modal-body">
+          <p class="text-muted mb-3" style="font-size:.875rem;">
+            Setting a new PIN for: <strong id="resetWorkerName"></strong>
+          </p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.82rem;">New PIN</label>
+            <input type="password" name="new_pin" class="form-control" placeholder="4–6 digits" maxlength="6" inputmode="numeric" required>
+          </div>
+          <div class="mb-1">
+            <label class="form-label fw-semibold" style="font-size:.82rem;">Confirm New PIN</label>
+            <input type="password" name="confirm_pin" class="form-control" placeholder="Repeat PIN" maxlength="6" inputmode="numeric" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-1"></i> Save PIN
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openResetModal(workerId, workerName) {
+  document.getElementById('resetWorkerName').textContent = workerName;
+  document.getElementById('resetPinForm').action = '/workers/' + workerId + '/reset-pin/';
+  var modal = new bootstrap.Modal(document.getElementById('resetPinModal'));
+  modal.show();
+}
+
+function copyLoginLink() {
+  const link = document.getElementById('workerLoginLink').textContent.trim();
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target.closest('button');
+    btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+    setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'; }, 2000);
+  });
+}
+</script>
+{% endblock %}

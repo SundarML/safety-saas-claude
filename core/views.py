@@ -16,6 +16,7 @@ from .forms import (
     DemoRequestForm, FreePlanRequestForm,
 )
 from users.models import CustomUser
+from users.forms import CreateWorkerForm, ResetWorkerPinForm
 
 
 # ---------------------------------------------------------------------------
@@ -388,3 +389,97 @@ def billing_view(request):
         subscription = getattr(request.organization, "subscription", None)
 
     return render(request, "core/billing.html", {"subscription": subscription})
+
+
+# ---------------------------------------------------------------------------
+# Worker management (no-email accounts with Employee ID + PIN)
+# ---------------------------------------------------------------------------
+
+def _manager_required(request):
+    if not request.user.is_authenticated or not request.user.is_manager:
+        raise PermissionDenied
+
+
+@login_required
+def worker_list_view(request):
+    """Manager: list all worker (no-email) accounts in the organisation."""
+    _manager_required(request)
+    org = request.organization
+    workers = CustomUser.objects.filter(
+        organization=org, email__isnull=True
+    ).order_by("full_name", "employee_id")
+    reset_form = ResetWorkerPinForm()
+    return render(request, "core/worker_list.html", {
+        "workers": workers,
+        "reset_form": reset_form,
+        "org": org,
+    })
+
+
+@login_required
+def create_worker_view(request):
+    """Manager: create a new no-email worker account."""
+    _manager_required(request)
+    org = request.organization
+
+    if request.method == "POST":
+        form = CreateWorkerForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            # Duplicate employee ID check
+            if CustomUser.objects.filter(organization=org, employee_id=cd["employee_id"]).exists():
+                form.add_error("employee_id", "This Employee ID already exists in your organisation.")
+            else:
+                CustomUser.objects.create_worker_user(
+                    employee_id=cd["employee_id"],
+                    pin=cd["pin"],
+                    organization=org,
+                    full_name=cd["full_name"],
+                    role=cd["role"],
+                )
+                messages.success(
+                    request,
+                    f"Worker account created for {cd['full_name']} (ID: {cd['employee_id']})."
+                )
+                return redirect("core:worker_list")
+    else:
+        form = CreateWorkerForm()
+
+    return render(request, "core/create_worker.html", {"form": form})
+
+
+@login_required
+def reset_worker_pin_view(request, worker_id):
+    """Manager: reset PIN for a worker account."""
+    _manager_required(request)
+    org = request.organization
+    worker = get_object_or_404(CustomUser, pk=worker_id, organization=org, email__isnull=True)
+
+    if request.method == "POST":
+        form = ResetWorkerPinForm(request.POST)
+        if form.is_valid():
+            worker.set_pin(form.cleaned_data["new_pin"])
+            worker.save(update_fields=["pin_hash"])
+            messages.success(request, f"PIN reset for {worker.get_full_name()}.")
+        else:
+            for errs in form.errors.values():
+                for e in errs:
+                    messages.error(request, e)
+
+    return redirect("core:worker_list")
+
+
+@login_required
+def toggle_worker_active_view(request, worker_id):
+    """Manager: activate or deactivate a worker account."""
+    _manager_required(request)
+    org = request.organization
+    worker = get_object_or_404(CustomUser, pk=worker_id, organization=org, email__isnull=True)
+
+    if request.method == "POST":
+        worker.is_active = not worker.is_active
+        worker.save(update_fields=["is_active"])
+        state = "activated" if worker.is_active else "deactivated"
+        messages.success(request, f"{worker.get_full_name()} has been {state}.")
+
+    return redirect("core:worker_list")

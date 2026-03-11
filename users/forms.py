@@ -3,6 +3,11 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserChangeForm
 from .models import CustomUser
 
+_WORKER_ROLES = [
+    ("observer",     "Observer"),
+    ("action_owner", "Action Owner"),
+]
+
 _2MB = 2 * 1024 * 1024
 _LOGO_TYPES = {"image/png", "image/jpeg", "image/webp"}
 
@@ -53,6 +58,107 @@ class ProfileUpdateForm(forms.ModelForm):
                 "This employee ID is already in use within your organisation."
             )
         return eid
+
+
+class WorkerLoginForm(forms.Form):
+    """Login form for no-email worker accounts: org domain + employee ID + PIN."""
+    org_domain = forms.CharField(
+        label="Organisation Code",
+        max_length=100,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. acme-corp", "autocomplete": "organization"}),
+        help_text="The code your manager gave you for your organisation.",
+    )
+    employee_id = forms.CharField(
+        label="Employee ID",
+        max_length=50,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. EMP-001", "autocomplete": "username"}),
+    )
+    pin = forms.CharField(
+        label="PIN",
+        max_length=6,
+        min_length=4,
+        widget=forms.PasswordInput(attrs={"placeholder": "4–6 digit PIN", "autocomplete": "current-password"}),
+    )
+
+    def clean_pin(self):
+        pin = self.cleaned_data.get("pin", "")
+        if not pin.isdigit():
+            raise forms.ValidationError("PIN must contain digits only.")
+        return pin
+
+
+class CreateWorkerForm(forms.Form):
+    """Manager creates a no-email worker account."""
+    full_name = forms.CharField(
+        label="Full Name",
+        max_length=255,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. Raju Kumar"}),
+    )
+    employee_id = forms.CharField(
+        label="Employee ID",
+        max_length=50,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. EMP-001"}),
+        help_text="Must be unique within your organisation.",
+    )
+    role = forms.ChoiceField(
+        label="Role",
+        choices=_WORKER_ROLES,
+    )
+    pin = forms.CharField(
+        label="PIN",
+        max_length=6,
+        min_length=4,
+        widget=forms.PasswordInput(attrs={"placeholder": "4–6 digits"}),
+        help_text="4 to 6 digits. Share this securely with the worker.",
+    )
+    confirm_pin = forms.CharField(
+        label="Confirm PIN",
+        max_length=6,
+        min_length=4,
+        widget=forms.PasswordInput(attrs={"placeholder": "Repeat PIN"}),
+    )
+
+    def clean_pin(self):
+        pin = self.cleaned_data.get("pin", "")
+        if not pin.isdigit():
+            raise forms.ValidationError("PIN must contain digits only.")
+        return pin
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("pin") and cleaned.get("confirm_pin"):
+            if cleaned["pin"] != cleaned["confirm_pin"]:
+                self.add_error("confirm_pin", "PINs do not match.")
+        return cleaned
+
+
+class ResetWorkerPinForm(forms.Form):
+    """Manager resets a worker's PIN."""
+    new_pin = forms.CharField(
+        label="New PIN",
+        max_length=6,
+        min_length=4,
+        widget=forms.PasswordInput(attrs={"placeholder": "4–6 digits"}),
+    )
+    confirm_pin = forms.CharField(
+        label="Confirm New PIN",
+        max_length=6,
+        min_length=4,
+        widget=forms.PasswordInput(attrs={"placeholder": "Repeat PIN"}),
+    )
+
+    def clean_new_pin(self):
+        pin = self.cleaned_data.get("new_pin", "")
+        if not pin.isdigit():
+            raise forms.ValidationError("PIN must contain digits only.")
+        return pin
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("new_pin") and cleaned.get("confirm_pin"):
+            if cleaned["new_pin"] != cleaned["confirm_pin"]:
+                self.add_error("confirm_pin", "PINs do not match.")
+        return cleaned
 
 
 class OrgLogoForm(forms.Form):

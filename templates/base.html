@@ -343,7 +343,7 @@
         <span style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);
                      display:flex;align-items:center;justify-content:center;font-size:.72rem;
                      font-weight:700;color:#fff;flex-shrink:0;">
-          {{ user.email|first|upper }}
+          {{ user.get_full_name|first|upper|default:"W" }}
         </span>
         <span class="d-none d-md-inline" style="font-size:.85rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
           {{ user.get_full_name|default:user.email }}
@@ -507,6 +507,10 @@
     <a href="{% url 'core:invite_contractor' %}"
        class="sb-link {% if 'invite-contractor' in request.path %}active{% endif %}">
       <i class="bi bi-person-badge"></i> Invite Contractor
+    </a>
+    <a href="{% url 'core:worker_list' %}"
+       class="sb-link {% if 'workers' in request.path %}active{% endif %}">
+      <i class="bi bi-people"></i> Worker Accounts
     </a>
     <a href="{% url 'core:billing' %}"
        class="sb-link {% if 'billing' in request.path %}active{% endif %}">
