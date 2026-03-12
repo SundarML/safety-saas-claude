@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Compliance Item — Vigilo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="d-flex align-items-center gap-2 mb-4">
+      <a href="{% url 'compliance:dashboard' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <h4 class="fw-bold mb-0">{{ action }} Compliance Obligation</h4>
+    </div>
+
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Obligation Title <span class="text-danger">*</span>
+            </label>
+            {{ form.title }}
+            <div class="form-text">e.g. "Renew Factory License", "File Annual Return under Factories Act"</div>
+            {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Law / Regulation</label>
+            {{ form.law }}
+            <div class="form-text">e.g. Factories Act 1948, Section 6 &nbsp;|&nbsp; OSH Code 2020</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Issuing Authority</label>
+            {{ form.authority }}
+            <div class="form-text">e.g. Chief Inspector of Factories, SPCB, DGMS</div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">Frequency <span class="text-danger">*</span></label>
+              {{ form.frequency }}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">Due Date <span class="text-danger">*</span></label>
+              {{ form.due_date }}
+              {% if form.due_date.errors %}<div class="text-danger small mt-1">{{ form.due_date.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Assigned To</label>
+            {{ form.assigned_to }}
+            <div class="form-text">Person responsible for ensuring compliance.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Notes</label>
+            {{ form.notes }}
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle me-1"></i> Save
+            </button>
+            <a href="{% url 'compliance:dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

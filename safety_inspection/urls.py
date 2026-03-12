@@ -37,6 +37,9 @@ urlpatterns = [
 
     # Training & Skills app
     path("training/", include("training.urls", namespace="training")),
+
+    # Legal Compliance app
+    path("compliance/", include("compliance.urls", namespace="compliance")),
 ]
 
 if settings.DEBUG:

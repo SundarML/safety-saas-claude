@@ -500,6 +500,25 @@
 
     <hr class="sb-divider">
 
+    <!-- ── LEGAL COMPLIANCE (hidden for contractors) ── -->
+    {% if not user.is_contractor %}
+    <div class="sidebar-section">Legal Compliance</div>
+
+    <a href="{% url 'compliance:dashboard' %}"
+       class="sb-link {% if 'compliance' in request.path and 'add' not in request.path %}active{% endif %}">
+      <i class="bi bi-shield-check"></i> Compliance Register
+    </a>
+
+    {% if user.is_manager or user.is_safety_manager %}
+    <a href="{% url 'compliance:item_create' %}"
+       class="sb-link {% if 'compliance' in request.path and 'add' in request.path %}active{% endif %}">
+      <i class="bi bi-plus-circle"></i> Add Obligation
+    </a>
+    {% endif %}
+
+    <hr class="sb-divider">
+    {% endif %}
+
     <!-- ── ADMINISTRATION (hidden for contractors) ── -->
     {% if not user.is_contractor and user.is_manager or not user.is_contractor and user.is_safety_manager %}
     <div class="sidebar-section">Administration</div>

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — Compliance{% endblock %}
+
+{% block extra_head %}
+<style>
+.urgency-bar {
+  height: 5px; border-radius: 3px; margin-bottom: 20px;
+}
+.urgency-bar.overdue       { background: #dc2626; }
+.urgency-bar.urgent        { background: #ea580c; }
+.urgency-bar.warning       { background: #ca8a04; }
+.urgency-bar.ok            { background: #16a34a; }
+.urgency-bar.complied      { background: #bbf7d0; }
+.urgency-bar.not_applicable{ background: #e2e8f0; }
+
+.info-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+.info-row:last-child { border-bottom: none; }
+.info-label { width: 160px; flex-shrink: 0; font-size: .82rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding-top: 2px; }
+.info-val   { font-size: .93rem; color: #0f172a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+  <a href="{% url 'compliance:dashboard' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="fw-bold mb-0 me-auto">{{ item.title }}</h4>
+
+  {% if user.is_manager or user.is_safety_manager %}
+  <a href="{% url 'compliance:item_edit' item.pk %}" class="btn btn-sm btn-outline-primary">
+    <i class="bi bi-pencil me-1"></i> Edit
+  </a>
+  {% endif %}
+
+  {% if item.status != 'complied' and item.status != 'not_applicable' %}
+    {% if user.is_manager or user.is_safety_manager or item.assigned_to == user %}
+    <a href="{% url 'compliance:mark_complied' item.pk %}" class="btn btn-sm btn-success">
+      <i class="bi bi-check-circle me-1"></i> Mark Complied
+    </a>
+    {% endif %}
+    {% if user.is_manager or user.is_safety_manager %}
+    <form method="post" action="{% url 'compliance:mark_na' item.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-secondary"
+              onclick="return confirm('Mark this item as Not Applicable?')">
+        N/A
+      </button>
+    </form>
+    {% endif %}
+  {% endif %}
+</div>
+
+{% with urgency=item.urgency %}
+<div class="urgency-bar {{ urgency }}"></div>
+
+<div class="row g-4">
+  <!-- Main detail -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body p-4">
+        <div class="info-row">
+          <div class="info-label">Status</div>
+          <div class="info-val">
+            <span class="badge
+              {% if urgency == 'overdue' %}bg-danger
+              {% elif urgency == 'urgent' %}bg-warning text-dark
+              {% elif urgency == 'complied' %}bg-success
+              {% elif urgency == 'not_applicable' %}bg-secondary
+              {% else %}bg-info text-dark{% endif %}"
+              style="font-size:.8rem;">
+              {{ item.get_status_display }}
+            </span>
+            {% if item.status == 'pending' or item.status == 'overdue' %}
+            <span class="text-muted small ms-2">
+              {% if item.days_until_due < 0 %}
+                {{ item.days_until_due|cut:"-" }} day{{ item.days_until_due|add:"0"|stringformat:"s"|slice:"1:"|length|pluralize }} overdue
+              {% else %}
+                {{ item.days_until_due }} day{{ item.days_until_due|pluralize }} remaining
+              {% endif %}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Due Date</div>
+          <div class="info-val">{{ item.due_date|date:"d F Y" }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Law / Regulation</div>
+          <div class="info-val">{{ item.law|default:"—" }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Authority</div>
+          <div class="info-val">{{ item.authority|default:"—" }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Frequency</div>
+          <div class="info-val">{{ item.get_frequency_display }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Assigned To</div>
+          <div class="info-val">{{ item.assigned_to.get_full_name|default:"Unassigned" }}</div>
+        </div>
+        {% if item.notes %}
+        <div class="info-row">
+          <div class="info-label">Notes</div>
+          <div class="info-val" style="white-space:pre-wrap;">{{ item.notes }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if item.status == 'complied' %}
+    <div class="card border-0 shadow-sm" style="border-left:4px solid #16a34a !important;">
+      <div class="card-body p-4">
+        <h6 class="fw-bold text-success mb-3"><i class="bi bi-check-circle-fill me-1"></i> Compliance Record</h6>
+        <div class="info-row">
+          <div class="info-label">Complied On</div>
+          <div class="info-val">{{ item.complied_on|date:"d F Y"|default:"—" }}</div>
+        </div>
+        {% if item.evidence %}
+        <div class="info-row">
+          <div class="info-label">Evidence</div>
+          <div class="info-val">
+            <a href="{{ item.evidence.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-file-earmark-arrow-down me-1"></i> Download Evidence
+            </a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Side panel -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-3">
+        <div class="text-muted small mb-2 fw-semibold text-uppercase" style="letter-spacing:.06em;">Record Info</div>
+        <div class="text-muted small">Added by {{ item.created_by.get_full_name|default:"—" }}</div>
+        <div class="text-muted small">{{ item.created_at|date:"d M Y, H:i" }}</div>
+        <hr class="my-2">
+        <div class="text-muted small">Last updated {{ item.updated_at|date:"d M Y, H:i" }}</div>
+      </div>
+    </div>
+
+    {% if user.is_manager or user.is_safety_manager %}
+    <div class="mt-3">
+      <a href="{% url 'compliance:item_delete' item.pk %}"
+         class="btn btn-sm btn-outline-danger w-100">
+        <i class="bi bi-trash me-1"></i> Delete
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

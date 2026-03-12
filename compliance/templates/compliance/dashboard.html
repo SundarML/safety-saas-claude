@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Legal Compliance — Vigilo{% endblock %}
+
+{% block extra_head %}
+<style>
+.stat-card {
+  border-radius: 12px; padding: 20px 24px;
+  border: 1px solid #e2e8f0; background: #fff;
+}
+.stat-val { font-size: 2rem; font-weight: 800; line-height: 1; }
+.stat-lbl { font-size: .8rem; color: #64748b; margin-top: 4px; }
+
+.badge-overdue       { background: #fee2e2; color: #dc2626; }
+.badge-urgent        { background: #ffedd5; color: #ea580c; }
+.badge-warning       { background: #fef9c3; color: #ca8a04; }
+.badge-ok            { background: #dcfce7; color: #16a34a; }
+.badge-complied      { background: #f0fdf4; color: #16a34a; }
+.badge-not_applicable{ background: #f1f5f9; color: #64748b; }
+
+.compliance-row { border-left: 4px solid #e2e8f0; }
+.compliance-row.overdue  { border-left-color: #dc2626; }
+.compliance-row.urgent   { border-left-color: #ea580c; }
+.compliance-row.warning  { border-left-color: #ca8a04; }
+.compliance-row.ok       { border-left-color: #16a34a; }
+.compliance-row.complied { border-left-color: #bbf7d0; }
+.compliance-row.not_applicable { border-left-color: #cbd5e1; }
+
+.score-ring {
+  width: 80px; height: 80px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 800;
+  border: 6px solid #bbf7d0; background: #f0fdf4; color: #16a34a;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">Legal Compliance Register</h4>
+    <p class="text-muted small mb-0">Track statutory obligations, due dates, and evidence.</p>
+  </div>
+  {% if user.is_manager or user.is_safety_manager %}
+  <a href="{% url 'compliance:item_create' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-plus-circle me-1"></i> Add Obligation
+  </a>
+  {% endif %}
+</div>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center">
+      <div class="stat-val">{{ total }}</div>
+      <div class="stat-lbl">Total</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#bbf7d0;">
+      <div class="stat-val" style="color:#16a34a;">{{ complied }}</div>
+      <div class="stat-lbl">Complied</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#fca5a5;">
+      <div class="stat-val" style="color:#dc2626;">{{ overdue }}</div>
+      <div class="stat-lbl">Overdue</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#fed7aa;">
+      <div class="stat-val" style="color:#ea580c;">{{ due_soon }}</div>
+      <div class="stat-lbl">Due in 30d</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#e2e8f0;">
+      <div class="stat-val" style="color:#64748b;">{{ pending }}</div>
+      <div class="stat-lbl">Pending</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center d-flex flex-column align-items-center justify-content-center">
+      <div class="score-ring">{{ score }}%</div>
+      <div class="stat-lbl mt-1">Compliance Score</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <a href="{% url 'compliance:dashboard' %}"
+     class="btn btn-sm {% if not status_filter %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+    All
+  </a>
+  <a href="?status=overdue"
+     class="btn btn-sm {% if status_filter == 'overdue' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+    Overdue
+  </a>
+  <a href="?status=pending"
+     class="btn btn-sm {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+    Pending
+  </a>
+  <a href="?status=complied"
+     class="btn btn-sm {% if status_filter == 'complied' %}btn-success{% else %}btn-outline-success{% endif %}">
+    Complied
+  </a>
+  <a href="?status=not_applicable"
+     class="btn btn-sm {% if status_filter == 'not_applicable' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+    N/A
+  </a>
+</div>
+
+<!-- Compliance list -->
+{% if items %}
+<div class="card shadow-sm border-0">
+  <div class="list-group list-group-flush">
+    {% for item in items %}
+    {% with urgency=item.urgency %}
+    <a href="{% url 'compliance:item_detail' item.pk %}"
+       class="list-group-item list-group-item-action compliance-row {{ urgency }} px-4 py-3">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div style="min-width:0;">
+          <div class="fw-semibold text-dark" style="font-size:.95rem;">{{ item.title }}</div>
+          {% if item.law %}
+          <div class="text-muted small mt-1">
+            <i class="bi bi-journal-text me-1"></i>{{ item.law }}
+          </div>
+          {% endif %}
+          {% if item.assigned_to %}
+          <div class="text-muted small">
+            <i class="bi bi-person me-1"></i>{{ item.assigned_to.get_full_name }}
+          </div>
+          {% endif %}
+        </div>
+        <div class="text-end flex-shrink-0">
+          <div class="small fw-semibold
+            {% if urgency == 'overdue' %}text-danger
+            {% elif urgency == 'urgent' %}text-warning
+            {% elif urgency == 'complied' %}text-success
+            {% else %}text-muted{% endif %}">
+            {{ item.due_date|date:"d M Y" }}
+          </div>
+          <span class="badge badge-{{ urgency }} mt-1" style="font-size:.72rem;">
+            {% if urgency == 'overdue' %}Overdue
+            {% elif urgency == 'urgent' %}Due soon
+            {% elif urgency == 'warning' %}Due in {{ item.days_until_due }}d
+            {% elif urgency == 'complied' %}Complied
+            {% elif urgency == 'not_applicable' %}N/A
+            {% else %}{{ item.days_until_due }}d left{% endif %}
+          </span>
+          <div class="text-muted" style="font-size:.72rem;margin-top:3px;">
+            {{ item.get_frequency_display }}
+          </div>
+        </div>
+      </div>
+    </a>
+    {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-check2-circle" style="font-size:2.5rem;"></i>
+  <p class="mt-2 mb-1 fw-semibold">No compliance items found.</p>
+  {% if user.is_manager or user.is_safety_manager %}
+  <a href="{% url 'compliance:item_create' %}" class="btn btn-success btn-sm mt-2">
+    Add your first obligation
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

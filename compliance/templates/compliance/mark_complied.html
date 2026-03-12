@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Mark Complied — {{ item.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="d-flex align-items-center gap-2 mb-4">
+      <a href="{% url 'compliance:item_detail' item.pk %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <h4 class="fw-bold mb-0">Mark as Complied</h4>
+    </div>
+
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-success text-white py-3 px-4">
+        <div class="fw-semibold">{{ item.title }}</div>
+        {% if item.law %}<div class="small opacity-75">{{ item.law }}</div>{% endif %}
+      </div>
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Date of Compliance <span class="text-danger">*</span>
+            </label>
+            {{ form.complied_on }}
+            {% if form.complied_on.errors %}<div class="text-danger small mt-1">{{ form.complied_on.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Upload Evidence</label>
+            {{ form.evidence }}
+            <div class="form-text">
+              Upload license copy, receipt, inspection report, or any proof of compliance.
+              PDF, image, or Word document accepted.
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Notes</label>
+            {{ form.notes }}
+            <div class="form-text">Any remarks, reference numbers, or follow-up actions.</div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle me-1"></i> Confirm Compliance
+            </button>
+            <a href="{% url 'compliance:item_detail' item.pk %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

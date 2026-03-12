@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "permits.apps.PermitsConfig",
     "training.apps.TrainingConfig",
+    "compliance.apps.ComplianceConfig",
 ]
 
 # ---------------------------------------------------------------------------
