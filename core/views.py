@@ -30,6 +30,11 @@ def home_view(request):
     return render(request, "home.html", {})
 
 
+def pricing_view(request):
+    """Public pricing page."""
+    return render(request, "pricing.html", {})
+
+
 def help_view(request):
     """Public help & user guide — accessible without login."""
     return render(request, "help.html", {})

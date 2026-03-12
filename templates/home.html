@@ -920,103 +920,19 @@
   </div>
 </section>
 
-<!-- ── PRICING TEASER ─────────────────────────────────────────────────── -->
-<section class="py-5" style="background:var(--white);">
+<!-- ── PRICING BANNER ──────────────────────────────────────────────────── -->
+<section style="background:var(--green-bg);border-top:1px solid #bbf7d0;border-bottom:1px solid #bbf7d0;padding:28px 0;">
   <div class="container">
-    <div class="row justify-content-center text-center mb-5">
-      <div class="col-lg-6 reveal">
-        <div class="section-kicker">Pricing</div>
-        <h2 class="section-h">Start free.<br>Scale when you're ready.</h2>
-        <p class="section-sub mx-auto mt-3">No contracts. No surprises. Cancel anytime.</p>
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-center gap-3 text-center text-md-start">
+      <div>
+        <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1.05rem;color:var(--navy);">
+          Simple, transparent pricing
+        </span>
+        <span style="color:var(--muted);font-size:.95rem;margin-left:8px;">— plans from ₹1,999/mo. No contracts, cancel anytime.</span>
       </div>
-    </div>
-    <div class="row g-4 justify-content-center">
-      <!-- Trial -->
-      <div class="col-sm-6 col-lg-3 reveal">
-        <div class="plan-card h-100">
-          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Trial</div>
-          <div class="plan-price mt-2"><sup>₹</sup>2<small>/mo</small></div>
-          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">3-month validity · getting started</p>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 3 users</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 50 observations</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Safety Observations</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work (PTW)</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Training &amp; Skills</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV &amp; Excel export</div>
-          <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt d-block text-center mt-4">Get Started</a>
-        </div>
-      </div>
-      <!-- Starter -->
-      <div class="col-sm-6 col-lg-3 reveal" style="transition-delay:.1s;">
-        <div class="plan-card h-100">
-          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Starter</div>
-          <div class="plan-price mt-2"><sup>₹</sup>1,999<small>/mo</small></div>
-          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For small safety teams</p>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 25 users</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 2,500 observations</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Safety Observations</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work (PTW)</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Training &amp; Skills</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV &amp; Excel export</div>
-          <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt d-block text-center mt-4">Start Free Trial</a>
-        </div>
-      </div>
-      <!-- Pro (featured) -->
-      <div class="col-sm-6 col-lg-3 reveal" style="transition-delay:.2s;">
-        <div class="plan-card featured h-100">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <span style="font-weight:700;font-size:1rem;">Pro</span>
-            <span class="plan-badge">Most Popular</span>
-          </div>
-          <div class="plan-price mt-2"><sup>₹</sup>4,999<small>/mo</small></div>
-          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For growing safety teams</p>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 50 users</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 5,000 observations</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Safety Observations</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work (PTW)</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Training &amp; Skills</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV &amp; Excel export</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Priority support</div>
-          <a href="{% url 'core:organization_signup' %}" class="btn-primary-mkt d-block text-center mt-4">Start Free Trial</a>
-        </div>
-      </div>
-      <!-- Enterprise -->
-      <div class="col-sm-6 col-lg-3 reveal" style="transition-delay:.3s;">
-        <div class="plan-card h-100">
-          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Enterprise</div>
-          <div class="plan-price mt-2"><sup>₹</sup>10,000<small>/mo</small></div>
-          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For large organisations</p>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 50 users</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 10,000 observations</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Safety Observations</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work (PTW)</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Training &amp; Skills</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV &amp; Excel export</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Priority support</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Dedicated onboarding</div>
-          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> SLA guarantee</div>
-          <a href="{% url 'core:request_demo' %}" class="btn-secondary-mkt d-block text-center mt-4">Talk to Sales</a>
-        </div>
-      </div>
-    </div>
-    <!-- Free Plan note -->
-    <div class="row mt-4">
-      <div class="col text-center">
-        <p style="font-size:.9rem;color:var(--muted);">
-          Need the Free plan? Request access — approved by our team.&nbsp;
-          <a href="{% url 'core:request_free_plan' %}" style="font-weight:600;color:var(--primary);white-space:nowrap;">
-            Request Free Plan &rarr;
-          </a>
-        </p>
-      </div>
+      <a href="{% url 'core:pricing' %}" class="btn-primary-mkt" style="white-space:nowrap;padding:11px 26px;font-size:.9rem;flex-shrink:0;">
+        See Pricing &rarr;
+      </a>
     </div>
   </div>
 </section>
@@ -1059,7 +975,7 @@
       <div class="col-6 col-lg-2">
         <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Product</div>
         <a href="{% url 'core:organization_signup' %}" class="footer-link">Start Free Trial</a>
-        <a href="{% url 'core:billing' %}" class="footer-link">Pricing</a>
+        <a href="{% url 'core:pricing' %}" class="footer-link">Pricing</a>
         <a href="{% url 'core:request_demo' %}" class="footer-link">Request Demo</a>
       </div>
       <div class="col-6 col-lg-2">

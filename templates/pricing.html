@@ -1,0 +1,626 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Pricing — Vigilo Safety Management{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── Tokens ──────────────────────────────────────────────────────────── */
+:root {
+  --green:      #16a34a;
+  --green-lt:   #22c55e;
+  --green-bg:   #f0fdf4;
+  --green-mid:  #dcfce7;
+  --teal:       #0d9488;
+  --navy:       #0f172a;
+  --slate:      #334155;
+  --muted:      #64748b;
+  --border:     #e2e8f0;
+  --off:        #f8fafc;
+  --white:      #ffffff;
+}
+
+.mkt { font-family: 'DM Sans', sans-serif; color: var(--slate); }
+.mkt h1,.mkt h2,.mkt h3,.mkt h4 { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--navy); }
+
+/* ─── CTA buttons ──────────────────────────────────────────────────────── */
+.btn-primary-mkt {
+  background: var(--green); color: var(--white);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .95rem; font-weight: 700;
+  padding: 14px 30px; border-radius: 8px; border: none;
+  text-decoration: none; display: inline-block;
+  transition: background .2s, box-shadow .2s, transform .15s;
+  box-shadow: 0 4px 14px rgba(22,163,74,.35);
+}
+.btn-primary-mkt:hover {
+  background: #15803d; color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(22,163,74,.4);
+}
+.btn-secondary-mkt {
+  background: var(--white); color: var(--navy);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .95rem; font-weight: 600;
+  padding: 13px 28px; border-radius: 8px;
+  border: 1.5px solid var(--border);
+  text-decoration: none; display: inline-block;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.btn-secondary-mkt:hover {
+  border-color: var(--green); color: var(--green);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+
+/* ─── Section headings ─────────────────────────────────────────────────── */
+.section-kicker {
+  font-size: .78rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--green);
+  margin-bottom: 10px; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.section-h {
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800; line-height: 1.15; letter-spacing: -.02em;
+}
+
+/* ─── Pricing hero ─────────────────────────────────────────────────────── */
+.pricing-hero {
+  background: var(--white);
+  position: relative; overflow: hidden;
+  padding: 72px 0 56px; text-align: center;
+}
+.pricing-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(22,163,74,.07) 0%, transparent 70%);
+}
+
+/* ─── Plan cards ───────────────────────────────────────────────────────── */
+.plan-card {
+  background: var(--white); border: 1.5px solid var(--border);
+  border-radius: 14px; padding: 28px; transition: all .25s; height: 100%;
+}
+.plan-card.featured {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(22,163,74,.08);
+}
+.plan-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.1); }
+.plan-badge {
+  background: var(--green); color: var(--white);
+  font-size: .72rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 100px;
+}
+.plan-price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2.5rem; font-weight: 800; color: var(--navy); line-height: 1;
+}
+.plan-price sup { font-size: 1.2rem; vertical-align: top; margin-top: 8px; }
+.plan-price small { font-size: .9rem; color: var(--muted); font-weight: 400; }
+.plan-feature { display: flex; align-items: center; gap: 8px; font-size: .87rem; color: var(--slate); padding: 6px 0; }
+.plan-feature i { color: var(--green); font-size: .9rem; }
+
+/* ─── Comparison table ─────────────────────────────────────────────────── */
+.compare-table {
+  width: 100%; border-collapse: collapse;
+  font-family: 'DM Sans', sans-serif; font-size: .9rem;
+}
+.compare-table th {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700; text-align: center;
+  padding: 16px 12px; border-bottom: 2px solid var(--border);
+  color: var(--navy);
+}
+.compare-table th.featured-col {
+  color: var(--green);
+  background: var(--green-bg);
+  border-radius: 8px 8px 0 0;
+}
+.compare-table th.feature-col { text-align: left; color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+.compare-table td {
+  text-align: center; padding: 13px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--slate);
+}
+.compare-table td.feature-name { text-align: left; color: var(--navy); font-weight: 500; }
+.compare-table td.featured-col { background: rgba(240,253,244,.5); }
+.compare-table tr:hover td { background: var(--off); }
+.compare-table tr:hover td.featured-col { background: rgba(240,253,244,.8); }
+.check-yes { color: var(--green); font-size: 1.05rem; }
+.check-no { color: #cbd5e1; font-size: 1.05rem; }
+.compare-table tr.section-row td {
+  background: var(--off); color: var(--muted);
+  font-size: .75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; padding: 10px 12px;
+}
+
+/* ─── FAQ ──────────────────────────────────────────────────────────────── */
+.faq-item {
+  border-bottom: 1px solid var(--border); padding: 20px 0;
+}
+.faq-item:last-child { border-bottom: none; }
+.faq-q {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700; font-size: 1rem; color: var(--navy);
+  cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; user-select: none;
+}
+.faq-q .faq-icon { color: var(--green); font-size: 1.1rem; flex-shrink: 0; transition: transform .25s; }
+.faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+.faq-a { font-size: .92rem; color: var(--muted); line-height: 1.75; margin-top: 10px; display: none; }
+
+/* ─── Final CTA ────────────────────────────────────────────────────────── */
+.final-cta {
+  background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+  border: 1px solid #bbf7d0; border-radius: 20px;
+  padding: 64px 48px; text-align: center;
+}
+
+/* ─── Footer ───────────────────────────────────────────────────────────── */
+.mkt-footer { background: var(--navy); padding: 48px 0 32px; }
+.footer-brand { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--white); font-size: 1.3rem; }
+.footer-tagline { font-size: .83rem; color: #64748b; margin-top: 6px; }
+.footer-link { color: #94a3b8; text-decoration: none; font-size: .85rem; display: block; margin-bottom: 8px; transition: color .2s; }
+.footer-link:hover { color: var(--green-lt); }
+.footer-divider { border-color: rgba(255,255,255,.08); margin: 32px 0 24px; }
+.footer-copy { font-size: .78rem; color: #475569; }
+
+/* ─── Scroll animations ────────────────────────────────────────────────── */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .65s ease, transform .65s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mkt" style="margin:-1.5rem;">
+
+<!-- ── PRICING HERO ───────────────────────────────────────────────────── -->
+<section class="pricing-hero">
+  <div class="container" style="position:relative;z-index:2;">
+    <div class="section-kicker justify-content-center d-flex">Pricing</div>
+    <h1 style="font-size:clamp(2.2rem,5vw,3.4rem);font-weight:800;letter-spacing:-.02em;color:var(--navy);margin-top:8px;">
+      Simple, transparent pricing.
+    </h1>
+    <p style="font-size:1.1rem;color:var(--muted);max-width:500px;margin:14px auto 0;line-height:1.7;">
+      Start free. Upgrade when your team grows. No contracts, no hidden fees.
+    </p>
+    <div class="d-flex justify-content-center gap-2 flex-wrap mt-4" style="font-size:.85rem;color:var(--muted);">
+      <span><i class="bi bi-check-circle-fill" style="color:var(--green);"></i> Free 14-day trial</span>
+      <span class="mx-1">·</span>
+      <span><i class="bi bi-check-circle-fill" style="color:var(--green);"></i> No credit card required</span>
+      <span class="mx-1">·</span>
+      <span><i class="bi bi-check-circle-fill" style="color:var(--green);"></i> Cancel anytime</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── PLAN CARDS ─────────────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--off);">
+  <div class="container">
+    <div class="row g-4 justify-content-center">
+
+      <!-- Trial -->
+      <div class="col-sm-6 col-lg-3 reveal">
+        <div class="plan-card h-100 d-flex flex-column">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Trial</div>
+          <div class="plan-price mt-2"><sup>₹</sup>2<small>/mo</small></div>
+          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">3-month validity · getting started</p>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 3 users</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 50 observations/mo</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Safety Observations</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work (PTW)</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Training &amp; Skills</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV &amp; Excel export</div>
+          <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt d-block text-center mt-auto pt-4">Get Started</a>
+        </div>
+      </div>
+
+      <!-- Starter -->
+      <div class="col-sm-6 col-lg-3 reveal" style="transition-delay:.1s;">
+        <div class="plan-card h-100 d-flex flex-column">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Starter</div>
+          <div class="plan-price mt-2"><sup>₹</sup>1,999<small>/mo</small></div>
+          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For small safety teams</p>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 25 users</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 2,500 observations/mo</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Safety Observations</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work (PTW)</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Training &amp; Skills</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV &amp; Excel export</div>
+          <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt d-block text-center mt-auto pt-4">Start Free Trial</a>
+        </div>
+      </div>
+
+      <!-- Pro (featured) -->
+      <div class="col-sm-6 col-lg-3 reveal" style="transition-delay:.2s;">
+        <div class="plan-card featured h-100 d-flex flex-column">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-weight:700;font-size:1rem;">Pro</span>
+            <span class="plan-badge">Most Popular</span>
+          </div>
+          <div class="plan-price mt-2"><sup>₹</sup>4,999<small>/mo</small></div>
+          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For growing safety teams</p>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 50 users</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 5,000 observations/mo</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Safety Observations</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work (PTW)</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Training &amp; Skills</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV &amp; Excel export</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Priority support</div>
+          <a href="{% url 'core:organization_signup' %}" class="btn-primary-mkt d-block text-center mt-auto pt-4">Start Free Trial</a>
+        </div>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="col-sm-6 col-lg-3 reveal" style="transition-delay:.3s;">
+        <div class="plan-card h-100 d-flex flex-column">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Enterprise</div>
+          <div class="plan-price mt-2"><sup>₹</sup>10,000<small>/mo</small></div>
+          <p style="font-size:.83rem;color:var(--muted);margin:10px 0 16px;">For large organisations</p>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 50 users</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> 10,000 observations/mo</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Safety Observations</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Permit to Work (PTW)</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Training &amp; Skills</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Email alerts</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Analytics dashboard</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> CSV &amp; Excel export</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Priority support</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> Dedicated onboarding</div>
+          <div class="plan-feature"><i class="bi bi-check-circle-fill"></i> SLA guarantee</div>
+          <a href="{% url 'core:request_demo' %}" class="btn-secondary-mkt d-block text-center mt-auto pt-4">Talk to Sales</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Free Plan note -->
+    <div class="text-center mt-4">
+      <p style="font-size:.9rem;color:var(--muted);">
+        Need a free plan? Request access — approved by our team.&nbsp;
+        <a href="{% url 'core:request_free_plan' %}" style="font-weight:600;color:var(--green);white-space:nowrap;">
+          Request Free Plan &rarr;
+        </a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURE COMPARISON TABLE ───────────────────────────────────────── -->
+<section class="py-5" style="background:var(--white);">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <div class="section-kicker">Compare plans</div>
+      <h2 class="section-h">Everything you get, side by side.</h2>
+    </div>
+
+    <div class="table-responsive reveal">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th class="feature-col" style="width:35%;">Feature</th>
+            <th>Trial<br><small style="font-weight:400;color:var(--muted);">₹2/mo</small></th>
+            <th>Starter<br><small style="font-weight:400;color:var(--muted);">₹1,999/mo</small></th>
+            <th class="featured-col">Pro<br><small style="font-weight:400;">₹4,999/mo</small></th>
+            <th>Enterprise<br><small style="font-weight:400;color:var(--muted);">₹10,000/mo</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Limits -->
+          <tr class="section-row">
+            <td colspan="5">Limits</td>
+          </tr>
+          <tr>
+            <td class="feature-name">Users</td>
+            <td>3</td><td>25</td><td class="featured-col">50</td><td>50</td>
+          </tr>
+          <tr>
+            <td class="feature-name">Observations per month</td>
+            <td>50</td><td>2,500</td><td class="featured-col">5,000</td><td>10,000</td>
+          </tr>
+          <tr>
+            <td class="feature-name">Validity</td>
+            <td>3 months</td><td>Monthly</td><td class="featured-col">Monthly</td><td>Monthly</td>
+          </tr>
+
+          <!-- Modules -->
+          <tr class="section-row">
+            <td colspan="5">Modules</td>
+          </tr>
+          <tr>
+            <td class="feature-name">Safety Observations</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Permit to Work (PTW)</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Training &amp; Skills</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+
+          <!-- Core features -->
+          <tr class="section-row">
+            <td colspan="5">Core Features</td>
+          </tr>
+          <tr>
+            <td class="feature-name">Email alerts &amp; notifications</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Analytics dashboard</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">CSV &amp; Excel export</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">PDF reports &amp; certificates</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Corrective action tracking</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Contractor &amp; worker accounts</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+
+          <!-- Support -->
+          <tr class="section-row">
+            <td colspan="5">Support &amp; Service</td>
+          </tr>
+          <tr>
+            <td class="feature-name">Email support</td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Priority support</td>
+            <td><i class="bi bi-dash check-no"></i></td>
+            <td><i class="bi bi-dash check-no"></i></td>
+            <td class="featured-col"><i class="bi bi-check-circle-fill check-yes"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">Dedicated onboarding</td>
+            <td><i class="bi bi-dash check-no"></i></td>
+            <td><i class="bi bi-dash check-no"></i></td>
+            <td class="featured-col"><i class="bi bi-dash check-no"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+          <tr>
+            <td class="feature-name">SLA guarantee</td>
+            <td><i class="bi bi-dash check-no"></i></td>
+            <td><i class="bi bi-dash check-no"></i></td>
+            <td class="featured-col"><i class="bi bi-dash check-no"></i></td>
+            <td><i class="bi bi-check-circle-fill check-yes"></i></td>
+          </tr>
+
+          <!-- CTA row -->
+          <tr>
+            <td></td>
+            <td style="padding-top:20px;">
+              <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt d-block text-center" style="padding:10px 14px;font-size:.85rem;">Get Started</a>
+            </td>
+            <td style="padding-top:20px;">
+              <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt d-block text-center" style="padding:10px 14px;font-size:.85rem;">Start Trial</a>
+            </td>
+            <td class="featured-col" style="padding-top:20px;">
+              <a href="{% url 'core:organization_signup' %}" class="btn-primary-mkt d-block text-center" style="padding:10px 14px;font-size:.85rem;">Start Trial</a>
+            </td>
+            <td style="padding-top:20px;">
+              <a href="{% url 'core:request_demo' %}" class="btn-secondary-mkt d-block text-center" style="padding:10px 14px;font-size:.85rem;">Talk to Sales</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ────────────────────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--off);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <div class="text-center mb-5 reveal">
+          <div class="section-kicker">FAQ</div>
+          <h2 class="section-h">Common questions.</h2>
+        </div>
+
+        <div class="faq-item reveal">
+          <div class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+            Is there a free plan?
+            <i class="bi bi-plus faq-icon"></i>
+          </div>
+          <div class="faq-a">
+            Yes — we offer a free plan for teams that qualify. It's approved on request rather than
+            self-serve to ensure a good fit. <a href="{% url 'core:request_free_plan' %}" style="color:var(--green);font-weight:600;">Apply here</a>.
+          </div>
+        </div>
+
+        <div class="faq-item reveal" style="transition-delay:.05s;">
+          <div class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+            What happens when my Trial plan expires?
+            <i class="bi bi-plus faq-icon"></i>
+          </div>
+          <div class="faq-a">
+            Your data is preserved. You'll be prompted to upgrade to a paid plan to continue using
+            Vigilo. We never delete your records — upgrades are instant and your team can pick up
+            exactly where they left off.
+          </div>
+        </div>
+
+        <div class="faq-item reveal" style="transition-delay:.1s;">
+          <div class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+            Can I change my plan later?
+            <i class="bi bi-plus faq-icon"></i>
+          </div>
+          <div class="faq-a">
+            Yes, absolutely. You can upgrade or downgrade at any time. Upgrades take effect immediately.
+            Downgrades apply at the start of your next billing cycle.
+          </div>
+        </div>
+
+        <div class="faq-item reveal" style="transition-delay:.15s;">
+          <div class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+            What counts as a "user"?
+            <i class="bi bi-plus faq-icon"></i>
+          </div>
+          <div class="faq-a">
+            Any person with an account in your organisation — managers, safety officers, observers,
+            action owners, and contractors. Worker accounts (no-email, PIN-based) also count toward
+            your user limit.
+          </div>
+        </div>
+
+        <div class="faq-item reveal" style="transition-delay:.2s;">
+          <div class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+            Is my data secure?
+            <i class="bi bi-plus faq-icon"></i>
+          </div>
+          <div class="faq-a">
+            Yes. Vigilo is hosted on AWS (Mumbai region) with encrypted data at rest and in transit.
+            Each organisation's data is fully isolated — no data is shared between organisations.
+          </div>
+        </div>
+
+        <div class="faq-item reveal" style="transition-delay:.25s;">
+          <div class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+            Do you offer a demo before I sign up?
+            <i class="bi bi-plus faq-icon"></i>
+          </div>
+          <div class="faq-a">
+            Yes — <a href="{% url 'core:request_demo' %}" style="color:var(--green);font-weight:600;">request a demo</a>
+            and our team will walk you through the platform with your use case in mind. Typically
+            scheduled within 1–2 business days.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINAL CTA ──────────────────────────────────────────────────────── -->
+<section class="py-5" style="background:var(--white);">
+  <div class="container">
+    <div class="final-cta reveal">
+      <div class="section-kicker" style="justify-content:center;display:flex;">Get Started Today</div>
+      <h2 class="section-h mt-2" style="font-size:clamp(1.8rem,4vw,2.8rem);">
+        Your next incident is<br>still preventable.
+      </h2>
+      <p style="color:var(--muted);font-size:1rem;max-width:420px;margin:14px auto 28px;line-height:1.75;">
+        Join safety teams replacing clipboards and spreadsheets with Vigilo.
+      </p>
+      <div class="d-flex justify-content-center flex-wrap gap-3">
+        <a href="{% url 'core:organization_signup' %}" class="btn-primary-mkt" style="font-size:1rem;padding:15px 36px;">
+          Start Free Trial
+        </a>
+        <a href="{% url 'core:request_demo' %}" class="btn-secondary-mkt" style="font-size:1rem;padding:15px 36px;">
+          Get a Demo
+        </a>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:16px;">
+        No credit card required &nbsp;·&nbsp; 14-day free trial &nbsp;·&nbsp; Cancel anytime
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────────────── -->
+<footer class="mkt-footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="footer-brand">🦺 Vigilo</div>
+        <div class="footer-tagline">Safety · Permits · Training<br>Built for the field. Trusted by managers.</div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Product</div>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Start Free Trial</a>
+        <a href="{% url 'core:pricing' %}" class="footer-link">Pricing</a>
+        <a href="{% url 'core:request_demo' %}" class="footer-link">Request Demo</a>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Features</div>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Safety Observations</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Permit to Work</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Training &amp; Skills</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Analytics</a>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Account</div>
+        <a href="{% url 'users:login' %}" class="footer-link">Login</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Sign Up</a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="footer-copy">© 2026 Vigilo. All rights reserved.</div>
+      <div class="footer-copy">Built with ❤️ for safer workplaces.</div>
+    </div>
+  </div>
+</footer>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Scroll reveal
+const revealEls = document.querySelectorAll('.reveal');
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); }
+  });
+}, { threshold: 0.1 });
+revealEls.forEach(el => revealObs.observe(el));
+
+// FAQ accordion
+function toggleFaq(el) {
+  const expanded = el.getAttribute('aria-expanded') === 'true';
+  el.setAttribute('aria-expanded', !expanded);
+  const answer = el.nextElementSibling;
+  answer.style.display = expanded ? 'none' : 'block';
+}
+</script>
+{% endblock %}
