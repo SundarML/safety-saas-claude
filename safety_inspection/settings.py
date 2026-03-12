@@ -211,8 +211,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ---------------------------------------------------------------------------
 # Email — Brevo (Sendinblue)
 # ---------------------------------------------------------------------------
-BREVO_API_KEY     = os.environ.get("BREVO_API_KEY", "")
+BREVO_API_KEY      = os.environ.get("BREVO_API_KEY", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "SafetySuite <noreply@yourdomain.com>")
+ADMIN_EMAIL        = os.environ.get("ADMIN_EMAIL", "")
 
 
 # ---------------------------------------------------------------------------

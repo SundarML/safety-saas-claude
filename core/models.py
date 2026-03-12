@@ -55,14 +55,25 @@ class ContractorInvite(models.Model):
 
 
 class DemoRequest(models.Model):
+    STATUS_CHOICES = [
+        ("new",       "New"),
+        ("contacted", "Contacted"),
+        ("scheduled", "Demo Scheduled"),
+        ("done",      "Done"),
+        ("dropped",   "Dropped"),
+    ]
+
     full_name = models.CharField(max_length=200)
     email = models.EmailField()
     whatsapp_number = models.CharField(max_length=20)
     company = models.CharField(max_length=200)
     job_title = models.CharField(max_length=200, blank=True)
     message = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
+    notes = models.TextField(blank=True, help_text="Internal notes — not visible to the requester")
 
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.full_name} ({self.company})"

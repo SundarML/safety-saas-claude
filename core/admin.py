@@ -4,16 +4,49 @@ from .models import Organization, Subscription, DemoRequest, FreePlanRequest, Co
 from users.models import CustomUser
 
 
+# ---------------------------------------------------------------------------
+# Demo Request
+# ---------------------------------------------------------------------------
+
+def mark_contacted(modeladmin, request, queryset):
+    queryset.update(status="contacted")
+mark_contacted.short_description = "Mark as Contacted"
+
+def mark_scheduled(modeladmin, request, queryset):
+    queryset.update(status="scheduled")
+mark_scheduled.short_description = "Mark as Demo Scheduled"
+
+def mark_done(modeladmin, request, queryset):
+    queryset.update(status="done")
+mark_done.short_description = "Mark as Done"
+
+def mark_dropped(modeladmin, request, queryset):
+    queryset.update(status="dropped")
+mark_dropped.short_description = "Mark as Dropped"
+
+
 @admin.register(DemoRequest)
 class DemoRequestAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "company", "email", "whatsapp_number", "created_at", "message")
+    list_display  = ("full_name", "company", "job_title", "email", "whatsapp_number", "status", "created_at")
+    list_filter   = ("status",)
     search_fields = ("full_name", "email", "company")
+    ordering      = ("-created_at",)
+    date_hierarchy = "created_at"
+    actions       = [mark_contacted, mark_scheduled, mark_done, mark_dropped]
+    readonly_fields = ("created_at", "updated_at")
+    fields        = (
+        "full_name", "company", "job_title", "email", "whatsapp_number",
+        "message", "status", "notes", "created_at", "updated_at",
+    )
 
+
+# ---------------------------------------------------------------------------
+# Free Plan Request
+# ---------------------------------------------------------------------------
 
 def approve_requests(modeladmin, request, queryset):
     queryset.update(status="approved", reviewed_at=timezone.now())
 approve_requests.short_description = "Approve selected requests"
-
 
 def reject_requests(modeladmin, request, queryset):
     queryset.update(status="rejected", reviewed_at=timezone.now())
@@ -22,13 +55,19 @@ reject_requests.short_description = "Reject selected requests"
 
 @admin.register(FreePlanRequest)
 class FreePlanRequestAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "company", "email", "whatsapp_number", "status", "created_at")
-    list_filter = ("status",)
+    list_display  = ("full_name", "company", "job_title", "email", "whatsapp_number", "status", "created_at")
+    list_filter   = ("status",)
     search_fields = ("full_name", "email", "company")
-    actions = [approve_requests, reject_requests]
+    ordering      = ("-created_at",)
+    date_hierarchy = "created_at"
+    actions       = [approve_requests, reject_requests]
+    readonly_fields = ("created_at", "reviewed_at")
 
 
-# ---------- INLINE USERS ----------
+# ---------------------------------------------------------------------------
+# Organization
+# ---------------------------------------------------------------------------
+
 class UserInline(admin.TabularInline):
     model = CustomUser
     extra = 0
@@ -37,30 +76,46 @@ class UserInline(admin.TabularInline):
     show_change_link = True
 
 
-# ---------- ORGANIZATION ADMIN ----------
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ("name", "domain")
+    list_display  = ("name", "domain")
     search_fields = ("name", "domain")
-
-    # ⭐ This enables inline users
-    inlines = [UserInline]
+    inlines       = [UserInline]
 
 
-# # Optional (recommended)
-# @admin.register(Plan)
-# class PlanAdmin(admin.ModelAdmin):
-#     list_display = ("name", "max_users", "max_observations")
+# ---------------------------------------------------------------------------
+# Subscription
+# ---------------------------------------------------------------------------
+
+def _expires(obj):
+    if obj.expires_at:
+        return obj.expires_at.strftime("%Y-%m-%d")
+    return "—"
+_expires.short_description = "Expires"
+
+def _trial(obj):
+    return "Yes" if obj.is_trial() else "No"
+_trial.short_description = "Trial?"
+
+def _active(obj):
+    return "Yes" if obj.is_active else "No"
+_active.short_description = "Active?"
 
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    # list_display = ("organization", "plan", "start_date", "end_date")
-    list_display = ("organization", "plan")
+    list_display  = ("organization", "plan", _trial, _active, _expires)
+    list_filter   = ("is_active", "plan")
+    search_fields = ("organization__name",)
+    ordering      = ("-created_at",)
 
+
+# ---------------------------------------------------------------------------
+# Contractor Invite
+# ---------------------------------------------------------------------------
 
 @admin.register(ContractorInvite)
 class ContractorInviteAdmin(admin.ModelAdmin):
-    list_display = ("email", "organization", "is_used", "access_validity_days", "created_at", "expires_at")
-    list_filter = ("is_used", "organization")
+    list_display  = ("email", "organization", "is_used", "access_validity_days", "created_at", "expires_at")
+    list_filter   = ("is_used", "organization")
     search_fields = ("email",)

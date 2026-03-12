@@ -50,7 +50,9 @@ def request_demo_view(request):
     if request.method == "POST":
         form = DemoRequestForm(request.POST)
         if form.is_valid():
-            form.save()
+            demo = form.save()
+            from core.utils.email import notify_admin_demo_request
+            notify_admin_demo_request(demo)
             messages.success(
                 request,
                 "Thank you! Our team will contact you shortly to schedule the demo.",
@@ -66,7 +68,9 @@ def request_free_plan_view(request):
     if request.method == "POST":
         form = FreePlanRequestForm(request.POST)
         if form.is_valid():
-            form.save()
+            free_req = form.save()
+            from core.utils.email import notify_admin_free_plan_request
+            notify_admin_free_plan_request(free_req)
             messages.success(
                 request,
                 "Thank you! Our team will review your request and get back to you shortly.",
