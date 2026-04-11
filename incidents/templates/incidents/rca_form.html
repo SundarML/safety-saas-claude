@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}5-Whys RCA — {{ incident.reference_no }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.why-card { border-left:4px solid #fde68a; border-radius:0 8px 8px 0; background:#fffbeb; padding:16px; margin-bottom:12px; }
+.why-label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#92400e; margin-bottom:6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'incidents:detail' incident.pk %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <div>
+    <h5 class="fw-bold mb-0">Root Cause Analysis — 5 Whys</h5>
+    <p class="text-muted small mb-0">{{ incident.reference_no }} — {{ incident.title }}</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+      <div class="card-body p-4">
+        <p class="text-muted small mb-4">
+          The <strong>5-Whys</strong> technique drills down to the root cause by asking "Why?" repeatedly.
+          Answer each Why based on the previous answer. Stop when you reach the root cause.
+          Not all 5 levels are required — stop when you reach the fundamental reason.
+        </p>
+        <form method="post">
+          {% csrf_token %}
+
+          <!-- Immediate cause -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold small">{{ form.immediate_cause.label }}</label>
+            {{ form.immediate_cause }}
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold small">{{ form.contributing_factors.label }}</label>
+            {{ form.contributing_factors }}
+          </div>
+
+          <hr>
+          <div class="fw-semibold mb-3" style="color:#92400e;">
+            <i class="bi bi-diagram-3 me-1"></i>5-Whys Analysis
+          </div>
+
+          {% for why_field, label in form.rca_why_1,form.rca_why_2,form.rca_why_3,form.rca_why_4,form.rca_why_5|zip %}
+          {% endfor %}
+
+          <div class="why-card">
+            <div class="why-label">Why 1 — Why did the incident occur?</div>
+            {{ form.rca_why_1 }}
+          </div>
+          <div class="why-card">
+            <div class="why-label">Why 2 — Why? (answer to Why 1)</div>
+            {{ form.rca_why_2 }}
+          </div>
+          <div class="why-card">
+            <div class="why-label">Why 3 — Why? (answer to Why 2)</div>
+            {{ form.rca_why_3 }}
+          </div>
+          <div class="why-card">
+            <div class="why-label">Why 4 — Why? (answer to Why 3)</div>
+            {{ form.rca_why_4 }}
+          </div>
+          <div class="why-card">
+            <div class="why-label">Why 5 — Why? (answer to Why 4)</div>
+            {{ form.rca_why_5 }}
+          </div>
+
+          <div class="mt-4 p-4 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+            <label class="form-label fw-bold" style="color:#15803d;">
+              <i class="bi bi-bullseye me-1"></i>{{ form.rca_root_cause.label }}
+            </label>
+            {{ form.rca_root_cause }}
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-warning">
+              <i class="bi bi-save me-1"></i>Save RCA
+            </button>
+            <a href="{% url 'incidents:detail' incident.pk %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+      <div class="card-body p-4">
+        <div class="fw-semibold mb-3 text-muted small">INCIDENT SUMMARY</div>
+        <div class="mb-2"><span class="text-muted small">Type:</span> <strong>{{ incident.get_incident_type_display }}</strong></div>
+        <div class="mb-2"><span class="text-muted small">Severity:</span> <strong>{{ incident.get_severity_display }}</strong></div>
+        <div class="mb-2"><span class="text-muted small">Date:</span> {{ incident.date_occurred|date:"d M Y" }}</div>
+        {% if incident.injured_person_name %}
+        <div class="mb-2"><span class="text-muted small">Person:</span> {{ incident.injured_person_name }}</div>
+        {% endif %}
+        <hr>
+        <div class="text-muted small" style="font-size:.78rem;">
+          <i class="bi bi-info-circle me-1"></i>
+          Fill in only as many "Why" levels as needed to reach the true root cause. Quality over quantity.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

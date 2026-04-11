@@ -23,6 +23,7 @@ from django.views.generic import CreateView, DetailView, UpdateView
 
 from .forms import LocationForm, ObservationCreateForm, RectificationForm, VerificationForm
 from .models import Location, Observation
+from .pdf_report import generate_observation_pdf
 from core.utils.guards import org_required as _org_required
 
 
@@ -539,3 +540,21 @@ def observations_dashboard(request):
         "owner_plot":     pio.to_html(owner_fig,    full_html=False),
         "manager_plot":   pio.to_html(manager_fig,  full_html=False),
     })
+
+
+# ---------------------------------------------------------------------------
+# Observation PDF report
+# ---------------------------------------------------------------------------
+
+@login_required
+def observation_pdf_report(request, pk):
+    obs = get_object_or_404(
+        Observation,
+        pk=pk,
+        organization=request.organization,
+    )
+    pdf_bytes = generate_observation_pdf(obs)
+    filename = f"observation-{obs.pk:04d}.pdf"
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response

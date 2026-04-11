@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{% if my_actions_view %}My Actions{% else %}Action Register{% endif %} — Vigilo{% endblock %}
+
+{% block extra_head %}
+<style>
+.action-card { border-radius:10px; border:1px solid #e2e8f0; transition:box-shadow .2s,border-color .2s; cursor:pointer; }
+.action-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.09); border-color:#1a2c52; }
+
+.priority-critical { background:#fee2e2; color:#991b1b; }
+.priority-high     { background:#ffedd5; color:#9a3412; }
+.priority-medium   { background:#fef9c3; color:#854d0e; }
+.priority-low      { background:#dcfce7; color:#15803d; }
+
+.status-open                 { background:#eff6ff; color:#2563eb; }
+.status-in_progress          { background:#f5f3ff; color:#7c3aed; }
+.status-pending_verification { background:#fff7ed; color:#c2410c; }
+.status-closed               { background:#f0fdf4; color:#16a34a; }
+
+.overdue-row { border-left:3px solid #dc2626 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">{% if my_actions_view %}My Actions{% else %}Action Register{% endif %}</h4>
+    <p class="text-muted small mb-0">
+      {% if my_actions_view %}
+        Your open corrective actions
+      {% else %}
+        All corrective actions raised across all modules
+        {% if overdue_count %}<span class="ms-2 badge bg-danger">{{ overdue_count }} overdue</span>{% endif %}
+      {% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if not my_actions_view %}
+    <a href="{% url 'actions:mine' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-person-check me-1"></i>My Actions
+    </a>
+    {% else %}
+    <a href="{% url 'actions:list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-list-ul me-1"></i>All Actions
+    </a>
+    {% endif %}
+    {% if user.is_manager or user.is_safety_manager %}
+    <a href="{% url 'actions:create' %}" class="btn btn-success btn-sm">
+      <i class="bi bi-plus-circle me-1"></i>New Action
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if not my_actions_view %}
+<!-- Filter bar -->
+<div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
+  <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
+    <select name="status" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      {% for val,label in STATUS_CHOICES %}
+      <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="priority" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+      <option value="">All Priorities</option>
+      {% for val,label in PRIORITY_CHOICES %}
+      <option value="{{ val }}" {% if priority_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="source" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+      <option value="">All Sources</option>
+      {% for val,label in SOURCE_CHOICES %}
+      <option value="{{ val }}" {% if source_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% if status_filter or priority_filter or source_filter %}
+    <a href="{% url 'actions:list' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+    {% endif %}
+  </form>
+</div>
+{% endif %}
+
+{% for action in actions %}
+<div class="card action-card mb-2 {% if action.is_overdue %}overdue-row{% endif %}"
+     onclick="window.location='{% url 'actions:detail' action.pk %}'">
+  <div class="card-body py-3 px-4">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+          <span class="text-muted small fw-semibold" style="font-family:monospace;">CA-{{ action.pk|stringformat:"04d" }}</span>
+          <span class="fw-semibold" style="font-size:.95rem;">{{ action.title }}</span>
+          {% if action.is_overdue %}
+          <span class="badge bg-danger" style="font-size:.65rem;">OVERDUE</span>
+          {% endif %}
+        </div>
+        <div class="text-muted small d-flex gap-3 flex-wrap">
+          {% if action.assigned_to %}
+          <span><i class="bi bi-person me-1"></i>{{ action.assigned_to.get_full_name }}</span>
+          {% else %}
+          <span class="text-danger"><i class="bi bi-person-x me-1"></i>Unassigned</span>
+          {% endif %}
+          <span><i class="bi bi-tag me-1"></i>{{ action.get_source_module_display }}</span>
+          {% if action.due_date %}
+          <span class="{% if action.is_overdue %}text-danger fw-semibold{% endif %}">
+            <i class="bi bi-calendar2 me-1"></i>{{ action.due_date|date:"d M Y" }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge rounded-pill priority-{{ action.priority }} px-2 py-1" style="font-size:.7rem;">
+          {{ action.get_priority_display }}
+        </span>
+        <span class="badge rounded-pill status-{{ action.status }} px-2 py-1" style="font-size:.7rem;">
+          {{ action.get_status_display }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+{% empty %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-check2-all" style="font-size:2.5rem; opacity:.25; display:block; margin-bottom:12px;"></i>
+  {% if my_actions_view %}
+  No open actions assigned to you.
+  {% else %}
+  No actions found.
+  {% if user.is_manager or user.is_safety_manager %}
+  <br><a href="{% url 'actions:create' %}" class="btn btn-success btn-sm mt-3">
+    <i class="bi bi-plus-circle me-1"></i>Create First Action
+  </a>
+  {% endif %}
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

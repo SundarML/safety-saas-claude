@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}CA-{{ action.pk|stringformat:"04d" }} — Actions{% endblock %}
+
+{% block extra_head %}
+<style>
+.info-label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6c757d; margin-bottom:3px; }
+.info-value { font-size:.92rem; color:#212529; }
+.section-card { border:none; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.07); }
+
+.priority-critical { background:#fee2e2; color:#991b1b; }
+.priority-high     { background:#ffedd5; color:#9a3412; }
+.priority-medium   { background:#fef9c3; color:#854d0e; }
+.priority-low      { background:#dcfce7; color:#15803d; }
+
+.status-open                 { background:#eff6ff; color:#2563eb; }
+.status-in_progress          { background:#f5f3ff; color:#7c3aed; }
+.status-pending_verification { background:#fff7ed; color:#c2410c; }
+.status-closed               { background:#f0fdf4; color:#16a34a; }
+
+.workflow-step {
+  display:flex; align-items:center; gap:8px; padding:8px 14px;
+  border-radius:8px; font-size:.82rem; font-weight:600;
+}
+.step-done    { background:#f0fdf4; color:#15803d; }
+.step-active  { background:#eff6ff; color:#2563eb; border:2px solid #93c5fd; }
+.step-pending { background:#f8f9fb; color:#94a3b8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'actions:list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+    <div>
+      <h4 class="fw-bold mb-0">{{ action.title }}</h4>
+      <span class="text-muted small" style="font-family:monospace;">CA-{{ action.pk|stringformat:"04d" }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if can_edit %}
+    <a href="{% url 'actions:edit' action.pk %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-pencil-square me-1"></i>Edit
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Workflow progress bar -->
+<div class="card section-card mb-4">
+  <div class="card-body py-3 px-4">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <div class="workflow-step {% if action.status == 'open' %}step-active{% elif action.status != 'open' %}step-done{% else %}step-pending{% endif %}">
+        <i class="bi bi-{% if action.status != 'open' %}check-circle-fill{% else %}circle{% endif %}"></i> Open
+      </div>
+      <i class="bi bi-chevron-right text-muted"></i>
+      <div class="workflow-step {% if action.status == 'in_progress' %}step-active{% elif action.status in 'pending_verification,closed' %}step-done{% else %}step-pending{% endif %}">
+        <i class="bi bi-{% if action.status in 'pending_verification,closed' %}check-circle-fill{% elif action.status == 'in_progress' %}arrow-clockwise{% else %}circle{% endif %}"></i> In Progress
+      </div>
+      <i class="bi bi-chevron-right text-muted"></i>
+      <div class="workflow-step {% if action.status == 'pending_verification' %}step-active{% elif action.status == 'closed' %}step-done{% else %}step-pending{% endif %}">
+        <i class="bi bi-{% if action.status == 'closed' %}check-circle-fill{% elif action.status == 'pending_verification' %}hourglass-split{% else %}circle{% endif %}"></i> Pending Verification
+      </div>
+      <i class="bi bi-chevron-right text-muted"></i>
+      <div class="workflow-step {% if action.status == 'closed' %}step-done{% else %}step-pending{% endif %}">
+        <i class="bi bi-{% if action.status == 'closed' %}check-circle-fill{% else %}circle{% endif %}"></i> Closed
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left: details -->
+  <div class="col-lg-8">
+
+    <!-- Metadata -->
+    <div class="card section-card mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="info-label">Priority</div>
+            <span class="badge rounded-pill priority-{{ action.priority }} px-2 py-1">
+              {{ action.get_priority_display }}
+            </span>
+          </div>
+          <div class="col-md-3">
+            <div class="info-label">Status</div>
+            <span class="badge rounded-pill status-{{ action.status }} px-2 py-1">
+              {{ action.get_status_display }}
+            </span>
+            {% if action.is_overdue %}<span class="badge bg-danger ms-1" style="font-size:.65rem;">OVERDUE</span>{% endif %}
+          </div>
+          <div class="col-md-3">
+            <div class="info-label">Due Date</div>
+            <div class="info-value {% if action.is_overdue %}text-danger fw-bold{% endif %}">
+              {{ action.due_date|date:"d M Y"|default:"—" }}
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="info-label">Source</div>
+            <div class="info-value">{{ action.get_source_module_display }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-label">Raised By</div>
+            <div class="info-value">{{ action.raised_by.get_full_name|default:"—" }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-label">Assigned To</div>
+            <div class="info-value {% if not action.assigned_to %}text-danger{% endif %}">
+              {{ action.assigned_to.get_full_name|default:"Unassigned" }}
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-label">Created</div>
+            <div class="info-value">{{ action.created_at|date:"d M Y" }}</div>
+          </div>
+        </div>
+
+        {% if action.description %}
+        <div class="mt-3 pt-3 border-top">
+          <div class="info-label">Description</div>
+          <div class="info-value" style="white-space:pre-line;">{{ action.description }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Source link -->
+        {% if action.source_hira_id or action.source_observation_id or action.source_compliance_id %}
+        <div class="mt-3 pt-3 border-top">
+          <div class="info-label">Source Record</div>
+          <div class="info-value">
+            {% if action.source_hira_id %}
+            <a href="{% url 'hira:register_detail' action.source_hira.register_id %}">
+              <i class="bi bi-shield-exclamation me-1 text-warning"></i>
+              HIRA Register #{{ action.source_hira.register_id|stringformat:"04d" }} — {{ action.source_hira.hazard_description|truncatechars:60 }}
+            </a>
+            {% elif action.source_observation_id %}
+            <a href="{% url 'observations:detail' action.source_observation_id %}">
+              <i class="bi bi-binoculars me-1"></i>
+              Observation #{{ action.source_observation_id }} — {{ action.source_observation.title|truncatechars:60 }}
+            </a>
+            {% elif action.source_compliance_id %}
+            <a href="{% url 'compliance:item_detail' action.source_compliance_id %}">
+              <i class="bi bi-shield-check me-1 text-success"></i>
+              {{ action.source_compliance.title|truncatechars:60 }}
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Closure / evidence -->
+    {% if action.closure_notes or action.evidence %}
+    <div class="card section-card mb-4">
+      <div class="card-body">
+        <div class="fw-semibold mb-3" style="color:#1a2c52; font-size:.9rem;">
+          <i class="bi bi-paperclip me-1"></i>Submission Details
+        </div>
+        {% if action.closure_notes %}
+        <div class="mb-3">
+          <div class="info-label">What was done</div>
+          <div class="info-value" style="white-space:pre-line;">{{ action.closure_notes }}</div>
+        </div>
+        {% endif %}
+        {% if action.evidence %}
+        <div>
+          <div class="info-label">Evidence</div>
+          <a href="{{ action.evidence.url }}" target="_blank" class="btn btn-outline-secondary btn-sm mt-1">
+            <i class="bi bi-file-earmark-arrow-down me-1"></i>Download Evidence
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Closure info -->
+    {% if action.status == 'closed' %}
+    <div class="card section-card mb-4" style="border-left:4px solid #16a34a !important;">
+      <div class="card-body">
+        <div class="fw-semibold mb-2 text-success">
+          <i class="bi bi-check-circle-fill me-1"></i>Action Closed
+        </div>
+        <span class="text-muted small">
+          Closed by <strong>{{ action.closed_by.get_full_name|default:"—" }}</strong>
+          on {{ action.closed_at|date:"d M Y H:i" }}
+        </span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Reopen comment -->
+    {% if action.reopen_comment %}
+    <div class="card section-card mb-4" style="border-left:4px solid #ea580c !important;">
+      <div class="card-body">
+        <div class="info-label">Rejection / Reopen Reason</div>
+        <div class="info-value" style="white-space:pre-line;">{{ action.reopen_comment }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Right: action buttons -->
+  <div class="col-lg-4">
+    <div class="card section-card">
+      <div class="card-body p-4">
+        <div class="fw-semibold mb-3" style="color:#1a2c52;">Actions</div>
+
+        {% if can_progress %}
+        <form method="post" action="{% url 'actions:progress' action.pk %}" class="mb-2">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-arrow-clockwise me-1"></i>Mark In Progress
+          </button>
+        </form>
+        {% endif %}
+
+        {% if can_submit %}
+        <button class="btn btn-success w-100 mb-2" type="button"
+                data-bs-toggle="collapse" data-bs-target="#submitPanel">
+          <i class="bi bi-send me-1"></i>Submit for Verification
+        </button>
+        <div class="collapse mb-3" id="submitPanel">
+          <div class="card card-body border" style="border-radius:8px;">
+            <form method="post" action="{% url 'actions:submit' action.pk %}" enctype="multipart/form-data">
+              {% csrf_token %}
+              {% for field in submit_form %}
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">{{ field.label }}</label>
+                {{ field }}
+              </div>
+              {% endfor %}
+              <button type="submit" class="btn btn-success btn-sm w-100">Submit</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if can_verify %}
+        <div class="mb-3">
+          <div class="fw-semibold small mb-2 text-warning">
+            <i class="bi bi-hourglass-split me-1"></i>Awaiting your verification
+          </div>
+          <form method="post" action="{% url 'actions:verify' action.pk %}">
+            {% csrf_token %}
+            {% for choice in verify_form.decision.field.choices %}
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="radio" name="decision"
+                     id="decision_{{ forloop.counter }}" value="{{ choice.0 }}"
+                     {% if forloop.first %}checked{% endif %}>
+              <label class="form-check-label small" for="decision_{{ forloop.counter }}">
+                {{ choice.1 }}
+              </label>
+            </div>
+            {% endfor %}
+            <div class="mt-2">
+              <label class="form-label small">Rejection reason (if sending back)</label>
+              {{ verify_form.reopen_comment }}
+            </div>
+            <button type="submit" class="btn btn-warning btn-sm w-100 mt-2">Submit Decision</button>
+          </form>
+        </div>
+        {% endif %}
+
+        {% if can_reopen %}
+        <button class="btn btn-outline-secondary w-100 btn-sm" type="button"
+                data-bs-toggle="collapse" data-bs-target="#reopenPanel">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Reopen Action
+        </button>
+        <div class="collapse mt-2" id="reopenPanel">
+          <div class="card card-body border" style="border-radius:8px;">
+            <form method="post" action="{% url 'actions:reopen' action.pk %}">
+              {% csrf_token %}
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Reason for reopening</label>
+                <textarea name="reopen_comment" class="form-control form-control-sm" rows="2"
+                          placeholder="Why is this being reopened?"></textarea>
+              </div>
+              <button type="submit" class="btn btn-outline-danger btn-sm w-100">Reopen</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if not can_progress and not can_submit and not can_verify and not can_reopen %}
+        <p class="text-muted small text-center mt-2">No actions available for your role at this stage.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

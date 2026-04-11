@@ -49,6 +49,13 @@
     </form>
     {% endif %}
   {% endif %}
+
+  {% if user.is_manager or user.is_safety_manager %}
+  <a href="{% url 'actions:create' %}?source_module=compliance&source_compliance={{ item.pk }}&title={{ item.title|urlencode }}&priority={% if item.urgency == 'overdue' %}critical{% elif item.urgency == 'urgent' %}high{% else %}medium{% endif %}"
+     class="btn btn-sm btn-outline-warning">
+    <i class="bi bi-plus-circle me-1"></i>Raise Action
+  </a>
+  {% endif %}
 </div>
 
 {% with urgency=item.urgency %}

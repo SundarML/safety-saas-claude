@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}HIRA Registers — Vigilo{% endblock %}
+
+{% block extra_head %}
+<style>
+.register-card { border-radius:10px; border:1px solid #e2e8f0; transition:box-shadow .2s, border-color .2s; cursor:pointer; }
+.register-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.10); border-color:#1a2c52; }
+.risk-critical { background:#fee2e2; color:#dc2626; }
+.risk-high     { background:#ffedd5; color:#ea580c; }
+.risk-medium   { background:#fef9c3; color:#ca8a04; }
+.risk-low      { background:#dcfce7; color:#16a34a; }
+.status-badge-draft        { background:#f1f5f9; color:#475569; }
+.status-badge-under_review { background:#eff6ff; color:#2563eb; }
+.status-badge-approved     { background:#f0fdf4; color:#16a34a; }
+.status-badge-expired      { background:#fef2f2; color:#dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">HIRA Registers</h4>
+    <p class="text-muted small mb-0">All hazard identification and risk assessment registers</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if user.is_manager or user.is_safety_manager %}
+    <a href="{% url 'hira:export_csv' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-filetype-csv me-1"></i>Export CSV
+    </a>
+    <a href="{% url 'hira:export_excel' %}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+    </a>
+    <a href="{% url 'hira:register_create' %}" class="btn btn-success btn-sm">
+      <i class="bi bi-plus-circle me-1"></i>New Register
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="d-flex gap-2 mb-4 flex-wrap">
+  <a href="{% url 'hira:register_list' %}"
+     class="btn btn-sm {% if not status_filter %}btn-dark{% else %}btn-outline-secondary{% endif %}">All</a>
+  <a href="?status=draft"
+     class="btn btn-sm {% if status_filter == 'draft' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Draft</a>
+  <a href="?status=under_review"
+     class="btn btn-sm {% if status_filter == 'under_review' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Under Review</a>
+  <a href="?status=approved"
+     class="btn btn-sm {% if status_filter == 'approved' %}btn-success{% else %}btn-outline-secondary{% endif %}">Approved</a>
+  <a href="?status=expired"
+     class="btn btn-sm {% if status_filter == 'expired' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Expired</a>
+</div>
+
+{% for r in registers %}
+{% with level=r.highest_risk_level %}
+<div class="card register-card mb-3" onclick="window.location='{% url 'hira:register_detail' r.pk %}'">
+  <div class="card-body py-3 px-4">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+          <span class="fw-bold" style="font-size:1rem;">{{ r.title }}</span>
+          <span class="text-muted small">Rev {{ r.revision_no }}</span>
+        </div>
+        <div class="text-muted small">
+          <i class="bi bi-tools me-1"></i>{{ r.activity }}
+          {% if r.location_text %}
+          <span class="ms-3"><i class="bi bi-geo-alt me-1"></i>{{ r.location_text }}</span>
+          {% endif %}
+          <span class="ms-3"><i class="bi bi-person me-1"></i>{{ r.assessed_by.get_full_name|default:"—" }}</span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap text-end">
+        {% if level %}
+        <span class="badge rounded-pill risk-{{ level }} px-2 py-1" style="font-size:.72rem;">
+          {{ level|title }} Risk
+        </span>
+        {% endif %}
+        <span class="badge rounded-pill status-badge-{{ r.status }} px-2 py-1" style="font-size:.72rem;">
+          {{ r.get_status_display }}
+        </span>
+        <span class="text-muted" style="font-size:.8rem;">
+          <i class="bi bi-exclamation-triangle me-1"></i>{{ r.hazards.count }} hazard{{ r.hazards.count|pluralize }}
+        </span>
+        <span class="text-muted" style="font-size:.8rem;">
+          <i class="bi bi-calendar2 me-1"></i>{{ r.assessment_date|date:"d M Y" }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% empty %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-clipboard2-x" style="font-size:2.5rem; opacity:.3; display:block; margin-bottom:12px;"></i>
+  No registers found.
+  {% if user.is_manager or user.is_safety_manager %}
+  <br><a href="{% url 'hira:register_create' %}" class="btn btn-success btn-sm mt-3">
+    <i class="bi bi-plus-circle me-1"></i>Create First Register
+  </a>
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

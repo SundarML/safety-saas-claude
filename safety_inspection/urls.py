@@ -40,6 +40,18 @@ urlpatterns = [
 
     # Legal Compliance app
     path("compliance/", include("compliance.urls", namespace="compliance")),
+
+    # HIRA app
+    path("hira/", include("hira.urls", namespace="hira")),
+
+    # Corrective Actions
+    path("actions/", include("actions.urls", namespace="actions")),
+
+    # Incidents
+    path("incidents/", include("incidents.urls", namespace="incidents")),
+
+    # Inspections
+    path("inspections/", include("inspections.urls", namespace="inspections")),
 ]
 
 if settings.DEBUG:

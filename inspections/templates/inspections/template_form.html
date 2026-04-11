@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}{% if template %}Edit{% else %}New{% endif %} Inspection Template — Vigilo{% endblock %}
+
+{% block extra_head %}
+<style>
+.section-block { border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; background:#fff; overflow:hidden; }
+.section-header { background:#f8f9fb; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid #e2e8f0; }
+.section-title-input { border:none; background:transparent; font-weight:600; font-size:.95rem; color:#1a2c52; width:100%; outline:none; }
+.section-title-input:focus { outline:2px solid #60a5fa; border-radius:4px; }
+.item-row { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid #f1f5f9; }
+.item-row:last-child { border-bottom:none; }
+.item-question { border:1px solid #e2e8f0; border-radius:6px; padding:7px 10px; font-size:.88rem; flex:1; }
+.item-question:focus { outline:none; border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,.15); }
+.critical-toggle { cursor:pointer; }
+.add-item-btn { font-size:.78rem; color:#2563eb; background:none; border:none; padding:8px 16px; cursor:pointer; text-align:left; width:100%; }
+.add-item-btn:hover { background:#f0f7ff; }
+.remove-btn { background:none; border:none; color:#94a3b8; cursor:pointer; padding:2px 4px; font-size:.85rem; }
+.remove-btn:hover { color:#dc2626; }
+#add-section-btn { border:2px dashed #e2e8f0; border-radius:10px; width:100%; padding:14px; background:none; cursor:pointer; color:#94a3b8; font-size:.88rem; transition:border-color .15s,color .15s; }
+#add-section-btn:hover { border-color:#2563eb; color:#2563eb; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'inspections:template_list' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <h5 class="fw-bold mb-0">{% if template %}Edit Template — {{ template.title }}{% else %}New Inspection Template{% endif %}</h5>
+</div>
+
+<form method="post" id="template-form">
+  {% csrf_token %}
+
+  <!-- Basic info -->
+  <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+    <div class="card-body p-4">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label fw-semibold small">Template Title <span class="text-danger">*</span></label>
+          {{ form.title }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small">Category</label>
+          {{ form.category }}
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold small">Description</label>
+          {{ form.description }}
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            {{ form.is_active }}
+            <label class="form-check-label small">Active (available for scheduling)</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sections & Items builder -->
+  <div class="fw-semibold mb-3" style="color:#1a2c52;">
+    <i class="bi bi-list-check me-1"></i>Checklist Sections &amp; Items
+    <span class="text-muted fw-normal small ms-2">Add sections, then add checklist items to each section.</span>
+  </div>
+
+  <div id="sections-container">
+    {% for section in sections %}
+    <div class="section-block" data-section-idx="{{ forloop.counter0 }}">
+      <div class="section-header">
+        <input type="text" name="section_title[]" value="{{ section.title }}"
+               class="section-title-input" placeholder="Section name (e.g. Housekeeping)" required>
+        <input type="hidden" name="section_id[]" value="{{ section.pk }}">
+        <button type="button" class="remove-btn remove-section" title="Remove section">
+          <i class="bi bi-x-circle"></i>
+        </button>
+      </div>
+      <div class="items-container">
+        {% for item in section.items.all %}
+        <div class="item-row">
+          <input type="text" name="item_question[]" value="{{ item.question }}"
+                 class="item-question" placeholder="Checklist item / question" required>
+          <input type="hidden" name="item_section_idx[]" value="{{ forloop.parentloop.counter0 }}">
+          <input type="hidden" name="item_id[]" value="{{ item.pk }}">
+          <label class="critical-toggle d-flex align-items-center gap-1" title="Mark as critical">
+            <input type="checkbox" name="item_critical[]" value="{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
+                   {% if item.is_critical %}checked{% endif %}
+                   class="form-check-input critical-check" style="margin:0;">
+            <span style="font-size:.7rem;color:#ea580c;font-weight:700;">CRITICAL</span>
+          </label>
+          <button type="button" class="remove-btn remove-item" title="Remove item">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" class="add-item-btn">
+        <i class="bi bi-plus me-1"></i>Add item
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button type="button" id="add-section-btn">
+    <i class="bi bi-plus-circle me-2"></i>Add Section
+  </button>
+
+  <div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-save me-1"></i>Save Template
+    </button>
+    <a href="{% url 'inspections:template_list' %}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+
+<!-- Hidden item template for JS cloning -->
+<template id="item-template">
+  <div class="item-row">
+    <input type="text" name="item_question[]" class="item-question" placeholder="Checklist item / question" required>
+    <input type="hidden" name="item_section_idx[]" value="__SIDX__">
+    <input type="hidden" name="item_id[]" value="">
+    <label class="critical-toggle d-flex align-items-center gap-1" title="Mark as critical">
+      <input type="checkbox" name="item_critical[]" value="__SIDX___0"
+             class="form-check-input critical-check" style="margin:0;">
+      <span style="font-size:.7rem;color:#ea580c;font-weight:700;">CRITICAL</span>
+    </label>
+    <button type="button" class="remove-btn remove-item" title="Remove item">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let sectionCount = {{ sections|length }};
+
+function getSectionIdx(sectionBlock) {
+  return parseInt(sectionBlock.dataset.sectionIdx);
+}
+
+function addItem(sectionBlock) {
+  const idx = getSectionIdx(sectionBlock);
+  const tmpl = document.getElementById("item-template").innerHTML
+    .replaceAll("__SIDX__", idx);
+  const container = sectionBlock.querySelector(".items-container");
+  container.insertAdjacentHTML("beforeend", tmpl);
+}
+
+function addSection() {
+  const idx = sectionCount++;
+  const html = `
+  <div class="section-block" data-section-idx="${idx}">
+    <div class="section-header">
+      <input type="text" name="section_title[]" class="section-title-input"
+             placeholder="Section name (e.g. Housekeeping)" required>
+      <input type="hidden" name="section_id[]" value="">
+      <button type="button" class="remove-btn remove-section" title="Remove section">
+        <i class="bi bi-x-circle"></i>
+      </button>
+    </div>
+    <div class="items-container"></div>
+    <button type="button" class="add-item-btn">
+      <i class="bi bi-plus me-1"></i>Add item
+    </button>
+  </div>`;
+  document.getElementById("sections-container").insertAdjacentHTML("beforeend", html);
+  // add first item automatically
+  const block = document.getElementById("sections-container").lastElementChild;
+  addItem(block);
+}
+
+document.getElementById("add-section-btn").addEventListener("click", addSection);
+
+document.getElementById("sections-container").addEventListener("click", function(e) {
+  const addBtn = e.target.closest(".add-item-btn");
+  if (addBtn) {
+    addItem(addBtn.closest(".section-block"));
+    return;
+  }
+  const removeItem = e.target.closest(".remove-item");
+  if (removeItem) {
+    removeItem.closest(".item-row").remove();
+    return;
+  }
+  const removeSection = e.target.closest(".remove-section");
+  if (removeSection) {
+    if (confirm("Remove this section and all its items?")) {
+      removeSection.closest(".section-block").remove();
+    }
+  }
+});
+
+// Add a blank section if none exist
+if (sectionCount === 0) addSection();
+</script>
+{% endblock %}

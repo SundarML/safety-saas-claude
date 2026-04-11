@@ -24,6 +24,9 @@ urlpatterns = [
     # delete observation
     path('<int:pk>/delete/', views.delete_observation, name='delete'),
 
+    # PDF report
+    path('<int:pk>/pdf/', views.observation_pdf_report, name='pdf_report'),
+
     # Dashboard URL
     path('dashboard/', views.observations_dashboard, name='dashboard'),
 

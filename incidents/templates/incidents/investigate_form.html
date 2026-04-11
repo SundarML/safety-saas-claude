@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Start Investigation — {{ incident.reference_no }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'incidents:detail' incident.pk %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <h5 class="fw-bold mb-0">Start Investigation — {{ incident.reference_no }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius:12px; max-width:560px;">
+  <div class="card-body p-4">
+    <p class="text-muted small mb-4">Assign an investigator and set a target date. The incident status will move to <strong>Under Investigation</strong>.</p>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">{{ field.label }}</label>
+        {{ field }}
+      </div>
+      {% endfor %}
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-search me-1"></i>Start Investigation
+        </button>
+        <a href="{% url 'incidents:detail' incident.pk %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

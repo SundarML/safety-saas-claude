@@ -139,11 +139,149 @@
       border-top: 1px solid rgba(255,255,255,.07);
     }
 
+    /* ── SIDEBAR COLLAPSIBLE GROUPS ─────────── */
+    .sb-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 18px 8px;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.38);
+      background: transparent;
+      border: none;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+      text-align: left;
+      margin-top: 6px;
+    }
+    .sb-group-header:hover,
+    .sb-group-header[aria-expanded="true"] {
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.78);
+    }
+    .sb-group-header.has-active {
+      color: rgba(255,255,255,.82);
+      border-left-color: rgba(96,165,250,.40);
+    }
+    .sb-group-header .sb-group-icon { font-size: .85rem; margin-right: 7px; }
+    .sb-chevron {
+      font-size: .72rem;
+      transition: transform .22s ease;
+      opacity: .45;
+      flex-shrink: 0;
+    }
+    .sb-group-header[aria-expanded="true"] .sb-chevron {
+      transform: rotate(180deg);
+      opacity: .85;
+    }
+    .sb-group-content { padding-bottom: 4px; }
+    .sb-group-label {
+      font-size: .57rem;
+      font-weight: 700;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.20);
+      padding: 8px 18px 2px 21px;
+    }
+    .sb-group-label.has-divider {
+      border-top: 1px solid rgba(255,255,255,.05);
+      margin-top: 4px;
+    }
+
     /* ── TRIAL BADGE ─────────────────────────── */
     .trial-badge { animation: pulse 2s infinite; }
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50%       { opacity: .7; }
+    }
+
+    /* ── MOBILE SIDEBAR OVERLAY ──────────────── */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 1040;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+    #sidebar-overlay.show { display: block; }
+
+    /* ── MOBILE: sidebar slides in over content ── */
+    @media (max-width: 991.98px) {
+      #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 1050;
+        margin-left: -240px;
+        transition: margin-left .25s ease;
+      }
+      #sidebar.open { margin-left: 0; }
+      /* remove the desktop collapse class effect on mobile */
+      #sidebar.collapsed { margin-left: -240px; }
+    }
+
+    /* ── MOBILE BOTTOM NAV ───────────────────── */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      background: #0e1729;
+      border-top: 1px solid rgba(255,255,255,.10);
+      z-index: 1030;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .mobile-bottom-nav .nav-items {
+      display: flex;
+      justify-content: space-around;
+      align-items: stretch;
+    }
+    .mobile-bottom-nav a {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 10px 4px;
+      color: rgba(255,255,255,.55);
+      text-decoration: none;
+      font-size: .6rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      min-height: 56px;
+      transition: color .12s;
+    }
+    .mobile-bottom-nav a i { font-size: 1.25rem; line-height: 1; }
+    .mobile-bottom-nav a:hover,
+    .mobile-bottom-nav a.active { color: #60a5fa; }
+    .mobile-bottom-nav a.primary-action {
+      color: #fff;
+      background: rgba(239,68,68,.18);
+    }
+    .mobile-bottom-nav a.primary-action i { color: #f87171; }
+
+    @media (max-width: 991.98px) {
+      .mobile-bottom-nav { display: block; }
+      /* push content above the bottom nav */
+      .flex-grow-1 { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important; }
+    }
+
+    /* ── LARGER TOUCH TARGETS ON MOBILE ─────── */
+    @media (max-width: 991.98px) {
+      .sb-link { padding: 12px 18px; font-size: .9rem; }
+      .form-control, .form-select { min-height: 44px; font-size: 1rem; }
+      .btn { min-height: 40px; }
+      .btn-sm { min-height: 36px; }
     }
   </style>
   {% block extra_head %}{% endblock %}
@@ -398,6 +536,9 @@
   </div>
 </nav>
 
+<!-- ===== SIDEBAR OVERLAY (mobile) ===== -->
+<div id="sidebar-overlay"></div>
+
 <!-- ===== MAIN LAYOUT ===== -->
 <div class="d-flex" style="min-height:calc(100vh - 56px);">
 
@@ -419,142 +560,265 @@
       </span>
     </a>
 
-    <!-- ── OBSERVATIONS (hidden for contractors) ── -->
+    <!-- ── HOME (always visible) ── -->
+    <a href="{% url 'core:app_dashboard' %}"
+       class="sb-link {% if request.path == '/core/app-dashboard/' %}active{% endif %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Go to the main dashboard — KPIs, live counts and quick actions">
+      <i class="bi bi-house-fill"></i> Dashboard
+    </a>
+
     {% if not user.is_contractor %}
-    <div class="sidebar-section">Observations</div>
 
-    <a href="{% url 'observations:create' %}"
-       class="sb-link {% if 'new' in request.path and 'observations' in request.path %}active{% endif %}">
-      <i class="bi bi-plus-circle"></i> Report New
-    </a>
+    <!-- ══ GROUP: SAFETY OPERATIONS ══ -->
+    <button class="sb-group-header" type="button"
+            data-bs-toggle="collapse" data-bs-target="#grp-safety-ops"
+            data-sb-group="safety-ops" aria-expanded="false">
+      <span><i class="bi bi-hard-drive sb-group-icon"></i>Safety Operations</span>
+      <i class="bi bi-chevron-down sb-chevron"></i>
+    </button>
+    <div class="collapse sb-group-content" id="grp-safety-ops">
 
-    <a href="{% url 'observations:dashboard' %}"
-       class="sb-link {% if 'observations' in request.path and 'dashboard' in request.path %}active{% endif %}">
-      <i class="bi bi-bar-chart-line"></i> Dashboard
-    </a>
+      <div class="sb-group-label">Observations</div>
+      <a href="{% url 'observations:create' %}"
+         class="sb-link {% if 'new' in request.path and 'observations' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Log a new safety hazard, unsafe act or unsafe condition">
+        <i class="bi bi-plus-circle"></i> Report New
+      </a>
+      <a href="{% url 'observations:dashboard' %}"
+         class="sb-link {% if 'observations' in request.path and 'dashboard' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="KPIs, trends, severity breakdown and observer performance charts">
+        <i class="bi bi-bar-chart-line"></i> Dashboard
+      </a>
+      <a href="{% url 'observations:observation_list' %}"
+         class="sb-link {% if request.path == '/observations/' %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="View, filter and manage all reported observations">
+        <i class="bi bi-list-ul"></i> All Observations
+      </a>
+      <a href="{% url 'observations:archived_list' %}"
+         class="sb-link {% if 'archived' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Closed and resolved observations moved to archive">
+        <i class="bi bi-archive"></i> Archived
+      </a>
 
-    <a href="{% url 'observations:observation_list' %}"
-       class="sb-link {% if request.path == '/observations/' %}active{% endif %}">
-      <i class="bi bi-list-ul"></i> All Observations
-    </a>
+      <div class="sb-group-label has-divider">Incidents</div>
+      <a href="{% url 'incidents:create' %}"
+         class="sb-link {% if 'incidents' in request.path and 'new' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Report a new incident or near-miss">
+        <i class="bi bi-plus-circle"></i> Report Incident
+      </a>
+      <a href="{% url 'incidents:list' %}"
+         class="sb-link {% if 'incidents' in request.path and 'stats' not in request.path and 'new' not in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="View and manage all reported incidents and near-misses">
+        <i class="bi bi-exclamation-octagon"></i> Incident Register
+      </a>
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'incidents:stats' %}"
+         class="sb-link {% if 'incidents' in request.path and 'stats' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="LTIFR, TRIFR, severity rate and monthly trend charts">
+        <i class="bi bi-bar-chart-line"></i> Statistics
+      </a>
+      {% endif %}
 
-    <a href="{% url 'observations:archived_list' %}"
-       class="sb-link {% if 'archived' in request.path %}active{% endif %}">
-      <i class="bi bi-archive"></i> Archived
-    </a>
+      <div class="sb-group-label has-divider">Permit to Work</div>
+      <a href="{% url 'permits:dashboard' %}"
+         class="sb-link {% if 'permits' in request.path and 'dashboard' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Overview of active, pending and expiring permits">
+        <i class="bi bi-lightning-charge"></i> PTW Dashboard
+      </a>
+      <a href="{% url 'permits:permit_list' %}"
+         class="sb-link {% if request.path == '/permits/' %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="View and manage all permits to work">
+        <i class="bi bi-file-earmark-check"></i> All Permits
+      </a>
+      <a href="{% url 'permits:create' %}"
+         class="sb-link {% if 'permits' in request.path and 'new' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Raise a new permit for high-risk work (hot work, confined space, electrical, etc.)">
+        <i class="bi bi-file-earmark-plus"></i> New Permit
+      </a>
+    </div>
+
+    <!-- ══ GROUP: RISK & COMPLIANCE ══ -->
+    <button class="sb-group-header" type="button"
+            data-bs-toggle="collapse" data-bs-target="#grp-risk"
+            data-sb-group="risk" aria-expanded="false">
+      <span><i class="bi bi-exclamation-triangle sb-group-icon"></i>Risk &amp; Compliance</span>
+      <i class="bi bi-chevron-down sb-chevron"></i>
+    </button>
+    <div class="collapse sb-group-content" id="grp-risk">
+
+      <div class="sb-group-label">Risk Assessment (HIRA)</div>
+      <a href="{% url 'hira:dashboard' %}"
+         class="sb-link {% if 'hira' in request.path and 'registers' not in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Risk level overview — critical, high, medium and low hazard counts across all registers">
+        <i class="bi bi-shield-exclamation"></i> HIRA Dashboard
+      </a>
+      <a href="{% url 'hira:register_list' %}"
+         class="sb-link {% if 'hira' in request.path and 'registers' in request.path and 'new' not in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="View and manage all Hazard Identification &amp; Risk Assessment registers">
+        <i class="bi bi-list-columns"></i> All Registers
+      </a>
+      <a href="{% url 'hira:risk_matrix' %}"
+         class="sb-link {% if 'risk-matrix' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="5×5 risk matrix — see all hazards plotted by likelihood and severity">
+        <i class="bi bi-grid-3x3-gap"></i> Risk Matrix
+      </a>
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'hira:register_create' %}"
+         class="sb-link {% if 'hira' in request.path and 'new' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Create a new HIRA register — identify hazards, assess risk and define controls (ISO 45001)">
+        <i class="bi bi-plus-circle"></i> New Register
+      </a>
+      {% endif %}
+
+      <div class="sb-group-label has-divider">Legal Compliance</div>
+      <a href="{% url 'compliance:dashboard' %}"
+         class="sb-link {% if 'compliance' in request.path and 'add' not in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Track statutory obligations, regulatory due dates and compliance evidence">
+        <i class="bi bi-shield-check"></i> Compliance Register
+      </a>
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'compliance:item_create' %}"
+         class="sb-link {% if 'compliance' in request.path and 'add' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Register a new legal or regulatory obligation with due date and assignee">
+        <i class="bi bi-plus-circle"></i> Add Obligation
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- ══ GROUP: IMPROVEMENT ══ -->
+    <button class="sb-group-header" type="button"
+            data-bs-toggle="collapse" data-bs-target="#grp-improvement"
+            data-sb-group="improvement" aria-expanded="false">
+      <span><i class="bi bi-arrow-up-circle sb-group-icon"></i>Improvement</span>
+      <i class="bi bi-chevron-down sb-chevron"></i>
+    </button>
+    <div class="collapse sb-group-content" id="grp-improvement">
+
+      <div class="sb-group-label">Corrective Actions</div>
+      <a href="{% url 'actions:mine' %}"
+         class="sb-link {% if 'actions' in request.path and 'mine' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Your open corrective actions requiring attention">
+        <i class="bi bi-person-check"></i> My Actions
+      </a>
+      <a href="{% url 'actions:list' %}"
+         class="sb-link {% if 'actions' in request.path and 'mine' not in request.path and 'new' not in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="All corrective actions across observations, HIRA, compliance and manual entries">
+        <i class="bi bi-check2-square"></i> Action Register
+      </a>
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'actions:create' %}"
+         class="sb-link {% if 'actions' in request.path and 'new' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Raise a new corrective action manually">
+        <i class="bi bi-plus-circle"></i> New Action
+      </a>
+      {% endif %}
+
+      <div class="sb-group-label has-divider">Inspections</div>
+      <a href="{% url 'inspections:list' %}"
+         class="sb-link {% if 'inspections' in request.path and 'templates' not in request.path and 'stats' not in request.path and 'new' not in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="All scheduled and completed safety inspections">
+        <i class="bi bi-clipboard2-check"></i> All Inspections
+      </a>
+      <a href="{% url 'inspections:template_list' %}"
+         class="sb-link {% if 'inspections' in request.path and 'templates' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Manage reusable inspection checklist templates">
+        <i class="bi bi-layout-text-sidebar-reverse"></i> Templates
+      </a>
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'inspections:inspection_create' %}"
+         class="sb-link {% if 'inspections' in request.path and 'new' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Schedule a new safety inspection">
+        <i class="bi bi-plus-circle"></i> Schedule Inspection
+      </a>
+      <a href="{% url 'inspections:stats' %}"
+         class="sb-link {% if 'inspections' in request.path and 'stats' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Inspection scores, pass/fail trends and inspector performance">
+        <i class="bi bi-bar-chart-line"></i> Statistics
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- ══ GROUP: PEOPLE & TRAINING ══ -->
+    <button class="sb-group-header" type="button"
+            data-bs-toggle="collapse" data-bs-target="#grp-training"
+            data-sb-group="training" aria-expanded="false">
+      <span><i class="bi bi-mortarboard sb-group-icon"></i>People &amp; Training</span>
+      <i class="bi bi-chevron-down sb-chevron"></i>
+    </button>
+    <div class="collapse sb-group-content" id="grp-training">
+      <a href="{% url 'training:dashboard' %}"
+         class="sb-link {% if 'training' in request.path and 'dashboard' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Training pass rates, trends and skill coverage across the organisation">
+        <i class="bi bi-bar-chart-line"></i> Dashboard
+      </a>
+      <a href="{% url 'training:module_list' %}"
+         class="sb-link {% if 'training' in request.path and 'dashboard' not in request.path and 'matrix' not in request.path and 'manage' not in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Browse available training modules and take assessments to earn skill credits">
+        <i class="bi bi-mortarboard"></i> Modules
+      </a>
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'training:skill_matrix' %}"
+         class="sb-link {% if 'training' in request.path and 'matrix' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="View employee proficiency levels and identify skill gaps across the team">
+        <i class="bi bi-grid-3x3-gap"></i> Skill Matrix
+      </a>
+      <a href="{% url 'training:manage_skills' %}"
+         class="sb-link {% if 'training' in request.path and 'manage' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Add and manage skill categories and competency definitions">
+        <i class="bi bi-tags"></i> Manage Skills
+      </a>
+      {% endif %}
+    </div>
 
     {% if user.is_manager or user.is_safety_manager %}
-    <a href="{% url 'observations:export_observations_csv' %}" class="sb-link">
-      <i class="bi bi-filetype-csv"></i> Export CSV
-    </a>
-    <a href="{% url 'observations:export_observations_excel' %}" class="sb-link">
-      <i class="bi bi-file-earmark-excel"></i> Export Excel
-    </a>
+    <!-- ══ GROUP: SETTINGS ══ -->
+    <button class="sb-group-header" type="button"
+            data-bs-toggle="collapse" data-bs-target="#grp-settings"
+            data-sb-group="settings" aria-expanded="false">
+      <span><i class="bi bi-gear sb-group-icon"></i>Settings</span>
+      <i class="bi bi-chevron-down sb-chevron"></i>
+    </button>
+    <div class="collapse sb-group-content" id="grp-settings">
+      {% if user.is_manager %}
+      <a href="{% url 'core:invite_user' %}"
+         class="sb-link {% if request.path == '/core/invite/' %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Send email invitations to add new users to your organisation">
+        <i class="bi bi-person-plus"></i> Invite Team Members
+      </a>
+      <a href="{% url 'core:invite_contractor' %}"
+         class="sb-link {% if 'invite-contractor' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Invite an external contractor with limited access and an expiry date">
+        <i class="bi bi-person-badge"></i> Invite Contractor
+      </a>
+      <a href="{% url 'core:worker_list' %}"
+         class="sb-link {% if 'workers' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Manage no-email worker accounts that log in with Employee ID and PIN">
+        <i class="bi bi-people"></i> Worker Accounts
+      </a>
+      <a href="{% url 'core:billing' %}"
+         class="sb-link {% if 'billing' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="View your plan, user count and subscription details">
+        <i class="bi bi-credit-card"></i> Billing
+      </a>
+      {% endif %}
+    </div>
     {% endif %}
 
-    <hr class="sb-divider">
-    {% endif %}
-
-    <!-- ── PERMIT TO WORK ── -->
-    <div class="sidebar-section">Permit to Work</div>
-
-    <a href="{% url 'permits:dashboard' %}"
-       class="sb-link {% if 'permits' in request.path and 'dashboard' in request.path %}active{% endif %}">
-      <i class="bi bi-lightning-charge"></i> PTW Dashboard
-    </a>
-
-    <a href="{% url 'permits:permit_list' %}"
-       class="sb-link {% if request.path == '/permits/' %}active{% endif %}">
-      <i class="bi bi-file-earmark-check"></i> All Permits
-    </a>
-
-    <a href="{% url 'permits:create' %}"
-       class="sb-link {% if 'permits' in request.path and 'new' in request.path %}active{% endif %}">
-      <i class="bi bi-file-earmark-plus"></i> New Permit
-    </a>
-
-    <hr class="sb-divider">
-
-    <!-- ── TRAINING & SKILLS ── -->
-    <div class="sidebar-section">Training &amp; Skills</div>
-
-    <a href="{% url 'training:dashboard' %}"
-       class="sb-link {% if 'training' in request.path and 'dashboard' in request.path %}active{% endif %}">
-      <i class="bi bi-bar-chart-line"></i> Dashboard
-    </a>
-    <a href="{% url 'training:module_list' %}"
-       class="sb-link {% if 'training' in request.path and 'dashboard' not in request.path and 'matrix' not in request.path and 'manage' not in request.path %}active{% endif %}">
-      <i class="bi bi-mortarboard"></i> Modules
-    </a>
-
-    {% if user.is_manager or user.is_safety_manager %}
-    <a href="{% url 'training:skill_matrix' %}"
-       class="sb-link {% if 'training' in request.path and 'matrix' in request.path %}active{% endif %}">
-      <i class="bi bi-grid-3x3-gap"></i> Skill Matrix
-    </a>
-    <a href="{% url 'training:manage_skills' %}"
-       class="sb-link {% if 'training' in request.path and 'manage' in request.path %}active{% endif %}">
-      <i class="bi bi-tags"></i> Manage Skills
-    </a>
-    {% endif %}
-
-    <hr class="sb-divider">
-
-    <!-- ── LEGAL COMPLIANCE (hidden for contractors) ── -->
-    {% if not user.is_contractor %}
-    <div class="sidebar-section">Legal Compliance</div>
-
-    <a href="{% url 'compliance:dashboard' %}"
-       class="sb-link {% if 'compliance' in request.path and 'add' not in request.path %}active{% endif %}">
-      <i class="bi bi-shield-check"></i> Compliance Register
-    </a>
-
-    {% if user.is_manager or user.is_safety_manager %}
-    <a href="{% url 'compliance:item_create' %}"
-       class="sb-link {% if 'compliance' in request.path and 'add' in request.path %}active{% endif %}">
-      <i class="bi bi-plus-circle"></i> Add Obligation
-    </a>
-    {% endif %}
-
-    <hr class="sb-divider">
-    {% endif %}
-
-    <!-- ── ADMINISTRATION (hidden for contractors) ── -->
-    {% if not user.is_contractor and user.is_manager or not user.is_contractor and user.is_safety_manager %}
-    <div class="sidebar-section">Administration</div>
-
-    {% if user.is_manager %}
-    <a href="{% url 'core:invite_user' %}"
-       class="sb-link {% if request.path == '/core/invite/' %}active{% endif %}">
-      <i class="bi bi-person-plus"></i> Invite Team Members
-    </a>
-    <a href="{% url 'core:invite_contractor' %}"
-       class="sb-link {% if 'invite-contractor' in request.path %}active{% endif %}">
-      <i class="bi bi-person-badge"></i> Invite Contractor
-    </a>
-    <a href="{% url 'core:worker_list' %}"
-       class="sb-link {% if 'workers' in request.path %}active{% endif %}">
-      <i class="bi bi-people"></i> Worker Accounts
-    </a>
-    <a href="{% url 'core:billing' %}"
-       class="sb-link {% if 'billing' in request.path %}active{% endif %}">
-      <i class="bi bi-credit-card"></i> Billing
-    </a>
-    {% endif %}
-
-    <hr class="sb-divider">
-    {% endif %}
+    {% endif %}{# end not contractor #}
 
     <!-- ── FOOTER ── -->
     <div class="sidebar-footer">
-      <a href="{% url 'core:app_dashboard' %}"
-         class="sb-link {% if request.path == '/core/app-dashboard/' %}active{% endif %}">
-        <i class="bi bi-house"></i> Home
-      </a>
       <a href="{% url 'core:help' %}"
-         class="sb-link {% if request.path == '/help/' %}active{% endif %}">
+         class="sb-link {% if request.path == '/help/' %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="User guide, how-to instructions and frequently asked questions">
         <i class="bi bi-question-circle"></i> Help &amp; Guide
       </a>
+      {% if request.user.is_superuser %}
+      <a href="/admin/" class="sb-link"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Django site-wide admin panel — manage all organisations, users and data">
+        <i class="bi bi-shield-lock"></i> Django Admin
+      </a>
+      {% endif %}
     </div>
 
   </div>
@@ -578,12 +842,139 @@
 
 </div>
 
+<!-- ===== MOBILE BOTTOM NAV ===== -->
+{% if user.is_authenticated %}
+<nav class="mobile-bottom-nav">
+  <div class="nav-items">
+    <a href="{% url 'core:app_dashboard' %}"
+       class="{% if request.path == '/core/app-dashboard/' %}active{% endif %}">
+      <i class="bi bi-house-fill"></i>Home
+    </a>
+    {% if not user.is_contractor %}
+    <a href="{% url 'observations:observation_list' %}"
+       class="{% if request.path == '/observations/' %}active{% endif %}">
+      <i class="bi bi-binoculars-fill"></i>Observe
+    </a>
+    {% endif %}
+    <a href="{% url 'observations:create' %}" class="primary-action">
+      <i class="bi bi-plus-circle-fill"></i>Report
+    </a>
+    {% if not user.is_contractor %}
+    <a href="{% url 'incidents:list' %}"
+       class="{% if 'incidents' in request.path %}active{% endif %}">
+      <i class="bi bi-exclamation-octagon-fill"></i>Incidents
+    </a>
+    {% endif %}
+    <a href="#" id="mobileMenuToggle">
+      <i class="bi bi-grid-3x3-gap-fill"></i>Menu
+    </a>
+  </div>
+</nav>
+{% endif %}
+
 <!-- ===== SCRIPTS ===== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  document.getElementById("sidebarToggle").addEventListener("click", function () {
-    document.getElementById("sidebar").classList.toggle("collapsed");
+  const sidebar  = document.getElementById("sidebar");
+  const overlay  = document.getElementById("sidebar-overlay");
+  const isMobile = () => window.innerWidth < 992;
+
+  function openSidebar() {
+    if (!sidebar) return;
+    if (isMobile()) {
+      sidebar.classList.add("open");
+      sidebar.classList.remove("collapsed");
+      if (overlay) overlay.classList.add("show");
+      document.body.style.overflow = "hidden";
+    } else {
+      sidebar.classList.remove("collapsed");
+    }
+  }
+
+  function closeSidebar() {
+    if (!sidebar) return;
+    if (isMobile()) {
+      sidebar.classList.remove("open");
+      if (overlay) overlay.classList.remove("show");
+      document.body.style.overflow = "";
+    } else {
+      sidebar.classList.add("collapsed");
+    }
+  }
+
+  function toggleSidebar() {
+    if (!sidebar) return;
+    if (isMobile()) {
+      sidebar.classList.contains("open") ? closeSidebar() : openSidebar();
+    } else {
+      sidebar.classList.toggle("collapsed");
+    }
+  }
+
+  // Auto-collapse on mobile on load
+  if (isMobile() && sidebar) {
+    sidebar.classList.remove("open");
+  }
+
+  var toggleBtn = document.getElementById("sidebarToggle");
+  if (toggleBtn) toggleBtn.addEventListener("click", toggleSidebar);
+
+  if (overlay) overlay.addEventListener("click", closeSidebar);
+
+  // Mobile menu toggle in bottom nav
+  var mobileMenuBtn = document.getElementById("mobileMenuToggle");
+  if (mobileMenuBtn) mobileMenuBtn.addEventListener("click", function(e) {
+    e.preventDefault();
+    toggleSidebar();
   });
+
+  // Close sidebar on nav link click on mobile
+  if (sidebar) {
+    sidebar.querySelectorAll(".sb-link").forEach(function(link) {
+      link.addEventListener("click", function() {
+        if (isMobile()) closeSidebar();
+      });
+    });
+  }
+
+  // Re-check on resize
+  window.addEventListener("resize", function() {
+    if (!isMobile() && overlay) {
+      overlay.classList.remove("show");
+      document.body.style.overflow = "";
+    }
+  });
+
+  // ── SIDEBAR GROUPS: auto-expand active group + persist state ──
+  (function() {
+    document.querySelectorAll('.sb-group-content').forEach(function(el) {
+      var btn = document.querySelector('[data-bs-target="#' + el.id + '"]');
+      var groupId = btn ? btn.getAttribute('data-sb-group') : null;
+
+      // Always expand the group that contains the current active link
+      if (el.querySelector('.sb-link.active')) {
+        el.classList.add('show');
+        if (btn) {
+          btn.setAttribute('aria-expanded', 'true');
+          btn.classList.add('has-active');
+        }
+      } else if (groupId && localStorage.getItem('sbg-' + groupId) === 'open') {
+        // Restore last-open state from localStorage
+        el.classList.add('show');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+      }
+
+      // Persist open/closed state
+      if (groupId) {
+        el.addEventListener('shown.bs.collapse', function() {
+          localStorage.setItem('sbg-' + groupId, 'open');
+        });
+        el.addEventListener('hidden.bs.collapse', function() {
+          localStorage.setItem('sbg-' + groupId, 'closed');
+        });
+      }
+    });
+  })();
 </script>
 {% block extra_js %}{% endblock %}
 

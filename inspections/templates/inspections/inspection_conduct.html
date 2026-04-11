@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Conduct — {{ inspection.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.section-block { border:none; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.07); margin-bottom:20px; overflow:hidden; }
+.section-header { background:#1a2c52; color:#fff; padding:14px 20px; font-weight:700; font-size:.92rem; }
+.item-block { padding:16px 20px; border-bottom:1px solid #f1f5f9; }
+.item-block:last-child { border-bottom:none; }
+.item-question { font-size:.95rem; font-weight:600; color:#1a2c52; margin-bottom:12px; }
+.resp-btn-group { display:flex; gap:8px; flex-wrap:wrap; }
+.resp-btn { border:2px solid #e2e8f0; border-radius:8px; padding:8px 18px; font-size:.82rem; font-weight:700; cursor:pointer; background:#fff; transition:all .12s; min-height:40px; }
+.resp-btn.pass  { color:#15803d; }
+.resp-btn.fail  { color:#dc2626; }
+.resp-btn.na    { color:#64748b; }
+.resp-btn.pass.selected  { background:#dcfce7; border-color:#16a34a; }
+.resp-btn.fail.selected  { background:#fee2e2; border-color:#dc2626; }
+.resp-btn.na.selected    { background:#f1f5f9; border-color:#64748b; }
+.resp-radio { display:none; }
+.critical-flag { font-size:.72rem; font-weight:700; color:#ea580c; background:#fff7ed; border:1px solid #fed7aa; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px; }
+.sticky-submit { position:sticky; bottom:0; background:#fff; border-top:1px solid #e2e8f0; padding:14px 20px; z-index:100; box-shadow:0 -4px 16px rgba(0,0,0,.08); }
+@media (max-width: 767px) {
+  .item-block { padding:14px 14px; }
+  .resp-btn { padding:10px 14px; flex:1; text-align:center; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{% url 'inspections:detail' inspection.pk %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <div>
+    <h5 class="fw-bold mb-0">{{ inspection.title }}</h5>
+    <p class="text-muted small mb-0">{{ inspection.template.title }} &nbsp;·&nbsp;
+      <i class="bi bi-geo-alt me-1"></i>{{ inspection.location_display }}</p>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="mb-3">
+  <div class="d-flex justify-content-between small text-muted mb-1">
+    <span id="progress-label">0 of {{ total_items }} answered</span>
+    <span id="progress-pct">0%</span>
+  </div>
+  <div class="progress" style="height:6px;border-radius:3px;">
+    <div class="progress-bar bg-primary" id="progress-bar" style="width:0%;transition:width .3s;"></div>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="conduct-form">
+  {% csrf_token %}
+
+  {% for section, findings in sections.items %}
+  <div class="section-block">
+    <div class="section-header">
+      <i class="bi bi-list-check me-2"></i>{{ section.title }}
+      <span class="ms-2 fw-normal opacity-75" style="font-size:.8rem;">{{ findings|length }} item{{ findings|length|pluralize }}</span>
+    </div>
+
+    {% for finding in findings %}
+    <div class="item-block">
+      <div class="item-question">
+        {{ forloop.parentloop.counter }}.{{ forloop.counter }}&nbsp; {{ finding.template_item.question }}
+        {% if finding.template_item.is_critical %}
+        <span class="critical-flag ms-2"><i class="bi bi-exclamation-triangle-fill"></i>Critical</span>
+        {% endif %}
+      </div>
+
+      <!-- Pass / Fail / N/A toggle -->
+      <div class="resp-btn-group mb-3">
+        <input type="radio" name="resp_{{ finding.pk }}" value="pass"
+               id="pass_{{ finding.pk }}" class="resp-radio"
+               {% if finding.response == 'pass' %}checked{% endif %}>
+        <label for="pass_{{ finding.pk }}"
+               class="resp-btn pass {% if finding.response == 'pass' %}selected{% endif %}">
+          <i class="bi bi-check-circle-fill me-1"></i>Pass
+        </label>
+
+        <input type="radio" name="resp_{{ finding.pk }}" value="fail"
+               id="fail_{{ finding.pk }}" class="resp-radio"
+               {% if finding.response == 'fail' %}checked{% endif %}>
+        <label for="fail_{{ finding.pk }}"
+               class="resp-btn fail {% if finding.response == 'fail' %}selected{% endif %}">
+          <i class="bi bi-x-circle-fill me-1"></i>Fail
+        </label>
+
+        <input type="radio" name="resp_{{ finding.pk }}" value="na"
+               id="na_{{ finding.pk }}" class="resp-radio"
+               {% if finding.response == 'na' %}checked{% endif %}>
+        <label for="na_{{ finding.pk }}"
+               class="resp-btn na {% if finding.response == 'na' %}selected{% endif %}">
+          N/A
+        </label>
+      </div>
+
+      <!-- Notes + photo (collapsible on mobile) -->
+      <div class="row g-2">
+        <div class="col-md-8">
+          <textarea name="notes_{{ finding.pk }}" rows="2"
+                    class="form-control form-control-sm"
+                    placeholder="Notes (optional)…">{{ finding.notes }}</textarea>
+        </div>
+        <div class="col-md-4">
+          <input type="file" name="photo_{{ finding.pk }}"
+                 class="form-control form-control-sm" accept="image/*" capture="environment">
+          {% if finding.photo %}
+          <div class="mt-1">
+            <img src="{{ finding.photo.url }}" style="max-height:50px;border-radius:4px;">
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  <div class="sticky-submit d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <span class="text-muted small" id="submit-info">Answer all items before submitting.</span>
+    <button type="submit" class="btn btn-success btn-lg px-5" id="submit-btn">
+      <i class="bi bi-check-circle me-2"></i>Complete Inspection
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const totalItems = {{ total_items }};
+const radios = document.querySelectorAll('.resp-radio');
+
+// Toggle visual selection on radio change
+radios.forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    // Deselect siblings
+    document.querySelectorAll(`input[name="${this.name}"]`).forEach(function(r) {
+      document.querySelector(`label[for="${r.id}"]`).classList.remove('selected');
+    });
+    document.querySelector(`label[for="${this.id}"]`).classList.add('selected');
+    updateProgress();
+  });
+});
+
+function updateProgress() {
+  const names = new Set(Array.from(radios).map(r => r.name));
+  let answered = 0;
+  names.forEach(function(name) {
+    if (document.querySelector(`input[name="${name}"]:checked`)) answered++;
+  });
+  const pct = totalItems > 0 ? Math.round(answered / totalItems * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = answered + ' of ' + totalItems + ' answered';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('submit-info').textContent =
+    answered === totalItems ? 'All items answered — ready to submit.' : `${totalItems - answered} item(s) remaining.`;
+}
+
+updateProgress();
+</script>
+{% endblock %}
