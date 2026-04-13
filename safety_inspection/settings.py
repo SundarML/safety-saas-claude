@@ -15,14 +15,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Core
 # ---------------------------------------------------------------------------
 
-SECRET_KEY = "snEip81OHcECmZCxfAGlReh5KiBHttwfxDQW-5QhX7a_kiFdzelyIdvHQikzRupMBKk"
 
-# SECRET_KEY = os.environ.get("SECRET_KEY")
-# if not SECRET_KEY:
-#     raise RuntimeError(
-#         "SECRET_KEY environment variable is not set. "
-#         "Set it before starting the server."
-#     )
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is not set. "
+        "Set it before starting the server."
+    )
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
