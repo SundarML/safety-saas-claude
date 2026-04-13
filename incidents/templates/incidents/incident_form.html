@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} — Incidents{% endblock %}
+
+{% block extra_head %}
+<style>
+.form-section { border:none; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.07); margin-bottom:1.5rem; }
+.form-section-title { font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6c757d; margin-bottom:1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'incidents:list' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <h5 class="fw-bold mb-0">{{ page_title }}</h5>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <!-- WHAT / TYPE -->
+  <div class="card form-section">
+    <div class="card-body p-4">
+      <div class="form-section-title"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Incident Details</div>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label fw-semibold small">Title <span class="text-danger">*</span></label>
+          {{ form.title }}
+          {% for e in form.title.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small">Incident Type <span class="text-danger">*</span></label>
+          {{ form.incident_type }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small">Severity <span class="text-danger">*</span></label>
+          {{ form.severity }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small">Date & Time <span class="text-danger">*</span></label>
+          {{ form.date_occurred }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Location (text)</label>
+          {{ form.location_text }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Location (from register)</label>
+          {{ form.location }}
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold small">Description <span class="text-danger">*</span></label>
+          {{ form.description }}
+          {% for e in form.description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Immediate Cause</label>
+          <div class="form-text mb-1">{{ form.immediate_cause.help_text }}</div>
+          {{ form.immediate_cause }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Contributing Factors</label>
+          <div class="form-text mb-1">{{ form.contributing_factors.help_text }}</div>
+          {{ form.contributing_factors }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHO -->
+  <div class="card form-section">
+    <div class="card-body p-4">
+      <div class="form-section-title"><i class="bi bi-person me-2"></i>Person Involved</div>
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label fw-semibold small">Injured / Involved Person Name</label>
+          {{ form.injured_person_name }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold small">Person Type</label>
+          {{ form.injured_person_type }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small">Body Part Affected</label>
+          {{ form.body_part_affected }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPACT -->
+  <div class="card form-section">
+    <div class="card-body p-4">
+      <div class="form-section-title"><i class="bi bi-bar-chart me-2"></i>Impact</div>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold small">Days Lost</label>
+          {{ form.days_lost }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold small">{{ form.property_damage_est.label }}</label>
+          {{ form.property_damage_est }}
+        </div>
+        <div class="col-md-3 d-flex align-items-end pb-2">
+          <div class="form-check">
+            {{ form.first_aid_given }}
+            <label class="form-check-label small ms-1">First Aid Given</label>
+          </div>
+        </div>
+        <div class="col-md-3 d-flex align-items-end pb-2">
+          <div class="form-check">
+            {{ form.emergency_services }}
+            <label class="form-check-label small ms-1">Emergency Services Called</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVIDENCE & HIRA LINK -->
+  <div class="card form-section">
+    <div class="card-body p-4">
+      <div class="form-section-title"><i class="bi bi-camera me-2"></i>Evidence & Linkage</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small">Photo 1</label>
+          {{ form.photo_1 }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small">Photo 2</label>
+          {{ form.photo_2 }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small">{{ form.linked_hazard.label }}</label>
+          {{ form.linked_hazard }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-danger">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      {% if is_edit %}Save Changes{% else %}Submit Report{% endif %}
+    </button>
+    <a href="{% url 'incidents:list' %}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

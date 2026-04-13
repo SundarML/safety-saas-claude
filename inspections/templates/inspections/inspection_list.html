@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Inspections — Vigilo{% endblock %}
+
+{% block extra_head %}
+<style>
+.insp-card { border:1px solid #e2e8f0; border-radius:10px; padding:14px 18px; margin-bottom:10px; background:#fff; transition:box-shadow .15s,border-color .15s; cursor:pointer; }
+.insp-card:hover { box-shadow:0 3px 12px rgba(0,0,0,.08); border-color:#1a2c52; }
+.insp-card.overdue { border-left:3px solid #dc2626; background:#fff8f8; }
+.score-badge { display:inline-flex; align-items:center; justify-content:center; min-width:52px; height:30px; border-radius:8px; font-size:.82rem; font-weight:800; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">Inspections</h4>
+    <p class="text-muted small mb-0">Scheduled and completed safety inspections</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if is_manager %}
+    <a href="{% url 'inspections:stats' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-bar-chart-line me-1"></i>Statistics
+    </a>
+    <a href="{% url 'inspections:template_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-clipboard2-check me-1"></i>Templates
+    </a>
+    <a href="{% url 'inspections:inspection_create' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Schedule Inspection
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-3" style="border-radius:10px;">
+  <div class="card-body py-3">
+    <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+      <select name="status" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <select name="template" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+        <option value="">All Templates</option>
+        {% for t in templates %}
+        <option value="{{ t.pk }}" {% if template_filter == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.title }}</option>
+        {% endfor %}
+      </select>
+      {% if is_manager %}
+      <select name="inspector" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+        <option value="">All Inspectors</option>
+        {% for u in inspectors %}
+        <option value="{{ u.pk }}" {% if inspector_filter == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
+      {% if status_filter or template_filter or inspector_filter %}
+      <a href="{% url 'inspections:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-x me-1"></i>Clear
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+{% for insp in inspections %}
+<a href="{% url 'inspections:detail' insp.pk %}"
+   class="insp-card d-block text-decoration-none {% if insp.status == 'overdue' %}overdue{% endif %}">
+  <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+    <div class="flex-grow-1">
+      <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+        <span class="fw-semibold" style="color:#1a2c52;">{{ insp.title }}</span>
+        {% if insp.status == 'scheduled' %}
+          <span class="badge" style="background:#eff6ff;color:#2563eb;font-size:.7rem;">Scheduled</span>
+        {% elif insp.status == 'in_progress' %}
+          <span class="badge" style="background:#f5f3ff;color:#7c3aed;font-size:.7rem;">In Progress</span>
+        {% elif insp.status == 'completed' %}
+          <span class="badge" style="background:#f0fdf4;color:#16a34a;font-size:.7rem;">Completed</span>
+        {% elif insp.status == 'overdue' %}
+          <span class="badge" style="background:#fee2e2;color:#dc2626;font-size:.7rem;">Overdue</span>
+        {% endif %}
+        {% if insp.has_critical_failures %}
+          <span class="badge" style="background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;font-size:.7rem;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>Critical Failures
+          </span>
+        {% endif %}
+      </div>
+      <div class="d-flex flex-wrap gap-3" style="font-size:.78rem;color:#64748b;">
+        <span><i class="bi bi-clipboard2-check me-1"></i>{{ insp.template.title }}</span>
+        <span><i class="bi bi-person me-1"></i>{{ insp.inspector.get_full_name|default:"—" }}</span>
+        <span><i class="bi bi-geo-alt me-1"></i>{{ insp.location_display }}</span>
+        <span><i class="bi bi-calendar2 me-1"></i>
+          {% if insp.conducted_date %}{{ insp.conducted_date|date:"d M Y" }}
+          {% else %}{{ insp.scheduled_date|date:"d M Y" }}{% endif %}
+        </span>
+      </div>
+    </div>
+    {% if insp.score is not None %}
+    <div class="score-badge
+      {% if insp.score >= 90 %}bg-success-subtle text-success
+      {% elif insp.score >= 70 %}bg-warning-subtle text-warning
+      {% else %}bg-danger-subtle text-danger{% endif %}">
+      {{ insp.score|floatformat:0 }}%
+    </div>
+    {% endif %}
+  </div>
+</a>
+{% empty %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-clipboard2" style="font-size:2.5rem;opacity:.25;display:block;margin-bottom:12px;"></i>
+  No inspections found.
+  {% if is_manager %}<br><a href="{% url 'inspections:inspection_create' %}">Schedule the first one</a>{% endif %}
+</div>
+{% endfor %}
+{% endblock %}

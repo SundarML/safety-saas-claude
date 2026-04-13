@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% block title %}{{ register.title }} — HIRA{% endblock %}
+
+{% block extra_head %}
+<style>
+.info-label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6c757d; margin-bottom:3px; }
+.info-value { font-size:.92rem; color:#212529; }
+.section-card { border:none; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.07); }
+
+.risk-critical { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; }
+.risk-high     { background:#ffedd5; color:#ea580c; border:1px solid #fed7aa; }
+.risk-medium   { background:#fef9c3; color:#854d0e; border:1px solid #fde68a; }
+.risk-low      { background:#dcfce7; color:#065f46; border:1px solid #bbf7d0; }
+
+.risk-badge-lg {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:3rem; height:2.2rem; border-radius:8px;
+  font-size:.85rem; font-weight:700; padding:0 10px;
+}
+
+.status-draft        { background:#f1f5f9; color:#475569; }
+.status-under_review { background:#eff6ff; color:#2563eb; }
+.status-approved     { background:#f0fdf4; color:#16a34a; }
+.status-expired      { background:#fef2f2; color:#dc2626; }
+
+.hoc-bar {
+  height:4px; border-radius:2px; margin-bottom:8px;
+}
+.hoc-elimination    { background:#16a34a; }
+.hoc-substitution   { background:#2563eb; }
+.hoc-engineering    { background:#7c3aed; }
+.hoc-administrative { background:#ea580c; }
+.hoc-ppe            { background:#dc2626; }
+
+.hazard-row { border:1px solid #e2e8f0; border-radius:10px; margin-bottom:12px; overflow:hidden; }
+.hazard-row:hover { border-color:#1a2c52; }
+.hazard-row-header { padding:12px 16px; background:#f8f9fb; }
+.hazard-row-body   { padding:16px; border-top:1px solid #e2e8f0; }
+
+.arrow-right { color:#adb5bd; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 py-2">
+
+  <!-- ── Page header ── -->
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'hira:register_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+      <div>
+        <h4 class="fw-bold mb-0">{{ register.title }}</h4>
+        <span class="text-muted small">HIRA-{{ register.pk|stringformat:"04d" }} &nbsp;·&nbsp; Rev {{ register.revision_no }}</span>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <!-- Workflow buttons -->
+      {% if user.is_manager or user.is_safety_manager %}
+        {% if register.status == 'draft' %}
+        <form method="post" action="{% url 'hira:register_approve' register.pk %}">
+          {% csrf_token %}
+          <button name="action" value="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-send me-1"></i>Submit for Review
+          </button>
+        </form>
+        {% elif register.status == 'under_review' %}
+        <form method="post" action="{% url 'hira:register_approve' register.pk %}" class="d-flex gap-2">
+          {% csrf_token %}
+          <button name="action" value="revert" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Revert to Draft
+          </button>
+          <button name="action" value="approve" class="btn btn-success btn-sm">
+            <i class="bi bi-check-circle me-1"></i>Approve
+          </button>
+        </form>
+        {% elif register.status == 'approved' %}
+        <form method="post" action="{% url 'hira:register_approve' register.pk %}">
+          {% csrf_token %}
+          <button name="action" value="revert" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Reopen as Draft
+          </button>
+        </form>
+        {% endif %}
+        <a href="{% url 'hira:register_edit' register.pk %}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-pencil-square me-1"></i>Edit
+        </a>
+      {% endif %}
+      <a href="{% url 'hira:register_pdf' register.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+      </a>
+      {% if user.is_manager %}
+      <a href="{% url 'hira:register_delete' register.pk %}" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-trash me-1"></i>Delete
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Assessment metadata ── -->
+  <div class="card section-card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="info-label">Activity / Work Area</div>
+          <div class="info-value fw-semibold">{{ register.activity }}</div>
+        </div>
+        <div class="col-md-2">
+          <div class="info-label">Location</div>
+          <div class="info-value">{{ register.location_text|default:"—" }}</div>
+        </div>
+        <div class="col-md-2">
+          <div class="info-label">Assessment Date</div>
+          <div class="info-value">{{ register.assessment_date|date:"d M Y" }}</div>
+        </div>
+        <div class="col-md-2">
+          <div class="info-label">Next Review</div>
+          <div class="info-value {% if register.is_review_due %}text-danger fw-bold{% endif %}">
+            {{ register.next_review_date|date:"d M Y"|default:"—" }}
+            {% if register.is_review_due %}<i class="bi bi-exclamation-triangle-fill ms-1"></i>{% endif %}
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="info-label">Assessed By</div>
+          <div class="info-value">{{ register.assessed_by.get_full_name|default:"—" }}</div>
+        </div>
+        <div class="col-md-1">
+          <div class="info-label">Status</div>
+          <span class="badge rounded-pill px-2 py-1 status-{{ register.status }}" style="font-size:.75rem;">
+            {{ register.get_status_display }}
+          </span>
+        </div>
+      </div>
+      {% if register.approved_by %}
+      <div class="mt-3 pt-3 border-top">
+        <span class="text-muted small">
+          <i class="bi bi-check-circle-fill text-success me-1"></i>
+          Approved by <strong>{{ register.approved_by.get_full_name }}</strong>
+          on {{ register.approved_at|date:"d M Y H:i" }}
+        </span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Hazard summary cards ── -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 text-center py-3 risk-critical" style="border-radius:10px;">
+        <div style="font-size:1.8rem; font-weight:800;">{{ risk_counts.critical }}</div>
+        <div style="font-size:.75rem; font-weight:700;">CRITICAL</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 text-center py-3 risk-high" style="border-radius:10px;">
+        <div style="font-size:1.8rem; font-weight:800;">{{ risk_counts.high }}</div>
+        <div style="font-size:.75rem; font-weight:700;">HIGH</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 text-center py-3 risk-medium" style="border-radius:10px;">
+        <div style="font-size:1.8rem; font-weight:800;">{{ risk_counts.medium }}</div>
+        <div style="font-size:.75rem; font-weight:700;">MEDIUM</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 text-center py-3 risk-low" style="border-radius:10px;">
+        <div style="font-size:1.8rem; font-weight:800;">{{ risk_counts.low }}</div>
+        <div style="font-size:.75rem; font-weight:700;">LOW</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Hazard list ── -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <span class="fw-bold" style="color:#1a2c52;">
+      <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+      Hazard Register
+      <span class="text-muted fw-normal small ms-1">({{ register.hazards.count }} hazard{{ register.hazards.count|pluralize }})</span>
+    </span>
+  </div>
+
+  {% for hazard in register.hazards.all %}
+  <div class="hazard-row">
+    <!-- Row header -->
+    <div class="hazard-row-header d-flex align-items-start justify-content-between gap-2 flex-wrap">
+      <div class="d-flex align-items-start gap-3">
+        <span class="fw-bold text-muted" style="font-size:.9rem; min-width:1.5rem;">#{{ forloop.counter }}</span>
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <span class="fw-semibold">{{ hazard.hazard_description }}</span>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:.7rem;">
+              {{ hazard.get_category_display }}
+            </span>
+            <span class="badge" style="background:#f1f5f9; color:#475569; font-size:.7rem;">
+              <i class="bi bi-people me-1"></i>{{ hazard.get_who_might_be_harmed_display }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <!-- Initial risk -->
+        <div class="text-center">
+          <div style="font-size:.65rem; color:#6c757d; font-weight:700; text-transform:uppercase;">Initial</div>
+          <div class="risk-badge-lg risk-{{ hazard.initial_risk_level }}">{{ hazard.initial_risk_score }}</div>
+        </div>
+        <i class="bi bi-arrow-right arrow-right"></i>
+        <!-- Residual risk -->
+        <div class="text-center">
+          <div style="font-size:.65rem; color:#6c757d; font-weight:700; text-transform:uppercase;">Residual</div>
+          {% if hazard.residual_risk_score %}
+          <div class="risk-badge-lg risk-{{ hazard.residual_risk_level }}">{{ hazard.residual_risk_score }}</div>
+          {% else %}
+          <div class="risk-badge-lg" style="background:#f1f5f9; color:#94a3b8;">—</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Row body -->
+    <div class="hazard-row-body">
+      <div class="row g-3">
+        <div class="col-md-5">
+          <div class="info-label">Potential Harm / Consequence</div>
+          <div class="info-value">{{ hazard.potential_harm }}</div>
+        </div>
+        <div class="col-md-7">
+          <div class="hoc-bar hoc-{{ hazard.primary_control_type }}"></div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge" style="font-size:.7rem;
+              {% if hazard.primary_control_type == 'elimination' %}background:#dcfce7; color:#16a34a;
+              {% elif hazard.primary_control_type == 'substitution' %}background:#dbeafe; color:#2563eb;
+              {% elif hazard.primary_control_type == 'engineering' %}background:#ede9fe; color:#7c3aed;
+              {% elif hazard.primary_control_type == 'administrative' %}background:#ffedd5; color:#ea580c;
+              {% else %}background:#fee2e2; color:#dc2626;{% endif %}">
+              {{ hazard.get_primary_control_type_display }}
+            </span>
+            <span class="info-label mb-0">Controls</span>
+          </div>
+          <div style="white-space:pre-line; font-size:.9rem; line-height:1.6;">{{ hazard.controls_description }}</div>
+        </div>
+      </div>
+
+      {% if hazard.action_required %}
+      <div class="mt-3 pt-3 border-top d-flex align-items-center gap-3 flex-wrap">
+        <span class="badge" style="background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; font-size:.75rem;">
+          <i class="bi bi-flag-fill me-1"></i>Action Required
+        </span>
+        {% if hazard.action_owner %}
+        <span class="text-muted small">
+          <i class="bi bi-person me-1"></i>{{ hazard.action_owner.get_full_name }}
+        </span>
+        {% endif %}
+        {% if hazard.action_due_date %}
+        <span class="text-muted small {% if hazard.action_due_date < today %}text-danger{% endif %}">
+          <i class="bi bi-calendar2 me-1"></i>{{ hazard.action_due_date|date:"d M Y" }}
+        </span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Linked observations -->
+      {% with linked=hazard.linked_observations.all %}
+      <div class="mt-3 pt-3 border-top">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="info-label mb-0">
+            <i class="bi bi-binoculars me-1"></i>Linked Observations
+            {% if linked %}<span class="ms-1 badge rounded-pill" style="background:#e0e7ff;color:#3730a3;font-size:.65rem;">{{ linked|length }}</span>{% endif %}
+          </span>
+          {% if user.is_manager or user.is_safety_manager %}
+          <a href="{% url 'hira:link_observation' hazard.pk %}" class="btn btn-outline-primary btn-sm" style="font-size:.72rem; padding:2px 10px;">
+            <i class="bi bi-link-45deg me-1"></i>Link
+          </a>
+          {% endif %}
+        </div>
+        {% if linked %}
+        <div class="d-flex flex-wrap gap-2">
+          {% for obs in linked %}
+          <div class="d-flex align-items-center gap-1 rounded px-2 py-1"
+               style="background:#f1f5f9; border:1px solid #e2e8f0; font-size:.78rem;">
+            <a href="{% url 'observations:detail' obs.pk %}" style="color:#1a2c52; text-decoration:none; font-weight:600;">
+              #{{ obs.pk }} {{ obs.title|truncatechars:40 }}
+            </a>
+            <span class="badge ms-1" style="background:
+              {% if obs.severity == 'HIGH' %}#fee2e2; color:#dc2626;
+              {% elif obs.severity == 'MEDIUM' %}#fef9c3; color:#854d0e;
+              {% else %}#dcfce7; color:#15803d;{% endif %}
+              font-size:.6rem;">{{ obs.get_severity_display }}</span>
+            {% if user.is_manager or user.is_safety_manager %}
+            <form method="post" action="{% url 'hira:unlink_observation' hazard.pk obs.pk %}" class="d-inline ms-1">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm p-0 text-danger" style="font-size:.7rem;"
+                      title="Remove link" onclick="return confirm('Remove this observation link?')">
+                <i class="bi bi-x-circle"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <span class="text-muted" style="font-size:.8rem;">No observations linked yet.</span>
+        {% endif %}
+      </div>
+      {% endwith %}
+
+      <!-- Compliance item linkage -->
+      {% if hazard.compliance_item %}
+      <div class="mt-2">
+        <span class="info-label mb-1 d-block"><i class="bi bi-shield-check me-1"></i>Compliance Item</span>
+        <a href="{% url 'compliance:item_detail' hazard.compliance_item_id %}" class="text-decoration-none">
+          <span class="badge rounded-pill px-2 py-1" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:.75rem;">
+            {{ hazard.compliance_item.title|truncatechars:60 }}
+          </span>
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Linked incidents -->
+      {% with incidents=hazard.incidents.all %}
+      {% if incidents %}
+      <div class="mt-2">
+        <span class="info-label mb-1 d-block"><i class="bi bi-exclamation-octagon me-1 text-danger"></i>Linked Incidents
+          <span class="ms-1 badge rounded-pill" style="background:#fee2e2;color:#dc2626;font-size:.65rem;">{{ incidents|length }}</span>
+        </span>
+        <div class="d-flex flex-wrap gap-2">
+          {% for inc in incidents %}
+          <a href="{% url 'incidents:detail' inc.pk %}" class="text-decoration-none">
+            <span class="badge px-2 py-1" style="background:#fff1f2;color:#9f1239;border:1px solid #fecdd3;font-size:.72rem;">
+              <i class="bi bi-exclamation-circle me-1"></i>{{ inc.reference_no }} — {{ inc.title|truncatechars:35 }}
+            </span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="text-center text-muted py-4">
+    <i class="bi bi-clipboard2 style="font-size:2rem; opacity:.3;"></i>
+    <p class="mt-2">No hazards added yet.
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'hira:register_edit' register.pk %}">Add hazards</a>
+      {% endif %}
+    </p>
+  </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

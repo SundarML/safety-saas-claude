@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}{{ inspection.title }} — Vigilo{% endblock %}
+
+{% block extra_head %}
+<style>
+.info-label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6c757d; margin-bottom:3px; }
+.info-value { font-size:.92rem; color:#212529; }
+.section-block { border:none; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.07); margin-bottom:16px; overflow:hidden; }
+.section-header { background:#f8f9fb; padding:12px 20px; border-bottom:1px solid #e2e8f0; }
+.finding-row { padding:12px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:flex-start; gap:14px; }
+.finding-row:last-child { border-bottom:none; }
+.resp-badge { min-width:44px; text-align:center; font-size:.72rem; font-weight:700; padding:3px 8px; border-radius:6px; flex-shrink:0; }
+.resp-pass { background:#dcfce7; color:#15803d; }
+.resp-fail { background:#fee2e2; color:#dc2626; }
+.resp-na   { background:#f1f5f9; color:#64748b; }
+.score-circle { width:80px; height:80px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800; font-size:1.4rem; border:4px solid; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'inspections:list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+    <div>
+      <h5 class="fw-bold mb-0">{{ inspection.title }}</h5>
+      <span class="text-muted small">{{ inspection.template.title }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if inspection.status == 'completed' %}
+    <a href="{% url 'inspections:pdf' inspection.pk %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+    </a>
+    {% endif %}
+    {% if can_conduct and inspection.status != 'completed' %}
+    <a href="{% url 'inspections:conduct' inspection.pk %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-clipboard2-check me-1"></i>
+      {% if inspection.status == 'in_progress' %}Continue{% else %}Start{% endif %} Inspection
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left: metadata -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:12px;">
+      <div class="card-body p-4">
+
+        {% if inspection.score is not None %}
+        <div class="text-center mb-4">
+          <div class="score-circle mx-auto
+            {% if inspection.score >= 90 %}text-success border-success
+            {% elif inspection.score >= 70 %}text-warning border-warning
+            {% else %}text-danger border-danger{% endif %}">
+            <span>{{ inspection.score|floatformat:0 }}%</span>
+          </div>
+          <div class="text-muted small mt-2">Compliance Score</div>
+          {% if inspection.has_critical_failures %}
+          <span class="badge mt-1" style="background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;font-size:.72rem;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>Critical Failures
+          </span>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+          <div class="info-label">Status</div>
+          <div class="info-value">
+            {% if inspection.status == 'scheduled' %}
+              <span class="badge" style="background:#eff6ff;color:#2563eb;">Scheduled</span>
+            {% elif inspection.status == 'in_progress' %}
+              <span class="badge" style="background:#f5f3ff;color:#7c3aed;">In Progress</span>
+            {% elif inspection.status == 'completed' %}
+              <span class="badge" style="background:#f0fdf4;color:#16a34a;">Completed</span>
+            {% elif inspection.status == 'overdue' %}
+              <span class="badge" style="background:#fee2e2;color:#dc2626;">Overdue</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="info-label">Template</div>
+          <div class="info-value">{{ inspection.template.title }}</div>
+        </div>
+        <div class="mb-3">
+          <div class="info-label">Inspector</div>
+          <div class="info-value">{{ inspection.inspector.get_full_name|default:"—" }}</div>
+        </div>
+        <div class="mb-3">
+          <div class="info-label">Location</div>
+          <div class="info-value">{{ inspection.location_display }}</div>
+        </div>
+        <div class="mb-3">
+          <div class="info-label">Scheduled Date</div>
+          <div class="info-value">{{ inspection.scheduled_date|date:"d M Y" }}</div>
+        </div>
+        {% if inspection.conducted_date %}
+        <div class="mb-3">
+          <div class="info-label">Conducted Date</div>
+          <div class="info-value">{{ inspection.conducted_date|date:"d M Y" }}</div>
+        </div>
+        {% endif %}
+        {% if inspection.notes %}
+        <div class="mb-0">
+          <div class="info-label">Notes</div>
+          <div class="info-value" style="white-space:pre-line;">{{ inspection.notes }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Summary counts -->
+    {% if inspection.status == 'completed' %}
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+      <div class="card-body p-3">
+        <div class="row g-2 text-center">
+          <div class="col-4">
+            <div style="font-size:1.4rem;font-weight:800;color:#15803d;">
+              {{ inspection.findings.all|length }}
+            </div>
+            <div style="font-size:.68rem;font-weight:700;color:#6c757d;text-transform:uppercase;">Total</div>
+          </div>
+          <div class="col-4">
+            <div style="font-size:1.4rem;font-weight:800;color:#15803d;" id="pass-count">—</div>
+            <div style="font-size:.68rem;font-weight:700;color:#15803d;text-transform:uppercase;">Pass</div>
+          </div>
+          <div class="col-4">
+            <div style="font-size:1.4rem;font-weight:800;color:#dc2626;" id="fail-count">—</div>
+            <div style="font-size:.68rem;font-weight:700;color:#dc2626;text-transform:uppercase;">Fail</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: findings -->
+  <div class="col-lg-8">
+    {% if sections %}
+      {% for section, findings in sections.items %}
+      <div class="section-block">
+        <div class="section-header d-flex align-items-center justify-content-between">
+          <span class="fw-semibold" style="color:#1a2c52;">{{ section.title }}</span>
+          <span class="text-muted small">
+            {{ findings|length }} item{{ findings|length|pluralize }}
+          </span>
+        </div>
+        {% for finding in findings %}
+        <div class="finding-row">
+          <span class="resp-badge resp-{{ finding.response }}">
+            {{ finding.get_response_display }}
+          </span>
+          <div class="flex-grow-1">
+            <div style="font-size:.9rem;">
+              {{ finding.template_item.question }}
+              {% if finding.template_item.is_critical %}
+              <span class="badge ms-1" style="background:#fff7ed;color:#ea580c;font-size:.62rem;">Critical</span>
+              {% endif %}
+            </div>
+            {% if finding.notes %}
+            <div class="text-muted mt-1" style="font-size:.78rem;">{{ finding.notes }}</div>
+            {% endif %}
+            {% if finding.photo %}
+            <div class="mt-2">
+              <a href="{{ finding.photo.url }}" target="_blank">
+                <img src="{{ finding.photo.url }}" alt="photo"
+                     style="max-height:80px;border-radius:6px;border:1px solid #e2e8f0;">
+              </a>
+            </div>
+            {% endif %}
+            {% if finding.raised_action %}
+            <div class="mt-1">
+              <a href="{% url 'actions:detail' finding.raised_action.pk %}"
+                 class="text-decoration-none" style="font-size:.75rem;color:#ea580c;">
+                <i class="bi bi-arrow-right-circle me-1"></i>CA raised: {{ finding.raised_action.title|truncatechars:60 }}
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-clipboard2" style="font-size:2rem;opacity:.3;display:block;margin-bottom:8px;"></i>
+        Inspection not yet conducted.
+        {% if can_conduct %}
+        <br><a href="{% url 'inspections:conduct' inspection.pk %}">Start now</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

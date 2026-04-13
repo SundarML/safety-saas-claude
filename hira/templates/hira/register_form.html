@@ -1,0 +1,687 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} — Vigilo{% endblock %}
+
+{% block extra_head %}
+<style>
+.section-card { border:none; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.07); }
+.field-label  { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#6c757d; margin-bottom:4px; }
+
+/* Hazard card */
+.hazard-card {
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  margin-bottom:14px;
+  overflow:hidden;
+  transition: border-color .2s;
+}
+.hazard-card:hover { border-color:#1a2c52; }
+.hazard-header {
+  background:#f8f9fb;
+  padding:10px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer;
+  user-select:none;
+}
+.hazard-header:hover { background:#eef2f7; }
+.hazard-body { padding:16px; border-top:1px solid #e2e8f0; display:none; }
+.hazard-body.show { display:block; }
+
+/* Risk score badge */
+.risk-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:2.5rem; height:2rem;
+  border-radius:6px;
+  font-size:.8rem; font-weight:700;
+  padding:0 8px;
+}
+.risk-unset    { background:#f1f5f9; color:#94a3b8; }
+.risk-low      { background:#d1fae5; color:#065f46; }
+.risk-medium   { background:#fef9c3; color:#854d0e; }
+.risk-high     { background:#ffedd5; color:#9a3412; }
+.risk-critical { background:#fee2e2; color:#991b1b; }
+
+/* Hierarchy of controls colour strip */
+.hoc-elimination    { border-left:4px solid #16a34a; }
+.hoc-substitution   { border-left:4px solid #2563eb; }
+.hoc-engineering    { border-left:4px solid #7c3aed; }
+.hoc-administrative { border-left:4px solid #ea580c; }
+.hoc-ppe            { border-left:4px solid #dc2626; }
+
+.hoc-label {
+  font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  padding:2px 6px; border-radius:4px;
+}
+.hoc-label.elimination    { background:#dcfce7; color:#16a34a; }
+.hoc-label.substitution   { background:#dbeafe; color:#2563eb; }
+.hoc-label.engineering    { background:#ede9fe; color:#7c3aed; }
+.hoc-label.administrative { background:#ffedd5; color:#ea580c; }
+.hoc-label.ppe            { background:#fee2e2; color:#dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'hira:dashboard' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <h4 class="fw-bold mb-0">{{ page_title }}</h4>
+</div>
+
+<form method="post" id="hira-form">
+  {% csrf_token %}
+
+  <!-- ── Assessment Header ── -->
+  <div class="card section-card mb-4">
+    <div class="card-body">
+      <div class="fw-bold mb-3" style="color:#1a2c52;">
+        <i class="bi bi-file-earmark-text me-2"></i>Assessment Details
+      </div>
+      <div class="row g-3">
+        <div class="col-md-8">
+          <div class="field-label">{{ form.title.label }}</div>
+          {{ form.title }}
+          {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-4">
+          <div class="field-label">{{ form.assessment_date.label }}</div>
+          {{ form.assessment_date }}
+        </div>
+        <div class="col-md-6">
+          <div class="field-label">{{ form.activity.label }}</div>
+          {{ form.activity }}
+        </div>
+        <div class="col-md-4">
+          <div class="field-label">{{ form.location_text.label }}</div>
+          {{ form.location_text }}
+        </div>
+        <div class="col-md-2">
+          <div class="field-label">{{ form.next_review_date.label }}</div>
+          {{ form.next_review_date }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Hazard Formset Management ── -->
+  {{ formset.management_form }}
+
+  <!-- ── Hazards Section ── -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <span class="fw-bold" style="color:#1a2c52; font-size:1rem;">
+        <i class="bi bi-exclamation-triangle me-2 text-warning"></i>Hazard Register
+      </span>
+      <span class="text-muted small ms-2" id="hazard-count-label"></span>
+    </div>
+    <button type="button" class="btn btn-outline-primary btn-sm" id="add-hazard-btn">
+      <i class="bi bi-plus-circle me-1"></i>Add Hazard
+    </button>
+  </div>
+
+  <!-- Risk matrix legend -->
+  <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+    <span class="text-muted" style="font-size:.72rem; font-weight:700; text-transform:uppercase;">Risk Levels:</span>
+    <span class="risk-badge risk-low">1–4 Low</span>
+    <span class="risk-badge risk-medium">5–9 Medium</span>
+    <span class="risk-badge risk-high">10–16 High</span>
+    <span class="risk-badge risk-critical">17–25 Critical</span>
+  </div>
+
+  <div id="hazards-container">
+    {% for hform in formset %}
+    <div class="hazard-card" id="hazard-card-{{ forloop.counter0 }}">
+      {% for hidden in hform.hidden_fields %}{{ hidden }}{% endfor %}
+
+      <!-- Card header (summary / toggle) -->
+      <div class="hazard-header" onclick="toggleHazard(this)">
+        <div class="d-flex align-items-center gap-3">
+          <span class="fw-bold text-muted" style="font-size:.9rem;">#<span class="hazard-num">{{ forloop.counter }}</span></span>
+          <span class="hoc-label {{ hform.primary_control_type.value }}" id="hoc-label-{{ forloop.counter0 }}">
+            {{ hform.primary_control_type.value|default:"administrative"|title }}
+          </span>
+          <span class="text-muted small hazard-summary-text" id="summary-{{ forloop.counter0 }}">
+            {% if hform.hazard_description.value %}{{ hform.hazard_description.value|truncatechars:60 }}{% else %}New Hazard{% endif %}
+          </span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="risk-badge" id="init-risk-badge-{{ forloop.counter0 }}">
+            {% if hform.initial_likelihood.value and hform.initial_severity.value %}
+              {% widthratio hform.initial_likelihood.value 1 hform.initial_severity.value %}
+            {% else %}?{% endif %}
+          </span>
+          <span class="text-muted small"><i class="bi bi-chevron-down"></i></span>
+        </div>
+      </div>
+
+      <!-- Card body (all fields) -->
+      <div class="hazard-body {% if hform.errors %}show{% endif %}">
+        {% if hform.non_field_errors %}
+          <div class="alert alert-danger small py-1">{{ hform.non_field_errors }}</div>
+        {% endif %}
+        <div class="row g-3">
+
+          <!-- LEFT: Hazard info + Initial risk -->
+          <div class="col-lg-6">
+            <div class="p-3 rounded-3" style="background:#f8f9fb;">
+              <div class="fw-semibold mb-3 small" style="color:#1a2c52;">
+                <i class="bi bi-exclamation-triangle me-1 text-warning"></i>Hazard Information
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <div class="field-label">Category</div>
+                  {{ hform.category }}
+                </div>
+                <div class="col-6">
+                  <div class="field-label">Who Might Be Harmed</div>
+                  {{ hform.who_might_be_harmed }}
+                </div>
+                <div class="col-12">
+                  <div class="field-label">Hazard Description</div>
+                  {{ hform.hazard_description }}
+                </div>
+                <div class="col-12">
+                  <div class="field-label">Potential Harm / Consequence</div>
+                  {{ hform.potential_harm }}
+                </div>
+              </div>
+
+              <!-- Initial Risk -->
+              <div class="mt-3 p-2 rounded-2" style="border:1px solid #e2e8f0; background:#fff;">
+                <div class="fw-semibold small mb-2" style="color:#dc2626;">
+                  <i class="bi bi-shield-exclamation me-1"></i>Initial Risk (Before Controls)
+                </div>
+                <div class="row g-2 align-items-end">
+                  <div class="col-5">
+                    <div class="field-label">Likelihood (L)</div>
+                    {{ hform.initial_likelihood }}
+                  </div>
+                  <div class="col-5">
+                    <div class="field-label">Severity (S)</div>
+                    {{ hform.initial_severity }}
+                  </div>
+                  <div class="col-2 text-center">
+                    <div class="field-label">L×S</div>
+                    <div class="risk-badge risk-unset" id="init-score-{{ forloop.counter0 }}">?</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Controls + Residual risk + Action -->
+          <div class="col-lg-6">
+            <div class="p-3 rounded-3" style="background:#f0fdf4; border-left:4px solid #16a34a;">
+              <div class="fw-semibold mb-3 small" style="color:#065f46;">
+                <i class="bi bi-shield-check me-1"></i>Controls (Hierarchy of Controls)
+              </div>
+              <div class="row g-2">
+                <div class="col-12">
+                  <div class="field-label">Primary Control Type</div>
+                  {{ hform.primary_control_type }}
+                  <div class="mt-1" style="font-size:.7rem; color:#6c757d;">
+                    Eliminate → Substitute → Engineering → Administrative → PPE (highest to lowest preference)
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="field-label">Controls Description</div>
+                  {{ hform.controls_description }}
+                </div>
+              </div>
+
+              <!-- Residual Risk -->
+              <div class="mt-3 p-2 rounded-2" style="border:1px solid #bbf7d0; background:#fff;">
+                <div class="fw-semibold small mb-2" style="color:#16a34a;">
+                  <i class="bi bi-shield-check me-1"></i>Residual Risk (After Controls)
+                </div>
+                <div class="row g-2 align-items-end">
+                  <div class="col-5">
+                    <div class="field-label">Likelihood (L)</div>
+                    {{ hform.residual_likelihood }}
+                  </div>
+                  <div class="col-5">
+                    <div class="field-label">Severity (S)</div>
+                    {{ hform.residual_severity }}
+                  </div>
+                  <div class="col-2 text-center">
+                    <div class="field-label">L×S</div>
+                    <div class="risk-badge risk-unset" id="res-score-{{ forloop.counter0 }}">?</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action -->
+            <div class="mt-3 p-3 rounded-3" style="background:#fff7ed; border:1px solid #fed7aa;">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="form-check mb-0">
+                  {{ hform.action_required }}
+                </div>
+                <div class="fw-semibold small" style="color:#ea580c;">
+                  <label for="{{ hform.action_required.id_for_label }}">Action Required</label>
+                </div>
+              </div>
+              <div class="row g-2 action-fields" {% if not hform.action_required.value %}style="display:none;"{% endif %}>
+                <div class="col-8">
+                  <div class="field-label">Action Owner</div>
+                  {{ hform.action_owner }}
+                </div>
+                <div class="col-4">
+                  <div class="field-label">Due Date</div>
+                  {{ hform.action_due_date }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Compliance item linkage -->
+            <div class="mt-2">
+              <div class="field-label">
+                <i class="bi bi-shield-check me-1 text-success"></i>Link to Compliance Item
+                <span class="text-muted fw-normal">(optional)</span>
+              </div>
+              {{ hform.compliance_item }}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Delete -->
+        <div class="d-flex justify-content-end mt-3">
+          {% if hform.instance.pk %}
+            <div class="form-check me-2" style="display:none!important;">{{ hform.DELETE }}</div>
+          {% endif %}
+          <button type="button" class="btn btn-outline-danger btn-sm delete-hazard-btn"
+                  data-has-pk="{% if hform.instance.pk %}1{% else %}0{% endif %}">
+            <i class="bi bi-trash me-1"></i>Remove Hazard
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Hidden template for new hazard cards ── -->
+  <div id="hazard-template" style="display:none;">
+    <div class="hazard-card" id="hazard-card-__prefix__">
+      <input type="hidden" name="hazards-__prefix__-id" id="id_hazards-__prefix__-id">
+      <input type="hidden" name="hazards-__prefix__-register" id="id_hazards-__prefix__-register">
+      <input type="hidden" name="hazards-__prefix__-order" id="id_hazards-__prefix__-order" value="__prefix__">
+
+      <div class="hazard-header" onclick="toggleHazard(this)">
+        <div class="d-flex align-items-center gap-3">
+          <span class="fw-bold text-muted" style="font-size:.9rem;">#<span class="hazard-num">__num__</span></span>
+          <span class="hoc-label administrative" id="hoc-label-__prefix__">Administrative</span>
+          <span class="text-muted small hazard-summary-text" id="summary-__prefix__">New Hazard</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="risk-badge risk-unset" id="init-risk-badge-__prefix__">?</span>
+          <span class="text-muted small"><i class="bi bi-chevron-down"></i></span>
+        </div>
+      </div>
+
+      <div class="hazard-body show">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="p-3 rounded-3" style="background:#f8f9fb;">
+              <div class="fw-semibold mb-3 small" style="color:#1a2c52;">
+                <i class="bi bi-exclamation-triangle me-1 text-warning"></i>Hazard Information
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <div class="field-label">Category</div>
+                  <select name="hazards-__prefix__-category" id="id_hazards-__prefix__-category" class="form-select form-select-sm">
+                    <option value="physical">Physical</option>
+                    <option value="chemical">Chemical</option>
+                    <option value="biological">Biological</option>
+                    <option value="ergonomic">Ergonomic</option>
+                    <option value="electrical">Electrical</option>
+                    <option value="fire_explosion">Fire / Explosion</option>
+                    <option value="working_at_height">Working at Height</option>
+                    <option value="confined_space">Confined Space</option>
+                    <option value="mechanical">Mechanical</option>
+                    <option value="psychosocial">Psychosocial</option>
+                    <option value="environmental">Environmental</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <div class="field-label">Who Might Be Harmed</div>
+                  <select name="hazards-__prefix__-who_might_be_harmed" id="id_hazards-__prefix__-who_might_be_harmed" class="form-select form-select-sm">
+                    <option value="all_personnel" selected>All Personnel</option>
+                    <option value="workers">Workers</option>
+                    <option value="contractors">Contractors</option>
+                    <option value="visitors">Visitors</option>
+                    <option value="public">Public</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <div class="field-label">Hazard Description</div>
+                  <textarea name="hazards-__prefix__-hazard_description" id="id_hazards-__prefix__-hazard_description"
+                            class="form-control form-control-sm" rows="2" placeholder="Describe the hazard…"></textarea>
+                </div>
+                <div class="col-12">
+                  <div class="field-label">Potential Harm / Consequence</div>
+                  <textarea name="hazards-__prefix__-potential_harm" id="id_hazards-__prefix__-potential_harm"
+                            class="form-control form-control-sm" rows="2" placeholder="Potential injury or consequence…"></textarea>
+                </div>
+              </div>
+
+              <div class="mt-3 p-2 rounded-2" style="border:1px solid #e2e8f0; background:#fff;">
+                <div class="fw-semibold small mb-2" style="color:#dc2626;">
+                  <i class="bi bi-shield-exclamation me-1"></i>Initial Risk (Before Controls)
+                </div>
+                <div class="row g-2 align-items-end">
+                  <div class="col-5">
+                    <div class="field-label">Likelihood (L)</div>
+                    <select name="hazards-__prefix__-initial_likelihood" id="id_hazards-__prefix__-initial_likelihood"
+                            class="form-select form-select-sm risk-input">
+                      <option value="1">1 – Rare</option>
+                      <option value="2">2 – Unlikely</option>
+                      <option value="3" selected>3 – Possible</option>
+                      <option value="4">4 – Likely</option>
+                      <option value="5">5 – Almost Certain</option>
+                    </select>
+                  </div>
+                  <div class="col-5">
+                    <div class="field-label">Severity (S)</div>
+                    <select name="hazards-__prefix__-initial_severity" id="id_hazards-__prefix__-initial_severity"
+                            class="form-select form-select-sm risk-input">
+                      <option value="1">1 – Insignificant</option>
+                      <option value="2">2 – Minor</option>
+                      <option value="3" selected>3 – Moderate</option>
+                      <option value="4">4 – Major</option>
+                      <option value="5">5 – Catastrophic</option>
+                    </select>
+                  </div>
+                  <div class="col-2 text-center">
+                    <div class="field-label">L×S</div>
+                    <div class="risk-badge risk-unset" id="init-score-__prefix__">?</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="p-3 rounded-3" style="background:#f0fdf4; border-left:4px solid #16a34a;">
+              <div class="fw-semibold mb-3 small" style="color:#065f46;">
+                <i class="bi bi-shield-check me-1"></i>Controls (Hierarchy of Controls)
+              </div>
+              <div class="row g-2">
+                <div class="col-12">
+                  <div class="field-label">Primary Control Type</div>
+                  <select name="hazards-__prefix__-primary_control_type" id="id_hazards-__prefix__-primary_control_type"
+                          class="form-select form-select-sm">
+                    <option value="elimination">Elimination</option>
+                    <option value="substitution">Substitution</option>
+                    <option value="engineering">Engineering Controls</option>
+                    <option value="administrative" selected>Administrative Controls</option>
+                    <option value="ppe">PPE</option>
+                  </select>
+                  <div class="mt-1" style="font-size:.7rem; color:#6c757d;">
+                    Eliminate → Substitute → Engineering → Administrative → PPE (highest to lowest preference)
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="field-label">Controls Description</div>
+                  <textarea name="hazards-__prefix__-controls_description" id="id_hazards-__prefix__-controls_description"
+                            class="form-control form-control-sm" rows="3" placeholder="List controls (one per line)…"></textarea>
+                </div>
+              </div>
+              <div class="mt-3 p-2 rounded-2" style="border:1px solid #bbf7d0; background:#fff;">
+                <div class="fw-semibold small mb-2" style="color:#16a34a;">
+                  <i class="bi bi-shield-check me-1"></i>Residual Risk (After Controls)
+                </div>
+                <div class="row g-2 align-items-end">
+                  <div class="col-5">
+                    <div class="field-label">Likelihood (L)</div>
+                    <select name="hazards-__prefix__-residual_likelihood" id="id_hazards-__prefix__-residual_likelihood"
+                            class="form-select form-select-sm risk-input">
+                      <option value="">— not assessed —</option>
+                      <option value="1">1 – Rare</option>
+                      <option value="2">2 – Unlikely</option>
+                      <option value="3">3 – Possible</option>
+                      <option value="4">4 – Likely</option>
+                      <option value="5">5 – Almost Certain</option>
+                    </select>
+                  </div>
+                  <div class="col-5">
+                    <div class="field-label">Severity (S)</div>
+                    <select name="hazards-__prefix__-residual_severity" id="id_hazards-__prefix__-residual_severity"
+                            class="form-select form-select-sm risk-input">
+                      <option value="">— not assessed —</option>
+                      <option value="1">1 – Insignificant</option>
+                      <option value="2">2 – Minor</option>
+                      <option value="3">3 – Moderate</option>
+                      <option value="4">4 – Major</option>
+                      <option value="5">5 – Catastrophic</option>
+                    </select>
+                  </div>
+                  <div class="col-2 text-center">
+                    <div class="field-label">L×S</div>
+                    <div class="risk-badge risk-unset" id="res-score-__prefix__">?</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3 p-3 rounded-3" style="background:#fff7ed; border:1px solid #fed7aa;">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <input type="checkbox" name="hazards-__prefix__-action_required"
+                       id="id_hazards-__prefix__-action_required" class="form-check-input action-required-cb">
+                <div class="fw-semibold small" style="color:#ea580c;">
+                  <label for="id_hazards-__prefix__-action_required">Action Required</label>
+                </div>
+              </div>
+              <div class="row g-2 action-fields" style="display:none;">
+                <div class="col-8">
+                  <div class="field-label">Action Owner</div>
+                  <select name="hazards-__prefix__-action_owner" id="id_hazards-__prefix__-action_owner"
+                          class="form-select form-select-sm">
+                    <option value="">— select —</option>
+                    {% for u in org_users %}
+                    <option value="{{ u.pk }}">{{ u.get_full_name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-4">
+                  <div class="field-label">Due Date</div>
+                  <input type="date" name="hazards-__prefix__-action_due_date"
+                         id="id_hazards-__prefix__-action_due_date" class="form-control form-control-sm">
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-2">
+              <div class="field-label">
+                <i class="bi bi-shield-check me-1 text-success"></i>Link to Compliance Item
+                <span class="text-muted fw-normal">(optional)</span>
+              </div>
+              <select name="hazards-__prefix__-compliance_item" id="id_hazards-__prefix__-compliance_item"
+                      class="form-select form-select-sm">
+                <option value="">— none —</option>
+                {% for ci in compliance_items %}
+                <option value="{{ ci.pk }}">{{ ci.title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+          <button type="button" class="btn btn-outline-danger btn-sm delete-hazard-btn" data-has-pk="0">
+            <i class="bi bi-trash me-1"></i>Remove Hazard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Submit ── -->
+  <div class="d-flex gap-2 justify-content-end mt-4">
+    <a href="{% if is_edit %}{% url 'hira:register_detail' register.pk %}{% else %}{% url 'hira:dashboard' %}{% endif %}"
+       class="btn btn-outline-secondary">Cancel</a>
+    <button type="submit" name="submit_action" value="save" class="btn btn-primary">
+      <i class="bi bi-floppy me-1"></i>Save Register
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+const mgmt   = document.getElementById('id_hazards-TOTAL_FORMS');
+let totalForms = parseInt(mgmt.value);
+
+// ── Toggle card body ─────────────────────────────────────────────────────────
+function toggleHazard(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('show');
+  const icon = header.querySelector('.bi-chevron-down, .bi-chevron-up');
+  if (icon) {
+    icon.classList.toggle('bi-chevron-down');
+    icon.classList.toggle('bi-chevron-up');
+  }
+}
+
+// ── Risk score helpers ───────────────────────────────────────────────────────
+function riskClass(score) {
+  if (!score || score === '?') return 'risk-unset';
+  const s = parseInt(score);
+  if (s <= 4)  return 'risk-low';
+  if (s <= 9)  return 'risk-medium';
+  if (s <= 16) return 'risk-high';
+  return 'risk-critical';
+}
+
+function updateRiskBadge(badgeId, l, s) {
+  const badge = document.getElementById(badgeId);
+  if (!badge) return;
+  const lv = parseInt(l), sv = parseInt(s);
+  if (isNaN(lv) || isNaN(sv) || lv === 0 || sv === 0) {
+    badge.textContent = '?';
+    badge.className = 'risk-badge risk-unset';
+  } else {
+    const score = lv * sv;
+    badge.textContent = score;
+    badge.className = 'risk-badge ' + riskClass(score);
+  }
+}
+
+function wireRiskInputs(idx) {
+  const iL = document.getElementById(`id_hazards-${idx}-initial_likelihood`);
+  const iS = document.getElementById(`id_hazards-${idx}-initial_severity`);
+  const rL = document.getElementById(`id_hazards-${idx}-residual_likelihood`);
+  const rS = document.getElementById(`id_hazards-${idx}-residual_severity`);
+
+  function calcInit() {
+    const score = iL && iS ? iL.value * iS.value : 0;
+    updateRiskBadge(`init-score-${idx}`, iL?.value, iS?.value);
+    updateRiskBadge(`init-risk-badge-${idx}`, iL?.value, iS?.value);
+  }
+  function calcRes() {
+    updateRiskBadge(`res-score-${idx}`, rL?.value, rS?.value);
+  }
+
+  [iL, iS].forEach(el => el && el.addEventListener('change', calcInit));
+  [rL, rS].forEach(el => el && el.addEventListener('change', calcRes));
+
+  calcInit();
+  calcRes();
+}
+
+// ── HOC label updater ─────────────────────────────────────────────────────────
+function wireControlType(idx) {
+  const sel   = document.getElementById(`id_hazards-${idx}-primary_control_type`);
+  const label = document.getElementById(`hoc-label-${idx}`);
+  const labels = {
+    elimination: 'Elimination', substitution: 'Substitution',
+    engineering: 'Engineering', administrative: 'Administrative', ppe: 'PPE'
+  };
+  if (!sel || !label) return;
+  sel.addEventListener('change', () => {
+    label.textContent  = labels[sel.value] || sel.value;
+    label.className    = `hoc-label ${sel.value}`;
+  });
+}
+
+// ── Summary text updater ──────────────────────────────────────────────────────
+function wireSummary(idx) {
+  const desc    = document.getElementById(`id_hazards-${idx}-hazard_description`);
+  const summary = document.getElementById(`summary-${idx}`);
+  if (!desc || !summary) return;
+  desc.addEventListener('input', () => {
+    summary.textContent = desc.value.substring(0, 60) || 'New Hazard';
+  });
+}
+
+// ── Action required toggle ────────────────────────────────────────────────────
+function wireActionToggle(card) {
+  const cb     = card.querySelector('.action-required-cb');
+  const fields = card.querySelector('.action-fields');
+  if (!cb || !fields) return;
+  cb.addEventListener('change', () => {
+    fields.style.display = cb.checked ? '' : 'none';
+  });
+}
+
+// ── Delete hazard ─────────────────────────────────────────────────────────────
+function wireDeleteBtn(card, idx) {
+  const btn = card.querySelector('.delete-hazard-btn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const hasPk = btn.dataset.hasPk === '1';
+    if (hasPk) {
+      // DB row — mark DELETE checkbox hidden in the card
+      const delCb = card.querySelector(`[name="hazards-${idx}-DELETE"]`);
+      if (delCb) { delCb.checked = true; }
+      card.style.opacity = '0.35';
+      card.style.pointerEvents = 'none';
+      card.querySelector('.hazard-header').style.background = '#fee2e2';
+    } else {
+      card.remove();
+      renumberHazards();
+    }
+  });
+}
+
+// ── Wire all existing cards on page load ──────────────────────────────────────
+function wireCard(card, idx) {
+  wireRiskInputs(idx);
+  wireControlType(idx);
+  wireSummary(idx);
+  wireActionToggle(card);
+  wireDeleteBtn(card, idx);
+}
+
+// ── Add hazard ────────────────────────────────────────────────────────────────
+document.getElementById('add-hazard-btn').addEventListener('click', () => {
+  const tpl      = document.getElementById('hazard-template').innerHTML;
+  const idx      = totalForms;
+  const num      = document.querySelectorAll('#hazards-container .hazard-card').length + 1;
+  const newHtml  = tpl.replace(/__prefix__/g, idx).replace(/__num__/g, num);
+  const wrapper  = document.createElement('div');
+  wrapper.innerHTML = newHtml;
+  const card = wrapper.firstElementChild;
+  document.getElementById('hazards-container').appendChild(card);
+  totalForms++;
+  mgmt.value = totalForms;
+  wireCard(card, idx);
+  renumberHazards();
+});
+
+function renumberHazards() {
+  document.querySelectorAll('#hazards-container .hazard-card .hazard-num').forEach((el, i) => {
+    el.textContent = i + 1;
+  });
+  const count = document.querySelectorAll('#hazards-container .hazard-card').length;
+  document.getElementById('hazard-count-label').textContent = `(${count} hazard${count !== 1 ? 's' : ''})`;
+}
+
+// Wire all existing formset rows on load
+document.querySelectorAll('#hazards-container .hazard-card').forEach((card, idx) => {
+  wireCard(card, idx);
+});
+renumberHazards();
+</script>
+{% endblock %}

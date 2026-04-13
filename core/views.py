@@ -42,8 +42,121 @@ def help_view(request):
 
 @login_required
 def app_dashboard_view(request):
-    """Post-login landing page with quick-action cards."""
-    return render(request, "app_dashboard.html", {})
+    """Post-login landing page — live KPIs + module quick-actions."""
+    user = request.user
+    org  = getattr(request, "organization", None)
+    today = timezone.now().date()
+    ctx = {"today": today}
+
+    if not org:
+        return render(request, "app_dashboard.html", ctx)
+
+    is_manager = user.is_manager or user.is_safety_manager
+
+    # ── Observations ──────────────────────────────────────────────────────────
+    from observations.models import Observation
+    obs_qs = Observation.objects.filter(organization=org)
+    ctx["obs_open"]       = obs_qs.filter(status__in=["OPEN", "IN_PROGRESS"]).count()
+    ctx["obs_overdue"]    = obs_qs.filter(
+        status__in=["OPEN", "IN_PROGRESS"],
+        target_date__lt=today,
+    ).count()
+    ctx["obs_awaiting"]   = obs_qs.filter(status="AWAITING_VERIFICATION").count()
+    ctx["obs_mine"]       = obs_qs.filter(
+        assigned_to=user,
+        status__in=["OPEN", "IN_PROGRESS"],
+    ).count()
+    ctx["obs_recent"]     = obs_qs.filter(
+        assigned_to=user,
+        status__in=["OPEN", "IN_PROGRESS"],
+    ).select_related("location").order_by("-date_observed")[:3]
+
+    # ── Permits ───────────────────────────────────────────────────────────────
+    from permits.models import Permit
+    permit_qs = Permit.objects.filter(organization=org)
+    ctx["permit_active"]    = permit_qs.filter(status__in=["APPROVED", "ACTIVE"]).count()
+    ctx["permit_submitted"] = permit_qs.filter(status="SUBMITTED").count()
+    ctx["permit_mine"]      = permit_qs.filter(
+        requestor=user,
+        status__in=["DRAFT", "SUBMITTED", "APPROVED", "ACTIVE"],
+    ).count()
+    ctx["permit_recent"]    = permit_qs.filter(
+        requestor=user,
+        status__in=["DRAFT", "SUBMITTED", "APPROVED", "ACTIVE"],
+    ).order_by("-id")[:3]
+
+    # ── HIRA ──────────────────────────────────────────────────────────────────
+    from hira.models import HazardRegister, Hazard
+    hira_qs = HazardRegister.objects.filter(organization=org)
+    all_hazards = Hazard.objects.filter(register__organization=org)
+    ctx["hira_total"]    = hira_qs.count()
+    ctx["hira_critical"] = sum(1 for h in all_hazards if h.effective_risk_level == "critical")
+    ctx["hira_high"]     = sum(1 for h in all_hazards if h.effective_risk_level == "high")
+    ctx["hira_actions_mine"] = all_hazards.filter(
+        action_required=True, action_owner=user
+    ).count()
+    ctx["hira_review_due"] = hira_qs.filter(
+        status="approved",
+        next_review_date__lte=today,
+    ).count()
+
+    # ── Compliance ────────────────────────────────────────────────────────────
+    from compliance.models import ComplianceItem
+    comp_qs = ComplianceItem.objects.filter(organization=org)
+    ctx["comp_overdue"]  = comp_qs.filter(status="overdue").count()
+    ctx["comp_due_soon"] = comp_qs.filter(
+        status="pending",
+        due_date__range=[today, today + timezone.timedelta(days=30)],
+    ).count()
+    ctx["comp_score"]    = 0
+    total_comp = comp_qs.count()
+    if total_comp:
+        ctx["comp_score"] = round(comp_qs.filter(status="complied").count() / total_comp * 100)
+
+    # ── Training ──────────────────────────────────────────────────────────────
+    from training.models import TrainingModule, AssessmentAttempt
+    ctx["training_modules"] = TrainingModule.objects.filter(organization=org).count()
+    ctx["my_attempts"]      = AssessmentAttempt.objects.filter(
+        user=user
+    ).select_related("assessment__training_module").order_by("-submitted_at")[:3]
+
+    # ── Corrective Actions ────────────────────────────────────────────────────
+    from actions.models import CorrectiveAction
+    ca_qs = CorrectiveAction.objects.filter(organization=org)
+    ctx["ca_open"]     = ca_qs.exclude(status=CorrectiveAction.STATUS_CLOSED).count()
+    ctx["ca_overdue"]  = sum(1 for a in ca_qs.exclude(status=CorrectiveAction.STATUS_CLOSED) if a.is_overdue)
+    ctx["ca_mine"]     = ca_qs.filter(
+        assigned_to=user,
+    ).exclude(status=CorrectiveAction.STATUS_CLOSED).count()
+    ctx["ca_pending_verification"] = ca_qs.filter(
+        status=CorrectiveAction.STATUS_PENDING_VERIFICATION
+    ).count()
+    ctx["ca_mine_list"] = ca_qs.filter(
+        assigned_to=user,
+    ).exclude(status=CorrectiveAction.STATUS_CLOSED).order_by("due_date")[:5]
+
+    from incidents.models import Incident
+    inc_qs = Incident.objects.filter(organization=org)
+    ctx["inc_open"]          = inc_qs.exclude(status=Incident.STATUS_CLOSED).count()
+    ctx["inc_investigating"]  = inc_qs.filter(status=Incident.STATUS_INVESTIGATING).count()
+    ctx["inc_recent"]        = inc_qs.exclude(status=Incident.STATUS_CLOSED).order_by("-date_occurred")[:5]
+
+    from inspections.models import Inspection
+    insp_qs = Inspection.objects.filter(organization=org)
+    today   = __import__("datetime").date.today()
+    # Auto-flag overdue
+    insp_qs.filter(
+        scheduled_date__lt=today,
+        status__in=[Inspection.STATUS_SCHEDULED, Inspection.STATUS_IN_PROGRESS],
+    ).update(status=Inspection.STATUS_OVERDUE)
+    ctx["insp_scheduled"] = insp_qs.filter(status=Inspection.STATUS_SCHEDULED).count()
+    ctx["insp_overdue"]   = insp_qs.filter(status=Inspection.STATUS_OVERDUE).count()
+    ctx["insp_upcoming"]  = insp_qs.filter(
+        status=Inspection.STATUS_SCHEDULED
+    ).order_by("scheduled_date")[:4]
+
+    ctx["is_manager"] = is_manager
+    return render(request, "app_dashboard.html", ctx)
 
 
 def request_demo_view(request):

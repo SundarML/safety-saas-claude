@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ template.title }} — Vigilo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'inspections:template_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+    <div>
+      <h5 class="fw-bold mb-0">{{ template.title }}</h5>
+      <span class="text-muted small">{{ template.get_category_display }} &nbsp;·&nbsp; {{ template.item_count }} item{{ template.item_count|pluralize }}</span>
+    </div>
+  </div>
+  {% if is_manager %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'inspections:template_edit' template.pk %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-pencil-square me-1"></i>Edit
+    </a>
+    <a href="{% url 'inspections:inspection_create' %}?template={{ template.pk }}" class="btn btn-sm btn-primary">
+      <i class="bi bi-calendar-plus me-1"></i>Schedule Inspection
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% if template.description %}
+<p class="text-muted mb-4">{{ template.description }}</p>
+{% endif %}
+
+{% for section in template.sections.all %}
+<div class="card border-0 shadow-sm mb-3" style="border-radius:10px;">
+  <div class="card-body p-0">
+    <div class="px-4 py-3 border-bottom" style="background:#f8f9fb;border-radius:10px 10px 0 0;">
+      <span class="fw-semibold" style="color:#1a2c52;">{{ section.title }}</span>
+      <span class="text-muted small ms-2">{{ section.items.count }} item{{ section.items.count|pluralize }}</span>
+    </div>
+    {% for item in section.items.all %}
+    <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom" style="{% if forloop.last %}border-bottom:none!important;{% endif %}">
+      <span class="text-muted" style="font-size:.8rem; min-width:1.5rem;">{{ forloop.counter }}.</span>
+      <span style="font-size:.92rem;">{{ item.question }}</span>
+      {% if item.is_critical %}
+      <span class="ms-auto badge" style="background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;font-size:.65rem;white-space:nowrap;">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>Critical
+      </span>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="px-4 py-3 text-muted small">No items in this section.</div>
+    {% endfor %}
+  </div>
+</div>
+{% empty %}
+<p class="text-muted">No sections defined.</p>
+{% endfor %}
+{% endblock %}

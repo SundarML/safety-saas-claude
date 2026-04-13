@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Risk Matrix — HIRA{% endblock %}
+
+{% block extra_head %}
+<style>
+.matrix-wrap { overflow-x: auto; }
+.matrix-table { border-collapse: separate; border-spacing: 4px; }
+.matrix-table th { font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  color: #6c757d; background: transparent; padding: 4px 8px; white-space: nowrap; }
+
+.cell-low      { background: #dcfce7; color: #15803d; border: 2px solid #bbf7d0; }
+.cell-medium   { background: #fef9c3; color: #854d0e; border: 2px solid #fde68a; }
+.cell-high     { background: #ffedd5; color: #9a3412; border: 2px solid #fed7aa; }
+.cell-critical { background: #fee2e2; color: #991b1b; border: 2px solid #fecaca; }
+.cell-empty    { background: #f8f9fb; color: #94a3b8; border: 2px solid #e2e8f0; }
+
+.matrix-cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 84px; height: 84px; border-radius: 8px; cursor: pointer;
+  transition: transform .15s, box-shadow .15s; text-decoration: none; position: relative;
+}
+.matrix-cell:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(0,0,0,.15); z-index: 1; }
+.matrix-cell.selected { outline: 3px solid #1a2c52; outline-offset: 2px; }
+.cell-score  { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+.cell-count  { font-size: .7rem; font-weight: 600; margin-top: 2px; }
+.cell-level  { font-size: .58rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+
+.y-axis-label {
+  writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  color: #475569; letter-spacing: .08em; white-space: nowrap;
+}
+.like-row-label { font-size: .68rem; font-weight: 700; color: #475569; white-space: nowrap; }
+
+.hazard-chip {
+  display: block; background: #f8f9fb; border: 1px solid #e2e8f0;
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+  text-decoration: none; color: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.hazard-chip:hover { border-color: #1a2c52; box-shadow: 0 2px 8px rgba(0,0,0,.07); color: inherit; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">Risk Matrix</h4>
+    <p class="text-muted small mb-0">Likelihood × Severity — effective risk position for all hazards in your organisation</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'hira:register_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-list-columns me-1"></i>Registers
+    </a>
+    <a href="{% url 'hira:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-grid me-1"></i>Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
+  <span class="text-muted small fw-semibold me-1">Risk Level:</span>
+  <span class="badge px-2 py-1" style="background:#fee2e2;color:#991b1b;font-size:.75rem;">Critical (17–25)</span>
+  <span class="badge px-2 py-1" style="background:#ffedd5;color:#9a3412;font-size:.75rem;">High (10–16)</span>
+  <span class="badge px-2 py-1" style="background:#fef9c3;color:#854d0e;font-size:.75rem;">Medium (5–9)</span>
+  <span class="badge px-2 py-1" style="background:#dcfce7;color:#15803d;font-size:.75rem;">Low (1–4)</span>
+  <span class="text-muted small ms-2">Click a cell to see hazards at that risk position.</span>
+</div>
+
+<div class="row g-4">
+  <!-- Matrix -->
+  <div class="col-xl-7 col-lg-8">
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+      <div class="card-body p-4">
+        <div class="matrix-wrap">
+          <table class="matrix-table">
+            <!-- Severity header -->
+            <thead>
+              <tr>
+                <th colspan="2"></th>
+                {% for sh in sev_headers %}
+                <th class="text-center" style="width:84px;">
+                  S{{ sh.s }}<br>
+                  <span style="font-size:.6rem; color:#94a3b8; font-weight:400;">{{ sh.label }}</span>
+                </th>
+                {% endfor %}
+              </tr>
+              <tr>
+                <th colspan="2" class="text-center" style="padding-bottom:8px;">
+                  <div class="x-axis-label text-muted" style="font-size:.65rem;">Severity &#8594;</div>
+                </th>
+                <th colspan="5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in cell_rows %}
+              <tr>
+                {% if forloop.first %}
+                <td rowspan="{{ cell_rows|length }}" style="padding-right:6px; vertical-align:middle;">
+                  <div class="y-axis-label">Likelihood</div>
+                </td>
+                {% endif %}
+                <!-- Likelihood label -->
+                <th class="like-row-label text-end pe-2" style="vertical-align:middle;">
+                  L{{ row.l }}<br>
+                  <span style="font-size:.58rem; font-weight:400; color:#94a3b8;">{{ row.l_label }}</span>
+                </th>
+                <!-- Cells -->
+                {% for cell in row.cells %}
+                <td style="padding:2px;">
+                  <a href="?l={{ cell.l }}&s={{ cell.s }}"
+                     class="matrix-cell {% if cell.count > 0 %}cell-{{ cell.level }}{% else %}cell-empty{% endif %}{% if cell.selected %} selected{% endif %}">
+                    <span class="cell-score">{{ cell.score }}</span>
+                    <span class="cell-count">
+                      {% if cell.count > 0 %}{{ cell.count }} <i class="bi bi-exclamation-triangle-fill" style="font-size:.6rem;"></i>{% else %}—{% endif %}
+                    </span>
+                    <span class="cell-level">{{ cell.level }}</span>
+                  </a>
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="col-xl-5 col-lg-4">
+    {% if selected_hazards is not None %}
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+      <div class="card-header bg-white border-0 pt-3 pb-2 px-4">
+        <div class="fw-bold" style="color:#1a2c52; font-size:1rem;">
+          Score {{ selected_score }}
+          &nbsp;
+          <span class="badge rounded-pill
+            {% if selected_score >= 17 %}bg-danger
+            {% elif selected_score >= 10 %}bg-warning text-dark
+            {% elif selected_score >= 5 %}bg-warning text-dark
+            {% else %}bg-success{% endif %}"
+            style="font-size:.72rem;">
+            {% if selected_score >= 17 %}Critical
+            {% elif selected_score >= 10 %}High
+            {% elif selected_score >= 5 %}Medium
+            {% else %}Low{% endif %}
+          </span>
+        </div>
+        <p class="text-muted small mb-0">
+          L{{ selected_l }} × S{{ selected_s }}
+          &nbsp;&mdash;&nbsp;
+          {{ selected_hazards|length }} hazard{{ selected_hazards|length|pluralize }}
+        </p>
+      </div>
+      <div class="card-body px-4 py-3" style="max-height:480px; overflow-y:auto;">
+        {% for hazard in selected_hazards %}
+        <a href="{% url 'hira:register_detail' hazard.register_id %}" class="hazard-chip">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div class="flex-grow-1">
+              <div class="fw-semibold" style="font-size:.88rem;">{{ hazard.hazard_description|truncatechars:90 }}</div>
+              <div class="text-muted mt-1" style="font-size:.78rem;">
+                <i class="bi bi-shield-exclamation me-1"></i>{{ hazard.register.title|truncatechars:50 }}
+              </div>
+            </div>
+            <span class="badge flex-shrink-0" style="background:#e0e7ff;color:#3730a3;font-size:.66rem;">
+              {{ hazard.get_category_display }}
+            </span>
+          </div>
+          {% if hazard.action_required %}
+          <div class="mt-2">
+            <span class="badge" style="background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;font-size:.65rem;">
+              <i class="bi bi-flag-fill me-1"></i>Action required
+            </span>
+          </div>
+          {% endif %}
+        </a>
+        {% empty %}
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-check-circle mb-2" style="font-size:1.8rem; opacity:.3; display:block;"></i>
+          No hazards at this risk position.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm d-flex align-items-center justify-content-center"
+         style="border-radius:12px; min-height:220px;">
+      <div class="text-center text-muted p-4">
+        <i class="bi bi-grid-3x3 mb-3" style="font-size:2.5rem; opacity:.2; display:block;"></i>
+        <p class="mb-0 small">Click any cell in the matrix<br>to see the hazards at that risk position.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

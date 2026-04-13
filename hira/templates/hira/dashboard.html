@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}HIRA Dashboard — Vigilo{% endblock %}
+
+{% block extra_head %}
+<style>
+.stat-card { border-radius:12px; padding:20px 22px; border:1px solid #e2e8f0; background:#fff; }
+.stat-val  { font-size:2rem; font-weight:800; line-height:1; }
+.stat-lbl  { font-size:.78rem; color:#64748b; margin-top:4px; }
+
+.risk-critical { background:#fee2e2; color:#dc2626; }
+.risk-high     { background:#ffedd5; color:#ea580c; }
+.risk-medium   { background:#fef9c3; color:#ca8a04; }
+.risk-low      { background:#dcfce7; color:#16a34a; }
+
+.register-row  { border-left:4px solid #e2e8f0; transition:border-color .2s; }
+.register-row:hover { border-left-color: #1a2c52; background:#f8f9fb; }
+.register-row.critical { border-left-color:#dc2626; }
+.register-row.high     { border-left-color:#ea580c; }
+.register-row.medium   { border-left-color:#ca8a04; }
+.register-row.low      { border-left-color:#16a34a; }
+
+.status-badge-draft        { background:#f1f5f9; color:#475569; }
+.status-badge-under_review { background:#eff6ff; color:#2563eb; }
+.status-badge-approved     { background:#f0fdf4; color:#16a34a; }
+.status-badge-expired      { background:#fef2f2; color:#dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">HIRA Dashboard</h4>
+    <p class="text-muted small mb-0">Hazard Identification &amp; Risk Assessment — ISO 45001 aligned</p>
+  </div>
+  {% if user.is_manager or user.is_safety_manager %}
+  <a href="{% url 'hira:register_create' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-plus-circle me-1"></i> New HIRA Register
+  </a>
+  {% endif %}
+</div>
+
+<!-- ── Stats row ── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center">
+      <div class="stat-val">{{ total }}</div>
+      <div class="stat-lbl">Total Registers</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#bbf7d0;">
+      <div class="stat-val" style="color:#16a34a;">{{ approved }}</div>
+      <div class="stat-lbl">Approved</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#bfdbfe;">
+      <div class="stat-val" style="color:#2563eb;">{{ draft }}</div>
+      <div class="stat-lbl">Draft / Review</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#fecaca;">
+      <div class="stat-val" style="color:#dc2626;">{{ expired }}</div>
+      <div class="stat-lbl">Expired</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#fed7aa;">
+      <div class="stat-val" style="color:#ea580c;">{{ review_soon }}</div>
+      <div class="stat-lbl">Review Due (30d)</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="stat-card text-center" style="border-color:#fecaca;">
+      <div class="stat-val" style="color:#dc2626;">{{ overdue_actions }}</div>
+      <div class="stat-lbl">Overdue Actions</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Risk level summary ── -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm" style="border-radius:12px;">
+      <div class="card-body py-3">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-bar-chart-fill text-danger"></i>
+          <span class="fw-semibold">Hazard Risk Distribution</span>
+          <span class="text-muted small ms-1">(effective residual risk across all registers)</span>
+        </div>
+        <div class="row g-3 text-center">
+          <div class="col-3">
+            <div class="rounded-3 p-3 risk-critical">
+              <div style="font-size:1.8rem; font-weight:800;">{{ critical_count }}</div>
+              <div style="font-size:.78rem; font-weight:600;">CRITICAL</div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="rounded-3 p-3 risk-high">
+              <div style="font-size:1.8rem; font-weight:800;">{{ high_count }}</div>
+              <div style="font-size:.78rem; font-weight:600;">HIGH</div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="rounded-3 p-3 risk-medium">
+              <div style="font-size:1.8rem; font-weight:800;">{{ medium_count }}</div>
+              <div style="font-size:.78rem; font-weight:600;">MEDIUM</div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="rounded-3 p-3 risk-low">
+              <div style="font-size:1.8rem; font-weight:800;">{{ low_count }}</div>
+              <div style="font-size:.78rem; font-weight:600;">LOW</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Recent registers ── -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <span class="fw-semibold">Recent Registers</span>
+  <a href="{% url 'hira:register_list' %}" class="text-decoration-none small">View all <i class="bi bi-arrow-right"></i></a>
+</div>
+
+{% for r in recent %}
+{% with level=r.highest_risk_level %}
+<div class="card border-0 shadow-sm mb-2 register-row {% if level %}{{ level }}{% endif %}"
+     style="border-radius:10px; cursor:pointer;"
+     onclick="window.location='{% url 'hira:register_detail' r.pk %}'">
+  <div class="card-body py-3 px-3">
+    <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+      <div>
+        <div class="fw-semibold" style="font-size:.95rem;">{{ r.title }}</div>
+        <div class="text-muted small mt-1">
+          <i class="bi bi-tools me-1"></i>{{ r.activity }}
+          {% if r.location_text %}<span class="ms-3"><i class="bi bi-geo-alt me-1"></i>{{ r.location_text }}</span>{% endif %}
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        {% if level %}
+        <span class="badge rounded-pill px-2 py-1 risk-{{ level }}" style="font-size:.72rem;">
+          {{ level|title }} Risk
+        </span>
+        {% endif %}
+        <span class="badge rounded-pill px-2 py-1 status-badge-{{ r.status }}" style="font-size:.72rem;">
+          {{ r.get_status_display }}
+        </span>
+        <span class="text-muted" style="font-size:.78rem;">
+          <i class="bi bi-calendar2 me-1"></i>{{ r.assessment_date|date:"d M Y" }}
+        </span>
+        <span class="text-muted" style="font-size:.78rem;">
+          {{ r.hazards.count }} hazard{{ r.hazards.count|pluralize }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% empty %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-clipboard2-x" style="font-size:2.5rem; opacity:.3; display:block; margin-bottom:12px;"></i>
+  No HIRA registers yet.
+  {% if user.is_manager or user.is_safety_manager %}
+  <br><a href="{% url 'hira:register_create' %}" class="btn btn-success btn-sm mt-3">
+    <i class="bi bi-plus-circle me-1"></i>Create First Register
+  </a>
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

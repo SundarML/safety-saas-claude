@@ -1,246 +1,937 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard — Vigilo{% endblock %}
 
 {% block extra_head %}
 <style>
-  .welcome-banner {
-    background: linear-gradient(120deg, #e0f7f4 0%, #f0fafa 60%, #e8f4fd 100%);
-    border-radius: 16px;
-    padding: 36px 40px;
-    margin-bottom: 32px;
-    border: 1px solid #d0eeea;
-  }
-  .welcome-kicker {
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: #0d9488;
-    margin-bottom: 8px;
-  }
-  .welcome-heading {
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 4px;
-    line-height: 1.2;
-  }
-  .welcome-sub {
-    font-size: .95rem;
-    color: #64748b;
-  }
+/* ── Welcome banner ──────────────────────────────────────────────── */
+.welcome-banner {
+  background: linear-gradient(120deg, #1a2c52 0%, #1e3a6e 60%, #162040 100%);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.welcome-banner::after {
+  content: "";
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(249,115,22,.12);
+}
+.welcome-date   { font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; margin-bottom:6px; }
+.welcome-name   { font-size:clamp(1.4rem,3vw,1.9rem); font-weight:800; color:#fff; margin-bottom:2px; line-height:1.2; }
+.welcome-org    { font-size:.9rem; color:#94a3b8; }
+.role-badge     { display:inline-block; background:rgba(249,115,22,.18); color:#fb923c;
+                  font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+                  padding:3px 10px; border-radius:20px; margin-top:8px; }
 
-  /* Quick-action cards */
-  .qa-card {
-    background: #fff;
-    border: 1px solid #e9ecef;
-    border-radius: 14px;
-    padding: 28px 24px;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    transition: transform .15s, box-shadow .15s, border-color .15s;
-    height: 100%;
-  }
-  .qa-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 28px rgba(0,0,0,.10);
-    border-color: #c7d9ff;
-    color: inherit;
-  }
-  .qa-icon {
-    width: 52px; height: 52px;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.5rem;
-    margin-bottom: 16px;
-  }
-  .qa-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 4px;
-  }
-  .qa-desc {
-    font-size: .83rem;
-    color: #94a3b8;
-    line-height: 1.5;
-  }
+/* ── KPI strip ───────────────────────────────────────────────────── */
+.kpi-strip { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:28px; }
+.kpi-card  {
+  flex:1; min-width:130px;
+  background:#fff; border:1px solid #e2e8f0; border-radius:12px;
+  padding:16px 18px; position:relative;
+}
+.kpi-card.alert-card { border-color:#fecaca; background:#fff5f5; }
+.kpi-card.warn-card  { border-color:#fed7aa; background:#fffaf5; }
+.kpi-card.ok-card    { border-color:#bbf7d0; background:#f0fdf4; }
+.kpi-val  { font-size:1.9rem; font-weight:800; line-height:1; }
+.kpi-lbl  { font-size:.72rem; color:#64748b; margin-top:4px; font-weight:500; }
+.kpi-icon { position:absolute; top:14px; right:14px; font-size:1.3rem; opacity:.25; }
+
+/* ── Section header ──────────────────────────────────────────────── */
+.section-header {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:14px; margin-top:28px;
+}
+.section-icon {
+  width:36px; height:36px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; flex-shrink:0;
+}
+.section-title { font-size:.95rem; font-weight:700; color:#0f172a; }
+.section-badge {
+  font-size:.7rem; font-weight:700; padding:2px 8px;
+  border-radius:20px; white-space:nowrap;
+}
+.badge-alert  { background:#fee2e2; color:#dc2626; }
+.badge-warn   { background:#ffedd5; color:#ea580c; }
+.badge-ok     { background:#dcfce7; color:#16a34a; }
+.badge-info   { background:#dbeafe; color:#2563eb; }
+.badge-neutral{ background:#f1f5f9; color:#475569; }
+.section-line { flex:1; height:1px; background:#e2e8f0; }
+
+/* ── Module cards ────────────────────────────────────────────────── */
+.mod-card {
+  background:#fff; border:1px solid #e2e8f0; border-radius:12px;
+  padding:18px 20px; text-decoration:none; color:inherit; display:block;
+  height:100%; transition:transform .15s, box-shadow .15s, border-color .15s;
+}
+.mod-card:hover {
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,.09);
+  border-color:#c7d9ff; color:inherit;
+}
+.mod-card-icon {
+  width:44px; height:44px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.25rem; margin-bottom:12px;
+}
+.mod-card-title { font-size:.92rem; font-weight:700; color:#0f172a; margin-bottom:3px; }
+.mod-card-desc  { font-size:.78rem; color:#94a3b8; line-height:1.45; }
+.mod-card-badge {
+  display:inline-block; margin-top:8px;
+  font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:10px;
+}
+
+/* ── Attention list ──────────────────────────────────────────────── */
+.attention-item {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 14px; border-radius:9px; background:#fff;
+  border:1px solid #e2e8f0; margin-bottom:8px;
+  text-decoration:none; color:inherit;
+  transition:border-color .15s, background .15s;
+}
+.attention-item:hover { border-color:#1a2c52; background:#f8f9fb; color:inherit; }
+.attention-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.attention-title { font-size:.88rem; font-weight:600; color:#0f172a; }
+.attention-meta  { font-size:.74rem; color:#94a3b8; margin-top:1px; }
+
+/* ── Compliance score ring ───────────────────────────────────────── */
+.score-ring {
+  width:56px; height:56px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; font-weight:800;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid px-2 px-lg-3 py-2">
 
-  <!-- ── WELCOME BANNER ──────────────────────────── -->
-  <div class="welcome-banner">
-    <div class="welcome-kicker">Dashboard</div>
-    <div class="welcome-heading">
-      Welcome back, {{ user.get_full_name|default:user.email }}
+{% if not request.organization %}
+  <div class="alert alert-warning">Your account is not linked to an organisation. Please contact your administrator.</div>
+{% else %}
+
+  <!-- ══════════════════════════════════════════════════════════════
+       WELCOME BANNER
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="welcome-banner mb-4">
+    <div class="welcome-date"><i class="bi bi-calendar2 me-1"></i>{{ today|date:"l, d F Y" }}</div>
+    <div class="welcome-name">Welcome back, {{ user.get_full_name|default:user.email }} 👋</div>
+    <div class="welcome-org">{{ request.organization.name }}</div>
+    <div>
+      <span class="role-badge">
+        {% if user.is_manager %}Manager
+        {% elif user.is_safety_manager %}Safety Manager
+        {% elif user.is_action_owner %}Action Owner
+        {% elif user.is_contractor %}Contractor
+        {% else %}Observer{% endif %}
+      </span>
     </div>
-    {% if request.organization %}
-      <div class="welcome-sub">{{ request.organization.name }}</div>
-    {% endif %}
   </div>
 
-  <!-- ── QUICK ACTION CARDS ──────────────────────── -->
-  <div class="row g-3">
+  <!-- ══════════════════════════════════════════════════════════════
+       KPI STRIP
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="kpi-strip">
 
-    <!-- Report Observation -->
-    <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'observations:create' %}" class="qa-card">
-        <div class="qa-icon" style="background:#fff0f0;">
-          <i class="bi bi-clipboard-plus" style="color:#dc3545;"></i>
-        </div>
-        <div class="qa-title">Report Observation</div>
-        <div class="qa-desc">Log a new safety hazard</div>
-      </a>
+    <div class="kpi-card {% if obs_overdue > 0 %}alert-card{% elif obs_open > 0 %}warn-card{% else %}ok-card{% endif %}">
+      <i class="bi bi-clipboard-x kpi-icon"></i>
+      <div class="kpi-val" style="color:{% if obs_overdue > 0 %}#dc2626{% elif obs_open > 0 %}#ea580c{% else %}#16a34a{% endif %};">
+        {{ obs_open }}
+      </div>
+      <div class="kpi-lbl">Open Observations</div>
+      {% if obs_overdue > 0 %}
+      <div class="section-badge badge-alert mt-2">{{ obs_overdue }} overdue</div>
+      {% endif %}
     </div>
 
-    <!-- All Observations -->
-    <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'observations:observation_list' %}" class="qa-card">
-        <div class="qa-icon" style="background:#f0f4ff;">
-          <i class="bi bi-bar-chart-line" style="color:#0d6efd;"></i>
-        </div>
-        <div class="qa-title">All Observations</div>
-        <div class="qa-desc">View &amp; manage records</div>
-      </a>
+    <div class="kpi-card {% if permit_submitted > 0 %}warn-card{% elif permit_active > 0 %}ok-card{% else %}{% endif %}">
+      <i class="bi bi-file-earmark-check kpi-icon"></i>
+      <div class="kpi-val" style="color:{% if permit_submitted > 0 %}#ea580c{% else %}#1a2c52{% endif %};">
+        {{ permit_active }}
+      </div>
+      <div class="kpi-lbl">Active Permits</div>
+      {% if permit_submitted > 0 %}
+      <div class="section-badge badge-warn mt-2">{{ permit_submitted }} awaiting approval</div>
+      {% endif %}
     </div>
 
-    <!-- Analytics -->
-    <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'observations:dashboard' %}" class="qa-card">
-        <div class="qa-icon" style="background:#fff8f0;">
-          <i class="bi bi-graph-up-arrow" style="color:#fd7e14;"></i>
-        </div>
-        <div class="qa-title">Analytics</div>
-        <div class="qa-desc">KPIs, trends &amp; reports</div>
-      </a>
+    <div class="kpi-card {% if hira_critical > 0 %}alert-card{% elif hira_high > 0 %}warn-card{% endif %}">
+      <i class="bi bi-shield-exclamation kpi-icon"></i>
+      <div class="kpi-val" style="color:{% if hira_critical > 0 %}#dc2626{% elif hira_high > 0 %}#ea580c{% else %}#1a2c52{% endif %};">
+        {{ hira_critical|add:hira_high }}
+      </div>
+      <div class="kpi-lbl">Critical / High Hazards</div>
+      {% if hira_critical > 0 %}
+      <div class="section-badge badge-alert mt-2">{{ hira_critical }} critical</div>
+      {% endif %}
     </div>
 
-    <!-- New Permit -->
-    <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'permits:create' %}" class="qa-card">
-        <div class="qa-icon" style="background:#f0fff4;">
-          <i class="bi bi-file-earmark-plus" style="color:#198754;"></i>
-        </div>
-        <div class="qa-title">New Permit</div>
-        <div class="qa-desc">Raise a permit to work</div>
-      </a>
+    <div class="kpi-card {% if comp_overdue > 0 %}alert-card{% elif comp_due_soon > 0 %}warn-card{% else %}ok-card{% endif %}">
+      <i class="bi bi-patch-check kpi-icon"></i>
+      <div class="kpi-val" style="color:{% if comp_overdue > 0 %}#dc2626{% elif comp_due_soon > 0 %}#ea580c{% else %}#16a34a{% endif %};">
+        {{ comp_score }}%
+      </div>
+      <div class="kpi-lbl">Compliance Score</div>
+      {% if comp_overdue > 0 %}
+      <div class="section-badge badge-alert mt-2">{{ comp_overdue }} overdue</div>
+      {% elif comp_due_soon > 0 %}
+      <div class="section-badge badge-warn mt-2">{{ comp_due_soon }} due soon</div>
+      {% endif %}
     </div>
 
-    <!-- All Permits -->
-    <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'permits:permit_list' %}" class="qa-card">
-        <div class="qa-icon" style="background:#f5f0ff;">
-          <i class="bi bi-file-earmark-check" style="color:#6f42c1;"></i>
-        </div>
-        <div class="qa-title">All Permits</div>
-        <div class="qa-desc">View &amp; manage PTW</div>
-      </a>
+    <div class="kpi-card">
+      <i class="bi bi-mortarboard kpi-icon"></i>
+      <div class="kpi-val" style="color:#4338ca;">{{ training_modules }}</div>
+      <div class="kpi-lbl">Training Modules</div>
     </div>
-
-    <!-- PTW Dashboard -->
-    <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'permits:dashboard' %}" class="qa-card">
-        <div class="qa-icon" style="background:#fffbf0;">
-          <i class="bi bi-lightning-charge" style="color:#ffc107;"></i>
-        </div>
-        <div class="qa-title">PTW Dashboard</div>
-        <div class="qa-desc">Active &amp; pending permits</div>
-      </a>
-    </div>
-
-    <!-- Archive -->
-    <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'observations:archived_list' %}" class="qa-card">
-        <div class="qa-icon" style="background:#f0f8ff;">
-          <i class="bi bi-archive" style="color:#0dcaf0;"></i>
-        </div>
-        <div class="qa-title">Archive</div>
-        <div class="qa-desc">Closed records</div>
-      </a>
-    </div>
-
-    <!-- Invite Users (managers only) -->
-    {% if user.is_manager %}
-    <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'core:invite_user' %}" class="qa-card">
-        <div class="qa-icon" style="background:#f0f0f0;">
-          <i class="bi bi-person-plus" style="color:#495057;"></i>
-        </div>
-        <div class="qa-title">Invite Users</div>
-        <div class="qa-desc">Add team members</div>
-      </a>
-    </div>
-    {% endif %}
 
   </div>
 
-  <!-- ── TRAINING & SKILLS ────────────────────────── -->
-  <div class="mt-4 mb-3 d-flex align-items-center gap-3">
-    <span class="fw-bold" style="font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;white-space:nowrap;">
-      Training &amp; Skills
+  <!-- ══════════════════════════════════════════════════════════════
+       NEEDS YOUR ATTENTION
+  ══════════════════════════════════════════════════════════════════ -->
+  {% if obs_mine or permit_mine or hira_actions_mine %}
+  <div class="section-header">
+    <div class="section-icon" style="background:#fef2f2;">
+      <i class="bi bi-bell-fill" style="color:#dc2626;"></i>
+    </div>
+    <div>
+      <div class="section-title">Needs Your Attention</div>
+    </div>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="row g-2 mb-2">
+    {% if obs_mine %}
+    <div class="col-md-4">
+      <a href="{% url 'observations:observation_list' %}" class="attention-item d-block">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attention-dot" style="background:#dc2626;"></div>
+          <div>
+            <div class="attention-title">{{ obs_mine }} open observation{{ obs_mine|pluralize }} assigned to you</div>
+            <div class="attention-meta">Requires rectification action</div>
+          </div>
+          <i class="bi bi-arrow-right ms-auto text-muted small"></i>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if permit_mine %}
+    <div class="col-md-4">
+      <a href="{% url 'permits:permit_list' %}" class="attention-item d-block">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attention-dot" style="background:#ea580c;"></div>
+          <div>
+            <div class="attention-title">{{ permit_mine }} active permit{{ permit_mine|pluralize }} you raised</div>
+            <div class="attention-meta">Check status &amp; update</div>
+          </div>
+          <i class="bi bi-arrow-right ms-auto text-muted small"></i>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if hira_actions_mine %}
+    <div class="col-md-4">
+      <a href="{% url 'hira:register_list' %}" class="attention-item d-block">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attention-dot" style="background:#ca8a04;"></div>
+          <div>
+            <div class="attention-title">{{ hira_actions_mine }} HIRA action{{ hira_actions_mine|pluralize }} assigned to you</div>
+            <div class="attention-meta">Risk control actions pending</div>
+          </div>
+          <i class="bi bi-arrow-right ms-auto text-muted small"></i>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if obs_awaiting and is_manager %}
+    <div class="col-md-4">
+      <a href="{% url 'observations:observation_list' %}" class="attention-item d-block">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attention-dot" style="background:#2563eb;"></div>
+          <div>
+            <div class="attention-title">{{ obs_awaiting }} observation{{ obs_awaiting|pluralize }} awaiting verification</div>
+            <div class="attention-meta">Ready for your review &amp; close</div>
+          </div>
+          <i class="bi bi-arrow-right ms-auto text-muted small"></i>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if permit_submitted and is_manager %}
+    <div class="col-md-4">
+      <a href="{% url 'permits:permit_list' %}" class="attention-item d-block">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attention-dot" style="background:#ea580c;"></div>
+          <div>
+            <div class="attention-title">{{ permit_submitted }} permit{{ permit_submitted|pluralize }} awaiting approval</div>
+            <div class="attention-meta">Review &amp; approve to allow work</div>
+          </div>
+          <i class="bi bi-arrow-right ms-auto text-muted small"></i>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if hira_review_due and is_manager %}
+    <div class="col-md-4">
+      <a href="{% url 'hira:register_list' %}?status=approved" class="attention-item d-block">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attention-dot" style="background:#ca8a04;"></div>
+          <div>
+            <div class="attention-title">{{ hira_review_due }} HIRA register{{ hira_review_due|pluralize }} overdue for review</div>
+            <div class="attention-meta">ISO 45001 periodic review required</div>
+          </div>
+          <i class="bi bi-arrow-right ms-auto text-muted small"></i>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if ca_overdue %}
+    <div class="col-md-4">
+      <a href="{% url 'actions:list' %}" class="attention-item d-block">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attention-dot" style="background:#dc2626;"></div>
+          <div>
+            <div class="attention-title">{{ ca_overdue }} corrective action{{ ca_overdue|pluralize }} overdue</div>
+            <div class="attention-meta">Past due date — immediate follow-up required</div>
+          </div>
+          <i class="bi bi-arrow-right ms-auto text-muted small"></i>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if ca_pending_verification and is_manager %}
+    <div class="col-md-4">
+      <a href="{% url 'actions:list' %}?status=pending_verification" class="attention-item d-block">
+        <div class="d-flex align-items-center gap-3">
+          <div class="attention-dot" style="background:#16a34a;"></div>
+          <div>
+            <div class="attention-title">{{ ca_pending_verification }} action{{ ca_pending_verification|pluralize }} awaiting your verification</div>
+            <div class="attention-meta">Submitted by assignee — review &amp; close</div>
+          </div>
+          <i class="bi bi-arrow-right ms-auto text-muted small"></i>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ══════════════════════════════════════════════════════════════
+       1. SAFETY OBSERVATIONS
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:#fef2f2;">
+      <i class="bi bi-clipboard2-pulse" style="color:#dc2626;"></i>
+    </div>
+    <div>
+      <div class="section-title">Safety Observations</div>
+    </div>
+    {% if obs_open > 0 %}
+    <span class="section-badge badge-alert">{{ obs_open }} open</span>
+    {% endif %}
+    <div class="section-line"></div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    {% if not user.is_contractor %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'observations:create' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fef2f2;">
+          <i class="bi bi-clipboard-plus" style="color:#dc2626;"></i>
+        </div>
+        <div class="mod-card-title">Report Observation</div>
+        <div class="mod-card-desc">Log a new safety hazard or unsafe act</div>
+      </a>
+    </div>
+    {% endif %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'observations:observation_list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#eff6ff;">
+          <i class="bi bi-list-ul" style="color:#2563eb;"></i>
+        </div>
+        <div class="mod-card-title">All Observations</div>
+        <div class="mod-card-desc">View, filter &amp; manage records</div>
+        {% if obs_open > 0 %}
+        <span class="mod-card-badge badge-alert">{{ obs_open }} open</span>
+        {% endif %}
+      </a>
+    </div>
+    {% if is_manager %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'observations:dashboard' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fff7ed;">
+          <i class="bi bi-graph-up-arrow" style="color:#ea580c;"></i>
+        </div>
+        <div class="mod-card-title">Analytics</div>
+        <div class="mod-card-desc">KPIs, trends, severity breakdown</div>
+      </a>
+    </div>
+    {% endif %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'observations:archived_list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f1f5f9;">
+          <i class="bi bi-archive" style="color:#64748b;"></i>
+        </div>
+        <div class="mod-card-title">Archived</div>
+        <div class="mod-card-desc">Closed &amp; resolved observations</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       2. PERMIT TO WORK
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:#f0fdf4;">
+      <i class="bi bi-file-earmark-lock2" style="color:#16a34a;"></i>
+    </div>
+    <div>
+      <div class="section-title">Permit to Work</div>
+    </div>
+    {% if permit_active > 0 %}
+    <span class="section-badge badge-ok">{{ permit_active }} active</span>
+    {% endif %}
+    {% if permit_submitted > 0 %}
+    <span class="section-badge badge-warn">{{ permit_submitted }} pending</span>
+    {% endif %}
+    <div class="section-line"></div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'permits:create' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f0fdf4;">
+          <i class="bi bi-file-earmark-plus" style="color:#16a34a;"></i>
+        </div>
+        <div class="mod-card-title">New Permit</div>
+        <div class="mod-card-desc">Raise a permit to work for high-risk activity</div>
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'permits:permit_list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f5f0ff;">
+          <i class="bi bi-file-earmark-check" style="color:#7c3aed;"></i>
+        </div>
+        <div class="mod-card-title">All Permits</div>
+        <div class="mod-card-desc">View &amp; manage permits</div>
+        {% if permit_active > 0 %}
+        <span class="mod-card-badge badge-ok">{{ permit_active }} active</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'permits:dashboard' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fffbf0;">
+          <i class="bi bi-lightning-charge" style="color:#ca8a04;"></i>
+        </div>
+        <div class="mod-card-title">PTW Dashboard</div>
+        <div class="mod-card-desc">Active, pending &amp; expiring permits</div>
+        {% if permit_submitted > 0 %}
+        <span class="mod-card-badge badge-warn">{{ permit_submitted }} need approval</span>
+        {% endif %}
+      </a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       3. RISK ASSESSMENT (HIRA)
+  ══════════════════════════════════════════════════════════════════ -->
+  {% if not user.is_contractor %}
+  <div class="section-header">
+    <div class="section-icon" style="background:#fff7ed;">
+      <i class="bi bi-shield-exclamation" style="color:#ea580c;"></i>
+    </div>
+    <div>
+      <div class="section-title">Risk Assessment (HIRA)</div>
+    </div>
+    {% if hira_critical > 0 %}
+    <span class="section-badge badge-alert">{{ hira_critical }} critical</span>
+    {% endif %}
+    {% if hira_high > 0 %}
+    <span class="section-badge badge-warn">{{ hira_high }} high</span>
+    {% endif %}
+    <div class="section-line"></div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'hira:dashboard' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fff7ed;">
+          <i class="bi bi-shield-exclamation" style="color:#ea580c;"></i>
+        </div>
+        <div class="mod-card-title">HIRA Dashboard</div>
+        <div class="mod-card-desc">Risk level overview &amp; statistics</div>
+        {% if hira_critical > 0 %}
+        <span class="mod-card-badge badge-alert">{{ hira_critical }} critical hazards</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'hira:register_list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#eff6ff;">
+          <i class="bi bi-list-columns" style="color:#2563eb;"></i>
+        </div>
+        <div class="mod-card-title">All Registers</div>
+        <div class="mod-card-desc">View &amp; manage HIRA documents</div>
+        {% if hira_total > 0 %}
+        <span class="mod-card-badge badge-neutral">{{ hira_total }} register{{ hira_total|pluralize }}</span>
+        {% endif %}
+      </a>
+    </div>
+    {% if is_manager %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'hira:register_create' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fdf4ff;">
+          <i class="bi bi-plus-circle" style="color:#9333ea;"></i>
+        </div>
+        <div class="mod-card-title">New HIRA Register</div>
+        <div class="mod-card-desc">Create a hazard identification &amp; risk assessment</div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ══════════════════════════════════════════════════════════════
+       4. LEGAL COMPLIANCE
+  ══════════════════════════════════════════════════════════════════ -->
+  {% if not user.is_contractor %}
+  <div class="section-header">
+    <div class="section-icon" style="background:#f0fdf4;">
+      <i class="bi bi-patch-check-fill" style="color:#16a34a;"></i>
+    </div>
+    <div>
+      <div class="section-title">Legal Compliance</div>
+    </div>
+    {% if comp_overdue > 0 %}
+    <span class="section-badge badge-alert">{{ comp_overdue }} overdue</span>
+    {% elif comp_due_soon > 0 %}
+    <span class="section-badge badge-warn">{{ comp_due_soon }} due soon</span>
+    {% else %}
+    <span class="section-badge badge-ok">{{ comp_score }}% compliant</span>
+    {% endif %}
+    <div class="section-line"></div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'compliance:dashboard' %}" class="mod-card">
+        <div class="d-flex align-items-start gap-3">
+          <div class="mod-card-icon mb-0 flex-shrink-0" style="background:#f0fdf4;">
+            <i class="bi bi-shield-check" style="color:#16a34a;"></i>
+          </div>
+          <div>
+            <div class="mod-card-title">Compliance Register</div>
+            <div class="mod-card-desc">Statutory obligations &amp; due dates</div>
+            {% if comp_overdue > 0 %}
+            <span class="mod-card-badge badge-alert">{{ comp_overdue }} overdue</span>
+            {% elif comp_due_soon > 0 %}
+            <span class="mod-card-badge badge-warn">{{ comp_due_soon }} due in 30 days</span>
+            {% else %}
+            <span class="mod-card-badge badge-ok">{{ comp_score }}% score</span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    </div>
+    {% if is_manager %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'compliance:item_create' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#eff6ff;">
+          <i class="bi bi-plus-circle" style="color:#2563eb;"></i>
+        </div>
+        <div class="mod-card-title">Add Obligation</div>
+        <div class="mod-card-desc">Register a new legal requirement</div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ══════════════════════════════════════════════════════════════
+       5. CORRECTIVE ACTIONS
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:#fefce8;">
+      <i class="bi bi-check2-square" style="color:#ca8a04;"></i>
+    </div>
+    <div>
+      <div class="section-title">Corrective Actions</div>
+    </div>
+    {% if ca_open > 0 %}
+    <span class="section-badge {% if ca_overdue > 0 %}badge-alert{% else %}badge-warn{% endif %}">
+      {{ ca_open }} open{% if ca_overdue %} · {{ ca_overdue }} overdue{% endif %}
     </span>
-    <hr class="flex-grow-1 m-0" style="border-color:#e9ecef;">
+    {% endif %}
+    <div class="section-line"></div>
   </div>
 
-  <div class="row g-3">
+  <!-- My open actions -->
+  {% if ca_mine_list %}
+  <div class="mb-3">
+    {% for ca in ca_mine_list %}
+    <a href="{% url 'actions:detail' ca.pk %}"
+       class="d-flex align-items-center justify-content-between px-3 py-2 mb-2 text-decoration-none rounded"
+       style="background:#f8f9fb; border:1px solid {% if ca.is_overdue %}#fecaca{% else %}#e2e8f0{% endif %}; font-size:.85rem;">
+      <div>
+        <span style="font-family:monospace; font-size:.72rem; color:#94a3b8;">CA-{{ ca.pk|stringformat:"04d" }}</span>
+        <span class="ms-2 fw-semibold" style="color:#1a2c52;">{{ ca.title|truncatechars:60 }}</span>
+        {% if ca.is_overdue %}<span class="badge bg-danger ms-1" style="font-size:.6rem;">OVERDUE</span>{% endif %}
+      </div>
+      <span class="badge rounded-pill" style="font-size:.65rem;
+        {% if ca.priority == 'critical' %}background:#fee2e2;color:#991b1b;
+        {% elif ca.priority == 'high' %}background:#ffedd5;color:#9a3412;
+        {% elif ca.priority == 'medium' %}background:#fef9c3;color:#854d0e;
+        {% else %}background:#dcfce7;color:#15803d;{% endif %}">
+        {{ ca.get_priority_display }}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
 
-    <!-- Training Dashboard -->
+  <div class="row g-3 mb-2">
     <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'training:dashboard' %}" class="qa-card">
-        <div class="qa-icon" style="background:#eef2ff;">
+      <a href="{% url 'actions:mine' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fefce8;">
+          <i class="bi bi-person-check" style="color:#ca8a04;"></i>
+        </div>
+        <div class="mod-card-title">My Actions</div>
+        <div class="mod-card-desc">Your open corrective actions</div>
+        {% if ca_mine > 0 %}
+        <span class="mod-card-badge {% if ca_overdue %}badge-alert{% else %}badge-warn{% endif %}">{{ ca_mine }} open</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'actions:list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fff7ed;">
+          <i class="bi bi-check2-all" style="color:#ea580c;"></i>
+        </div>
+        <div class="mod-card-title">Action Register</div>
+        <div class="mod-card-desc">All org-wide corrective actions</div>
+        {% if ca_open > 0 %}
+        <span class="mod-card-badge badge-warn">{{ ca_open }} open</span>
+        {% endif %}
+      </a>
+    </div>
+    {% if is_manager %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'actions:list' %}?status=pending_verification" class="mod-card">
+        <div class="mod-card-icon" style="background:#f0fdf4;">
+          <i class="bi bi-hourglass-split" style="color:#16a34a;"></i>
+        </div>
+        <div class="mod-card-title">Awaiting Verification</div>
+        <div class="mod-card-desc">Actions submitted for your sign-off</div>
+        {% if ca_pending_verification > 0 %}
+        <span class="mod-card-badge badge-info">{{ ca_pending_verification }} pending</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'actions:create' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#eff6ff;">
+          <i class="bi bi-plus-circle" style="color:#2563eb;"></i>
+        </div>
+        <div class="mod-card-title">New Action</div>
+        <div class="mod-card-desc">Raise a corrective action manually</div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       6. INCIDENTS
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:#fff1f2;">
+      <i class="bi bi-exclamation-octagon-fill" style="color:#dc2626;"></i>
+    </div>
+    <div>
+      <div class="section-title">Incidents</div>
+    </div>
+    {% if inc_open > 0 %}
+    <span class="section-badge badge-alert">{{ inc_open }} open</span>
+    {% endif %}
+    <div class="section-line"></div>
+  </div>
+
+  <!-- Recent incidents -->
+  {% if inc_recent %}
+  <div class="mb-3">
+    {% for inc in inc_recent %}
+    <a href="{% url 'incidents:detail' inc.pk %}"
+       class="d-flex align-items-center justify-content-between px-3 py-2 mb-2 text-decoration-none rounded"
+       style="background:#f8f9fb; border:1px solid #e2e8f0; font-size:.85rem;">
+      <div>
+        <span style="font-family:monospace; font-size:.72rem; color:#94a3b8;">{{ inc.reference_no }}</span>
+        <span class="ms-2 fw-semibold" style="color:#1a2c52;">{{ inc.title|truncatechars:60 }}</span>
+        {% if inc.severity == 'fatality' or inc.severity == 'lti' %}
+        <span class="badge bg-danger ms-1" style="font-size:.6rem;">{{ inc.get_severity_display|upper }}</span>
+        {% endif %}
+      </div>
+      <span class="badge rounded-pill" style="font-size:.65rem;
+        {% if inc.status == 'reported' %}background:#fee2e2;color:#991b1b;
+        {% elif inc.status == 'under_investigation' %}background:#fef9c3;color:#854d0e;
+        {% elif inc.status == 'action_required' %}background:#ffedd5;color:#9a3412;
+        {% else %}background:#dcfce7;color:#15803d;{% endif %}">
+        {{ inc.get_status_display }}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="row g-3 mb-2">
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'incidents:list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fff1f2;">
+          <i class="bi bi-exclamation-octagon" style="color:#dc2626;"></i>
+        </div>
+        <div class="mod-card-title">Incident Register</div>
+        <div class="mod-card-desc">All reported incidents and near-misses</div>
+        {% if inc_open > 0 %}
+        <span class="mod-card-badge badge-alert">{{ inc_open }} open</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'incidents:create' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#ffe4e6;">
+          <i class="bi bi-plus-circle" style="color:#e11d48;"></i>
+        </div>
+        <div class="mod-card-title">Report Incident</div>
+        <div class="mod-card-desc">Log a new incident or near-miss</div>
+      </a>
+    </div>
+    {% if is_manager %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'incidents:list' %}?status=under_investigation" class="mod-card">
+        <div class="mod-card-icon" style="background:#fef9c3;">
+          <i class="bi bi-search" style="color:#854d0e;"></i>
+        </div>
+        <div class="mod-card-title">Under Investigation</div>
+        <div class="mod-card-desc">Incidents pending investigation</div>
+        {% if inc_investigating > 0 %}
+        <span class="mod-card-badge badge-warn">{{ inc_investigating }}</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'incidents:stats' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f0fdf4;">
+          <i class="bi bi-bar-chart-line" style="color:#16a34a;"></i>
+        </div>
+        <div class="mod-card-title">Statistics</div>
+        <div class="mod-card-desc">LTIFR, TRIFR and trend charts</div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       7. INSPECTIONS
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:#f0fdf4;">
+      <i class="bi bi-clipboard2-check-fill" style="color:#16a34a;"></i>
+    </div>
+    <div>
+      <div class="section-title">Inspections</div>
+    </div>
+    {% if insp_overdue > 0 %}
+    <span class="section-badge badge-alert">{{ insp_overdue }} overdue</span>
+    {% elif insp_scheduled > 0 %}
+    <span class="section-badge badge-info">{{ insp_scheduled }} scheduled</span>
+    {% endif %}
+    <div class="section-line"></div>
+  </div>
+
+  {% if insp_upcoming %}
+  <div class="mb-3">
+    {% for insp in insp_upcoming %}
+    <a href="{% url 'inspections:detail' insp.pk %}"
+       class="d-flex align-items-center justify-content-between px-3 py-2 mb-2 text-decoration-none rounded"
+       style="background:#f8f9fb; border:1px solid #e2e8f0; font-size:.85rem;">
+      <div>
+        <span class="fw-semibold" style="color:#1a2c52;">{{ insp.title }}</span>
+        <span class="text-muted ms-2 small">{{ insp.scheduled_date|date:"d M Y" }}</span>
+      </div>
+      <span class="text-muted small">{{ insp.inspector.get_full_name|default:"—" }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="row g-3 mb-2">
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'inspections:list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f0fdf4;">
+          <i class="bi bi-clipboard2-check" style="color:#16a34a;"></i>
+        </div>
+        <div class="mod-card-title">All Inspections</div>
+        <div class="mod-card-desc">Scheduled and completed inspections</div>
+        {% if insp_scheduled > 0 %}
+        <span class="mod-card-badge badge-info">{{ insp_scheduled }} scheduled</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'inspections:template_list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f0fdf4;">
+          <i class="bi bi-layout-text-sidebar-reverse" style="color:#15803d;"></i>
+        </div>
+        <div class="mod-card-title">Templates</div>
+        <div class="mod-card-desc">Reusable inspection checklists</div>
+      </a>
+    </div>
+    {% if is_manager %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'inspections:inspection_create' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#dcfce7;">
+          <i class="bi bi-plus-circle" style="color:#16a34a;"></i>
+        </div>
+        <div class="mod-card-title">Schedule Inspection</div>
+        <div class="mod-card-desc">Assign a checklist to an inspector</div>
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'inspections:stats' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#eff6ff;">
+          <i class="bi bi-bar-chart-line" style="color:#2563eb;"></i>
+        </div>
+        <div class="mod-card-title">Statistics</div>
+        <div class="mod-card-desc">Scores, trends and performance</div>
+        {% if insp_overdue > 0 %}
+        <span class="mod-card-badge badge-alert">{{ insp_overdue }} overdue</span>
+        {% endif %}
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       8. TRAINING & SKILLS
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:#eef2ff;">
+      <i class="bi bi-mortarboard-fill" style="color:#4338ca;"></i>
+    </div>
+    <div>
+      <div class="section-title">Training &amp; Skills</div>
+    </div>
+    {% if training_modules > 0 %}
+    <span class="section-badge badge-info">{{ training_modules }} module{{ training_modules|pluralize }}</span>
+    {% endif %}
+    <div class="section-line"></div>
+  </div>
+
+  <div class="row g-3 mb-2">
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'training:dashboard' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#eef2ff;">
           <i class="bi bi-bar-chart-line" style="color:#4338ca;"></i>
         </div>
-        <div class="qa-title">Training Dashboard</div>
-        <div class="qa-desc">
-          {% if user.is_manager or user.is_safety_manager %}
-            Org-wide pass rates &amp; trends
-          {% else %}
-            My scores &amp; certified skills
-          {% endif %}
+        <div class="mod-card-title">Training Dashboard</div>
+        <div class="mod-card-desc">
+          {% if is_manager %}Org-wide pass rates &amp; trends{% else %}My scores &amp; progress{% endif %}
         </div>
       </a>
     </div>
-
-    <!-- Training Modules -->
     <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'training:module_list' %}" class="qa-card">
-        <div class="qa-icon" style="background:#f0fdf4;">
+      <a href="{% url 'training:module_list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f0fdf4;">
           <i class="bi bi-mortarboard" style="color:#16a34a;"></i>
         </div>
-        <div class="qa-title">Training Modules</div>
-        <div class="qa-desc">Browse &amp; take assessments</div>
+        <div class="mod-card-title">Training Modules</div>
+        <div class="mod-card-desc">Browse &amp; take assessments</div>
+        {% if training_modules > 0 %}
+        <span class="mod-card-badge badge-info">{{ training_modules }} available</span>
+        {% endif %}
       </a>
     </div>
-
-    <!-- Skill Matrix (managers only) -->
-    {% if user.is_manager or user.is_safety_manager %}
+    {% if is_manager %}
     <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'training:skill_matrix' %}" class="qa-card">
-        <div class="qa-icon" style="background:#fdf4ff;">
+      <a href="{% url 'training:skill_matrix' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fdf4ff;">
           <i class="bi bi-grid-3x3-gap" style="color:#9333ea;"></i>
         </div>
-        <div class="qa-title">Skill Matrix</div>
-        <div class="qa-desc">Employee proficiency levels</div>
+        <div class="mod-card-title">Skill Matrix</div>
+        <div class="mod-card-desc">Employee proficiency &amp; skill gaps</div>
       </a>
     </div>
-
-    <!-- Manage Skills (managers only) -->
     <div class="col-sm-6 col-lg-3">
-      <a href="{% url 'training:manage_skills' %}" class="qa-card">
-        <div class="qa-icon" style="background:#fff7ed;">
+      <a href="{% url 'training:manage_skills' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fff7ed;">
           <i class="bi bi-tags" style="color:#ea580c;"></i>
         </div>
-        <div class="qa-title">Manage Skills</div>
-        <div class="qa-desc">Add skill categories &amp; skills</div>
+        <div class="mod-card-title">Manage Skills</div>
+        <div class="mod-card-desc">Add skill categories &amp; competencies</div>
       </a>
     </div>
     {% endif %}
-
   </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       6. ADMINISTRATION (managers only)
+  ══════════════════════════════════════════════════════════════════ -->
+  {% if user.is_manager %}
+  <div class="section-header">
+    <div class="section-icon" style="background:#f1f5f9;">
+      <i class="bi bi-gear-fill" style="color:#475569;"></i>
+    </div>
+    <div>
+      <div class="section-title">Administration</div>
+    </div>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'core:invite_user' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f1f5f9;">
+          <i class="bi bi-person-plus" style="color:#475569;"></i>
+        </div>
+        <div class="mod-card-title">Invite Team Members</div>
+        <div class="mod-card-desc">Add users to your organisation</div>
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'core:invite_contractor' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fff7ed;">
+          <i class="bi bi-person-badge" style="color:#ea580c;"></i>
+        </div>
+        <div class="mod-card-title">Invite Contractor</div>
+        <div class="mod-card-desc">Grant contractor access</div>
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'core:worker_list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#eff6ff;">
+          <i class="bi bi-people" style="color:#2563eb;"></i>
+        </div>
+        <div class="mod-card-title">Worker Accounts</div>
+        <div class="mod-card-desc">Manage no-email worker accounts</div>
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'core:billing' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f0fdf4;">
+          <i class="bi bi-credit-card" style="color:#16a34a;"></i>
+        </div>
+        <div class="mod-card-title">Billing</div>
+        <div class="mod-card-desc">Plan, usage &amp; subscription</div>
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+{% endif %}{# end org check #}
 </div>
 {% endblock %}

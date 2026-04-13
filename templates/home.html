@@ -136,31 +136,103 @@
   box-shadow: 0 4px 24px rgba(0,0,0,.08);
 }
 .float-1 {
-  position: absolute; top: -20px; left: -30px;
+  position: absolute; top: 8px; left: 8px;
   animation: float1 4s ease-in-out infinite;
-  width: 200px;
+  width: 210px; z-index: 3;
 }
 .float-2 {
-  position: absolute; bottom: -15px; right: -20px;
+  position: absolute; bottom: 8px; right: 8px;
   animation: float2 4.5s ease-in-out infinite;
-  width: 180px;
+  width: 200px; z-index: 3;
 }
 @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+.card-float-fading { opacity: 0; transform: translateY(4px); transition: opacity .28s ease, transform .28s ease; }
+.card-float-visible { opacity: 1; transform: translateY(0);  transition: opacity .32s ease, transform .32s ease; }
 
-/* ─── Social proof numbers ─────────────────────────────────────────────── */
-.proof-strip {
-  background: var(--off); border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border); padding: 36px 0;
+/* ─── Standards badge strip ─────────────────────────────────────────────── */
+.badge-strip {
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 0;
+  overflow: hidden;
 }
-.proof-item { text-align: center; }
-.proof-num {
+.badge-strip-inner {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; flex-wrap: nowrap; overflow-x: auto;
+  scrollbar-width: none;
+}
+.badge-strip-inner::-webkit-scrollbar { display: none; }
+.badge-item {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 22px; white-space: nowrap; flex-shrink: 0;
+  border-right: 1px solid var(--border);
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 2.2rem; font-weight: 800; color: var(--navy);
-  line-height: 1;
+  font-size: .78rem; font-weight: 700; color: var(--navy);
+  letter-spacing: .01em;
 }
-.proof-num span { color: var(--green); }
-.proof-label { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+.badge-item:last-child { border-right: none; }
+.badge-item i { color: var(--green); font-size: .9rem; flex-shrink: 0; }
+.badge-item .badge-sub {
+  font-size: .65rem; font-weight: 500; color: var(--muted);
+  display: block; line-height: 1; margin-top: 1px;
+}
+@media (max-width: 768px) {
+  .badge-strip-inner { justify-content: flex-start; padding: 0 16px; }
+  .badge-item { padding: 6px 18px; }
+}
+
+/* ─── Activity ticker ───────────────────────────────────────────────────── */
+.ticker-strip {
+  background: var(--navy);
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.ticker-inner {
+  display: flex; align-items: center; gap: 20px;
+  padding: 0 8px; height: 64px;
+}
+.ticker-live-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(22,163,74,.12); border: 1px solid rgba(22,163,74,.3);
+  border-radius: 100px; padding: 5px 14px; flex-shrink: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .72rem; font-weight: 800; color: var(--green-lt);
+  letter-spacing: .07em; text-transform: uppercase;
+}
+.ticker-sep {
+  width: 1px; height: 32px; background: rgba(255,255,255,.1); flex-shrink: 0;
+}
+.ticker-viewport {
+  flex: 1; overflow: hidden; position: relative; height: 64px;
+  display: flex; align-items: center;
+}
+.ticker-event {
+  position: absolute; width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0; pointer-events: none;
+}
+.ticker-event.active  { animation: tick-in  .4s ease forwards; pointer-events: auto; }
+.ticker-event.leaving { animation: tick-out .4s ease forwards; }
+@keyframes tick-in  { from { opacity:0; transform:translateX(48px) } to { opacity:1; transform:translateX(0) } }
+@keyframes tick-out { from { opacity:1; transform:translateX(0) } to { opacity:0; transform:translateX(-48px) } }
+.ticker-module {
+  font-size: .68rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; padding: 2px 10px;
+  border-radius: 100px; flex-shrink: 0; white-space: nowrap;
+}
+.ticker-text  { font-size: .88rem; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ticker-time  { font-size: .72rem; color: #475569; flex-shrink: 0; white-space: nowrap; margin-left: auto; padding-left: 12px; }
+.ticker-dots  { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+.ticker-dot   { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.18); transition: background .3s; cursor: pointer; }
+.ticker-dot.active { background: var(--green-lt); }
+@media (max-width: 640px) {
+  .ticker-time { display: none; }
+  .ticker-dots { display: none; }
+  .ticker-inner { gap: 10px; padding: 0 4px; }
+  .ticker-module { display: none; }
+}
 
 /* ─── Section headings ─────────────────────────────────────────────────── */
 .section-kicker {
@@ -201,7 +273,7 @@
   background: var(--off); border-radius: 16px;
   border: 1px solid var(--border); overflow: hidden;
 }
-.module-tab-nav { border-bottom: 1px solid var(--border); }
+.module-tab-nav { border-bottom: 1px solid var(--border); overflow-x: auto; flex-wrap: nowrap; }
 .module-tab {
   padding: 16px 24px; font-weight: 600; font-size: .9rem;
   color: var(--muted); cursor: pointer; border: none;
@@ -326,6 +398,151 @@
 .ql-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem; color: var(--navy); }
 .ql-desc  { font-size: .78rem; color: var(--muted); margin-top: 3px; }
 
+/* ─── Platform connection diagram ──────────────────────────────────────── */
+.pcd-section { background: var(--navy); }
+.pcd-node {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px; padding: 10px 18px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .83rem; font-weight: 600; color: #cbd5e1;
+  transition: border-color .25s, color .25s;
+  white-space: nowrap;
+}
+.pcd-node:hover { border-color: rgba(22,163,74,.5); color: #86efac; }
+.pcd-node-hub {
+  background: rgba(22,163,74,.12);
+  border: 1.5px solid var(--green);
+  color: var(--green-lt);
+  box-shadow: 0 0 20px rgba(22,163,74,.25);
+  font-size: .9rem; padding: 14px 24px;
+}
+.pcd-node-out {
+  background: rgba(59,130,246,.08);
+  border: 1.5px solid rgba(59,130,246,.4);
+  color: #93c5fd;
+  font-size: .9rem; padding: 14px 24px;
+}
+.pcd-arrow {
+  color: var(--green); font-size: 1.1rem; font-weight: 700;
+  flex-shrink: 0; opacity: .7;
+}
+.pcd-arrow-v {
+  color: var(--green); font-size: 1rem; opacity: .5;
+  text-align: center; line-height: 1; margin: 2px 0;
+}
+.pcd-col-sources {
+  display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+}
+.pcd-col-center {
+  display: flex; flex-direction: column; gap: 10px;
+  align-items: center; justify-content: center;
+}
+.pcd-tagline {
+  text-align: center; margin-top: 40px; padding-top: 32px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.05rem; font-weight: 700;
+  color: #e2e8f0; line-height: 1.7;
+}
+.pcd-tagline span { color: var(--green-lt); }
+
+/* ─── Before / After comparison ────────────────────────────────────────── */
+.ba-section { background: var(--navy); }
+.ba-card {
+  display: flex; border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.ba-panel { flex: 1; padding: 32px; }
+.ba-panel-before { background: #1e293b; }
+.ba-panel-after  { background: #0f2818; }
+.ba-panel-header {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .78rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.ba-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: .88rem; line-height: 1.5;
+}
+.ba-row:last-child { border-bottom: none; }
+.ba-row-before { color: #94a3b8; }
+.ba-row-after  { color: #86efac; }
+.ba-x { color: #f87171; font-weight: 700; flex-shrink: 0; }
+.ba-tick { color: var(--green-lt); font-weight: 700; flex-shrink: 0; }
+.ba-divider {
+  width: 2px; background: linear-gradient(to bottom, transparent, var(--green), var(--green-lt), var(--green), transparent);
+  flex-shrink: 0; position: relative; box-shadow: 0 0 14px rgba(22,163,74,.6);
+}
+.ba-vs {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--green); border: 2px solid #86efac;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800; font-size: .7rem; color: white;
+  box-shadow: 0 0 16px rgba(22,163,74,.7);
+  animation: vs-pulse 2.4s ease-in-out infinite;
+}
+@keyframes vs-pulse {
+  0%,100% { box-shadow: 0 0 10px rgba(22,163,74,.5); }
+  50%      { box-shadow: 0 0 24px rgba(22,163,74,.9); }
+}
+.ba-stat-strip {
+  display: flex; justify-content: center; gap: 48px;
+  flex-wrap: wrap; margin-top: 40px; padding-top: 32px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.ba-stat-num {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2rem; font-weight: 800; color: var(--green-lt); line-height: 1;
+}
+.ba-stat-label { font-size: .78rem; color: #64748b; margin-top: 4px; }
+@media (max-width: 768px) {
+  .ba-card { flex-direction: column; }
+  .ba-divider { width: 100%; height: 2px; }
+  .ba-vs { top: 50%; left: 50%; }
+  .ba-stat-strip { gap: 28px; }
+}
+
+/* ─── Pain → Solution rows ─────────────────────────────────────────────── */
+.ps-row {
+  display: flex; align-items: stretch;
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--white);
+  transition: box-shadow .25s, transform .25s;
+}
+.ps-row:hover { box-shadow: 0 8px 32px rgba(0,0,0,.08); transform: translateY(-2px); }
+.ps-pain {
+  flex: 1; padding: 22px 26px;
+  background: #f8fafc; border-right: 1px solid var(--border);
+}
+.ps-arrow {
+  width: 46px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; color: var(--green); background: var(--white);
+  font-weight: 800;
+}
+.ps-solution { flex: 1.4; padding: 22px 26px; background: var(--green-bg); }
+.ps-label-bad  { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8; margin-bottom:8px; }
+.ps-label-good { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--green); margin-bottom:6px; }
+.ps-pain-text  { font-size:.9rem; color:var(--slate); line-height:1.65; font-style:italic; }
+.ps-mod-title  { font-size:.95rem; font-weight:700; color:var(--navy); margin-bottom:5px; }
+.ps-mod-pills  { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.ps-pill {
+  font-size:.72rem; font-weight:600; color:var(--green);
+  background:rgba(22,163,74,.1); border:1px solid #bbf7d0;
+  border-radius:100px; padding:2px 10px;
+}
+@media (max-width: 640px) {
+  .ps-row { flex-direction: column; }
+  .ps-pain { border-right: none; border-bottom: 1px solid var(--border); }
+  .ps-arrow { width:100%; height:30px; border-top:1px solid var(--border); transform:rotate(90deg); }
+}
+
 /* ─── Scroll animations ────────────────────────────────────────────────── */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .65s ease, transform .65s ease; }
 .reveal.visible { opacity: 1; transform: translateY(0); }
@@ -352,7 +569,10 @@
 </div>
 
 <div class="container py-4">
-  <div class="row g-3">
+
+  <!-- Safety Operations -->
+  <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;">Safety Operations</div>
+  <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
       <a href="{% url 'observations:create' %}" class="ql-card">
         <div class="ql-icon">📋</div>
@@ -364,14 +584,7 @@
       <a href="{% url 'observations:observation_list' %}" class="ql-card">
         <div class="ql-icon">📊</div>
         <div class="ql-title">All Observations</div>
-        <div class="ql-desc">View & manage records</div>
-      </a>
-    </div>
-    <div class="col-6 col-md-3">
-      <a href="{% url 'observations:dashboard' %}" class="ql-card">
-        <div class="ql-icon">📈</div>
-        <div class="ql-title">Analytics</div>
-        <div class="ql-desc">KPIs, trends & reports</div>
+        <div class="ql-desc">View &amp; manage records</div>
       </a>
     </div>
     <div class="col-6 col-md-3">
@@ -385,14 +598,128 @@
       <a href="{% url 'permits:permit_list' %}" class="ql-card">
         <div class="ql-icon">📑</div>
         <div class="ql-title">All Permits</div>
-        <div class="ql-desc">View & manage PTW</div>
+        <div class="ql-desc">View &amp; manage PTW</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'incidents:create' %}" class="ql-card">
+        <div class="ql-icon">🚨</div>
+        <div class="ql-title">Report Incident</div>
+        <div class="ql-desc">Log an incident or near miss</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'incidents:list' %}" class="ql-card">
+        <div class="ql-icon">📁</div>
+        <div class="ql-title">All Incidents</div>
+        <div class="ql-desc">View &amp; investigate</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'inspections:list' %}" class="ql-card">
+        <div class="ql-icon">🔍</div>
+        <div class="ql-title">Inspections</div>
+        <div class="ql-desc">Conduct or view audits</div>
       </a>
     </div>
     <div class="col-6 col-md-3">
       <a href="{% url 'permits:dashboard' %}" class="ql-card">
         <div class="ql-icon">⚡</div>
         <div class="ql-title">PTW Dashboard</div>
-        <div class="ql-desc">Active & pending permits</div>
+        <div class="ql-desc">Active &amp; pending permits</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Risk & Compliance -->
+  <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;">Risk &amp; Compliance</div>
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <a href="{% url 'hira:register_list' %}" class="ql-card">
+        <div class="ql-icon">⚠️</div>
+        <div class="ql-title">HIRA Register</div>
+        <div class="ql-desc">Hazard identification &amp; risk</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'compliance:dashboard' %}" class="ql-card">
+        <div class="ql-icon">⚖️</div>
+        <div class="ql-title">Legal Compliance</div>
+        <div class="ql-desc">Track obligations &amp; evidence</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'actions:list' %}" class="ql-card">
+        <div class="ql-icon">✅</div>
+        <div class="ql-title">Corrective Actions</div>
+        <div class="ql-desc">All open &amp; closed actions</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'actions:mine' %}" class="ql-card">
+        <div class="ql-icon">🎯</div>
+        <div class="ql-title">My Actions</div>
+        <div class="ql-desc">Actions assigned to me</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Analytics & Training -->
+  <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;">Analytics &amp; Training</div>
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <a href="{% url 'observations:dashboard' %}" class="ql-card">
+        <div class="ql-icon">📈</div>
+        <div class="ql-title">Safety Analytics</div>
+        <div class="ql-desc">KPIs, trends &amp; reports</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'incidents:stats' %}" class="ql-card">
+        <div class="ql-icon">📊</div>
+        <div class="ql-title">Incident Stats</div>
+        <div class="ql-desc">LTIFR, TRIFR &amp; trends</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'training:dashboard' %}" class="ql-card">
+        <div class="ql-icon">🎓</div>
+        <div class="ql-title">Training</div>
+        <div class="ql-desc">Modules &amp; assessments</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'training:skill_matrix' %}" class="ql-card">
+        <div class="ql-icon">🏅</div>
+        <div class="ql-title">Skill Matrix</div>
+        <div class="ql-desc">Team proficiency overview</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Manager tools -->
+  {% if user.is_manager %}
+  <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;">Management</div>
+  <div class="row g-3">
+    <div class="col-6 col-md-3">
+      <a href="{% url 'core:invite_user' %}" class="ql-card">
+        <div class="ql-icon">👥</div>
+        <div class="ql-title">Invite Users</div>
+        <div class="ql-desc">Add team members</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'inspections:template_list' %}" class="ql-card">
+        <div class="ql-icon">🏗️</div>
+        <div class="ql-title">Inspection Templates</div>
+        <div class="ql-desc">Build &amp; manage checklists</div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a href="{% url 'hira:risk_matrix' %}" class="ql-card">
+        <div class="ql-icon">🎯</div>
+        <div class="ql-title">Risk Matrix</div>
+        <div class="ql-desc">Organisation risk overview</div>
       </a>
     </div>
     <div class="col-6 col-md-3">
@@ -402,16 +729,9 @@
         <div class="ql-desc">Closed records</div>
       </a>
     </div>
-    {% if user.is_manager %}
-    <div class="col-6 col-md-3">
-      <a href="{% url 'core:invite_user' %}" class="ql-card">
-        <div class="ql-icon">👥</div>
-        <div class="ql-title">Invite Users</div>
-        <div class="ql-desc">Add team members</div>
-      </a>
-    </div>
-    {% endif %}
   </div>
+  {% endif %}
+
 </div>
 
 {% else %}
@@ -453,6 +773,14 @@
           </a>
         </div>
 
+        <!-- Already have an account -->
+        <p style="margin-top:14px;margin-bottom:0;font-size:.83rem;color:var(--muted);">
+          Already have an account?
+          <a href="{% url 'users:login' %}" class="btn-link-mkt" style="font-size:.83rem;">
+            Log in <i class="bi bi-arrow-right" style="font-size:.75rem;"></i>
+          </a>
+        </p>
+
         <!-- Trust signals -->
         <div class="trust-strip">
           <span class="trust-item"><i class="bi bi-check-circle-fill"></i> Free 14-day trial</span>
@@ -464,7 +792,7 @@
 
       <!-- Right: Product illustration -->
       <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center">
-        <div class="hero-visual" style="width:100%;max-width:480px;position:relative;padding:20px 30px;">
+        <div class="hero-visual" style="width:100%;max-width:500px;position:relative;padding:60px 50px;">
 
           <!-- Main dashboard card -->
           <div style="background:white;border-radius:16px;border:1px solid var(--border);
@@ -533,21 +861,21 @@
             </div>
           </div>
 
-          <!-- Floating cards -->
-          <div class="card-float float-1">
-            <div style="font-size:.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">
-              ✅ Rectification Verified
+          <!-- Floating cards — content rotated by JS -->
+          <div class="card-float float-1" id="floatCard1">
+            <div id="floatCard1Inner" class="card-float-visible">
+              <div style="font-size:.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">✅ Rectification Verified</div>
+              <div style="font-size:.78rem;color:var(--slate);font-weight:500;">Floor hazard cleared &amp; signed off</div>
+              <div style="font-size:.68rem;color:var(--muted);margin-top:4px;">Safety Manager · 2 mins ago</div>
             </div>
-            <div style="font-size:.78rem;color:var(--slate);font-weight:500;">Floor hazard cleared & signed off</div>
-            <div style="font-size:.68rem;color:var(--muted);margin-top:4px;">Safety Manager · 2 mins ago</div>
           </div>
 
-          <div class="card-float float-2">
-            <div style="font-size:.7rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">
-              🔴 High Risk Alert Sent
+          <div class="card-float float-2" id="floatCard2">
+            <div id="floatCard2Inner" class="card-float-visible">
+              <div style="font-size:.7rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">🔴 HIGH Risk Alert Sent</div>
+              <div style="font-size:.78rem;color:var(--slate);font-weight:500;">Email dispatched to action owner</div>
+              <div style="font-size:.68rem;color:var(--muted);margin-top:4px;">Automated · Just now</div>
             </div>
-            <div style="font-size:.78rem;color:var(--slate);font-weight:500;">Email dispatched to action owner</div>
-            <div style="font-size:.68rem;color:var(--muted);margin-top:4px;">Automated · Just now</div>
           </div>
 
         </div>
@@ -557,84 +885,368 @@
   </div>
 </section>
 
-<!-- ── SOCIAL PROOF NUMBERS ──────────────────────────────────────────── -->
-<section class="proof-strip">
+<!-- ── STANDARDS BADGE STRIP ────────────────────────────────────────────── -->
+<div class="badge-strip reveal">
   <div class="container">
-    <div class="row g-4 text-center">
-      <div class="col-6 col-md-3 reveal">
-        <div class="proof-num"><span class="countup" data-to="3">3</span> min</div>
-        <div class="proof-label">Average time to report a hazard</div>
+    <div class="badge-strip-inner">
+
+      <div class="badge-item">
+        <i class="bi bi-shield-check"></i>
+        <div>
+          ISO 45001 : 2018
+          <span class="badge-sub">Risk management aligned</span>
+        </div>
       </div>
-      <div class="col-6 col-md-3 reveal" style="transition-delay:.1s;">
-        <div class="proof-num"><span class="countup" data-to="8">8</span></div>
-        <div class="proof-label">Permit to Work categories supported</div>
+
+      <div class="badge-item">
+        <i class="bi bi-shield-check"></i>
+        <div>
+          OSHA Compliant
+          <span class="badge-sub">Workflow standards met</span>
+        </div>
       </div>
-      <div class="col-6 col-md-3 reveal" style="transition-delay:.2s;">
-        <div class="proof-num"><span class="countup" data-to="5">5</span></div>
-        <div class="proof-label">Workflow stages fully automated</div>
+
+      <div class="badge-item">
+        <i class="bi bi-shield-check"></i>
+        <div>
+          Factories Act Ready
+          <span class="badge-sub">India regulatory compliant</span>
+        </div>
       </div>
-      <div class="col-6 col-md-3 reveal" style="transition-delay:.3s;">
-        <div class="proof-num"><span class="countup" data-to="100">100</span><span>%</span></div>
-        <div class="proof-label">Audit-ready — every action logged</div>
+
+      <div class="badge-item">
+        <i class="bi bi-journal-check"></i>
+        <div>
+          100% Audit Trail
+          <span class="badge-sub">Every action timestamped</span>
+        </div>
       </div>
+
+      <div class="badge-item">
+        <i class="bi bi-lock-fill"></i>
+        <div>
+          AWS S3 Encrypted
+          <span class="badge-sub">Evidence stored securely</span>
+        </div>
+      </div>
+
+      <div class="badge-item">
+        <i class="bi bi-buildings"></i>
+        <div>
+          Multi-tenant SaaS
+          <span class="badge-sub">Zero cross-org data leakage</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── ACTIVITY TICKER ────────────────────────────────────────────────── -->
+<section class="ticker-strip">
+  <div class="container">
+    <div class="ticker-inner">
+
+      <!-- Live badge -->
+      <div class="ticker-live-badge">
+        <span class="eyebrow-dot"></span> Live
+      </div>
+
+      <div class="ticker-sep"></div>
+
+      <!-- Scrolling event viewport -->
+      <div class="ticker-viewport" id="tickerViewport"></div>
+
+      <div class="ticker-sep d-none d-md-block"></div>
+
+      <!-- Dot indicators -->
+      <div class="ticker-dots d-none d-md-flex" id="tickerDots"></div>
+
     </div>
   </div>
 </section>
 
-<!-- ── FEATURES GRID ──────────────────────────────────────────────────── -->
+<!-- ── PAIN → SOLUTION ─────────────────────────────────────────────────── -->
 <section class="py-5" style="background:var(--white);">
   <div class="container">
+
     <div class="row justify-content-center text-center mb-5">
       <div class="col-lg-7 reveal">
         <div class="section-kicker">Why Vigilo</div>
-        <h2 class="section-h">Everything your safety team needs.<br>Nothing they don't.</h2>
-        <p class="section-sub mx-auto mt-3">Built for safety officers on the ground and HSE managers in the office.</p>
+        <h2 class="section-h">Every safety team knows<br>these problems.</h2>
+        <p class="section-sub mx-auto mt-3">Vigilo fixes them — module by module. No spreadsheets. No WhatsApp chains. No clipboards.</p>
       </div>
     </div>
-    <div class="row g-4">
-      <div class="col-md-6 col-lg-4 reveal">
-        <div class="feat-card">
-          <div class="feat-icon" style="background:#fef2f2;">🔍</div>
-          <h4>Instant Hazard Reporting</h4>
-          <p>Report any hazard in under 3 minutes — description, photo, severity, location and assignee — from any device on-site.</p>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Row 1: Observations -->
+      <div class="ps-row reveal">
+        <div class="ps-pain">
+          <div class="ps-label-bad">😓 The Problem</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:1.3rem;flex-shrink:0;">📱</span>
+            <p class="ps-pain-text mb-0">"Hazards are reported on WhatsApp, someone says OK, and then nothing happens. No follow-up, no accountability, no closure."</p>
+          </div>
+        </div>
+        <div class="ps-arrow">→</div>
+        <div class="ps-solution">
+          <div class="ps-label-good">📋 Safety Observations</div>
+          <div class="ps-mod-title">Every hazard tracked from report to verified closure</div>
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.6;">Severity-based alerts fire instantly. Action owners are assigned. Daily overdue reminders chase progress automatically. Safety manager verifies every closure.</div>
+          <div class="ps-mod-pills">
+            <span class="ps-pill">4-stage workflow</span>
+            <span class="ps-pill">Photo evidence</span>
+            <span class="ps-pill">Auto overdue alerts</span>
+            <span class="ps-pill">Manager sign-off</span>
+          </div>
         </div>
       </div>
-      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.08s;">
-        <div class="feat-card">
-          <div class="feat-icon" style="background:#fff7ed;">🔔</div>
-          <h4>Automated Alerts</h4>
-          <p>HIGH severity observations trigger an instant email to the assigned owner. Overdue items send daily reminders automatically.</p>
+
+      <!-- Row 2: HIRA -->
+      <div class="ps-row reveal" style="transition-delay:.07s;">
+        <div class="ps-pain">
+          <div class="ps-label-bad">😓 The Problem</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:1.3rem;flex-shrink:0;">📊</span>
+            <p class="ps-pain-text mb-0">"Our risk assessments are in Excel files. Nobody updates them. The last HIRA review was 18 months ago and no one noticed."</p>
+          </div>
+        </div>
+        <div class="ps-arrow">→</div>
+        <div class="ps-solution">
+          <div class="ps-label-good">⚠️ HIRA — Risk Assessment</div>
+          <div class="ps-mod-title">Live risk register with ISO 45001 scoring — always current</div>
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.6;">Likelihood × Severity matrix scores every hazard. Controls documented. Residual risk tracked. Periodic review alerts fire automatically before registers go stale.</div>
+          <div class="ps-mod-pills">
+            <span class="ps-pill">5×5 risk matrix</span>
+            <span class="ps-pill">Control hierarchy</span>
+            <span class="ps-pill">Residual risk</span>
+            <span class="ps-pill">Review alerts</span>
+          </div>
         </div>
       </div>
-      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.16s;">
-        <div class="feat-card">
-          <div class="feat-icon" style="background:#eff6ff;">🔐</div>
-          <h4>Digital Permit to Work</h4>
-          <p>Full PTW workflow — draft, submit, approve, activate and close. Eight work categories with hazard, controls and isolation capture.</p>
+
+      <!-- Row 3: PTW -->
+      <div class="ps-row reveal" style="transition-delay:.14s;">
+        <div class="ps-pain">
+          <div class="ps-label-bad">😓 The Problem</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:1.3rem;flex-shrink:0;">📄</span>
+            <p class="ps-pain-text mb-0">"Permits are filled on paper, signed with a pen, and stored in a file cabinet. In an audit we can never find the right one."</p>
+          </div>
+        </div>
+        <div class="ps-arrow">→</div>
+        <div class="ps-solution">
+          <div class="ps-label-good">🔐 Permit to Work</div>
+          <div class="ps-mod-title">Digital permits — gated approval, full audit trail</div>
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.6;">8 work categories. Auto-numbered. Pre-work checklists, LOTO capture, and isolation documentation on every permit. No work starts without formal sign-off.</div>
+          <div class="ps-mod-pills">
+            <span class="ps-pill">8 work types</span>
+            <span class="ps-pill">LOTO / isolation</span>
+            <span class="ps-pill">Approval gate</span>
+            <span class="ps-pill">Auto-numbered</span>
+          </div>
         </div>
       </div>
-      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.24s;">
-        <div class="feat-card">
-          <div class="feat-icon" style="background:#f0fdf4;">✅</div>
-          <h4>Verification Gate</h4>
-          <p>No observation closes without Safety Manager sign-off. No permit activates without formal approval. Built-in governance, every time.</p>
+
+      <!-- Row 4: Incidents + CAs -->
+      <div class="ps-row reveal" style="transition-delay:.21s;">
+        <div class="ps-pain">
+          <div class="ps-label-bad">😓 The Problem</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:1.3rem;flex-shrink:0;">🚨</span>
+            <p class="ps-pain-text mb-0">"We log incidents in a register, write corrective actions in the meeting minutes, and then six months later the same incident happens again."</p>
+          </div>
+        </div>
+        <div class="ps-arrow">→</div>
+        <div class="ps-solution">
+          <div class="ps-label-good">🚨 Incidents + ✅ Corrective Actions</div>
+          <div class="ps-mod-title">Closed-loop incident management — RCA to verified fix</div>
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.6;">Every incident triggers an investigation workflow with root cause analysis. Corrective actions are assigned, tracked, and closed with evidence upload. LTIFR / TRIFR auto-calculated.</div>
+          <div class="ps-mod-pills">
+            <span class="ps-pill">RCA workflow</span>
+            <span class="ps-pill">LTIFR / TRIFR</span>
+            <span class="ps-pill">Evidence closure</span>
+            <span class="ps-pill">Trend charts</span>
+          </div>
         </div>
       </div>
-      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.32s;">
-        <div class="feat-card">
-          <div class="feat-icon" style="background:#faf5ff;">📊</div>
-          <h4>Analytics Dashboard</h4>
-          <p>Live KPIs, severity trends, location hotspots, action owner performance and overdue tracking — all in one view.</p>
+
+      <!-- Row 5: Inspections -->
+      <div class="ps-row reveal" style="transition-delay:.28s;">
+        <div class="ps-pain">
+          <div class="ps-label-bad">😓 The Problem</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:1.3rem;flex-shrink:0;">📝</span>
+            <p class="ps-pain-text mb-0">"Safety inspections are done on printed checklists. Findings get noted but rarely followed up. There's no score, no trail, no action raised."</p>
+          </div>
+        </div>
+        <div class="ps-arrow">→</div>
+        <div class="ps-solution">
+          <div class="ps-label-good">🔍 Inspections &amp; Audits</div>
+          <div class="ps-mod-title">Mobile checklists with auto-scoring and instant corrective actions</div>
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.6;">Custom templates. Pass / Fail / N/A scored on any device. Every critical failure auto-raises a corrective action. PDF report generated instantly — audit-ready in seconds.</div>
+          <div class="ps-mod-pills">
+            <span class="ps-pill">Mobile-optimised</span>
+            <span class="ps-pill">Auto-scoring</span>
+            <span class="ps-pill">Auto CAs on failure</span>
+            <span class="ps-pill">PDF report</span>
+          </div>
         </div>
       </div>
-      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.4s;">
-        <div class="feat-card">
-          <div class="feat-icon" style="background:#fefce8;">📁</div>
-          <h4>Audit-Ready Exports</h4>
-          <p>Download your complete observation record as CSV or Excel in one click. Organised, timestamped, attribution-complete.</p>
+
+      <!-- Row 6: Legal Compliance + Audit -->
+      <div class="ps-row reveal" style="transition-delay:.35s;">
+        <div class="ps-pain">
+          <div class="ps-label-bad">😓 The Problem</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:1.3rem;flex-shrink:0;">📂</span>
+            <p class="ps-pain-text mb-0">"When an auditor arrives, we spend two days pulling records from email threads, filing cabinets, and shared drives. Half the compliance items are expired and nobody knew."</p>
+          </div>
         </div>
+        <div class="ps-arrow">→</div>
+        <div class="ps-solution">
+          <div class="ps-label-good">⚖️ Legal Compliance + 📁 Audit Exports</div>
+          <div class="ps-mod-title">Compliance tracked in real time — audit prep takes 10 minutes</div>
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.6;">Every legal obligation tracked with traffic-light urgency and auto-reminders before expiry. Complete records — timestamped, attributed, evidence-attached — exported as CSV or PDF in one click.</div>
+          <div class="ps-mod-pills">
+            <span class="ps-pill">Traffic-light urgency</span>
+            <span class="ps-pill">Evidence upload</span>
+            <span class="ps-pill">Auto-reminders</span>
+            <span class="ps-pill">One-click export</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── BEFORE / AFTER ─────────────────────────────────────────────────── -->
+<section class="ba-section py-5">
+  <div class="container">
+
+    <!-- Heading -->
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-7 reveal">
+        <div class="section-kicker" style="color:var(--green-lt);">The Difference</div>
+        <h2 class="section-h" style="color:white;">This is what safety management<br>looks like. Then and now.</h2>
+        <p style="color:#64748b;font-size:1rem;margin-top:12px;line-height:1.7;">
+          Vigilo doesn't add another tool to the pile. It replaces the pile entirely.
+        </p>
       </div>
     </div>
+
+    <!-- Split card -->
+    <div class="ba-card reveal">
+
+      <!-- Before panel -->
+      <div class="ba-panel ba-panel-before">
+        <div class="ba-panel-header" style="color:#f87171;">
+          <span style="font-size:1rem;">✗</span> Before Vigilo
+        </div>
+
+        <div class="ba-row ba-row-before">
+          <span class="ba-x">✗</span>
+          <span>📱 Hazards reported on WhatsApp — forgotten within hours</span>
+        </div>
+        <div class="ba-row ba-row-before">
+          <span class="ba-x">✗</span>
+          <span>📄 Paper permit books — signed with a pen, filed in a cabinet</span>
+        </div>
+        <div class="ba-row ba-row-before">
+          <span class="ba-x">✗</span>
+          <span>📊 Risk assessments in Excel — last updated 18 months ago</span>
+        </div>
+        <div class="ba-row ba-row-before">
+          <span class="ba-x">✗</span>
+          <span>📧 Corrective actions in email threads — nobody follows up</span>
+        </div>
+        <div class="ba-row ba-row-before">
+          <span class="ba-x">✗</span>
+          <span>📝 Paper inspection checklists — findings noted, nothing done</span>
+        </div>
+        <div class="ba-row ba-row-before">
+          <span class="ba-x">✗</span>
+          <span>📂 Audit prep takes 2 days of pulling files from everywhere</span>
+        </div>
+        <div class="ba-row ba-row-before">
+          <span class="ba-x">✗</span>
+          <span>❓ Compliance expiry dates unknown until an auditor asks</span>
+        </div>
+        <div class="ba-row ba-row-before">
+          <span class="ba-x">✗</span>
+          <span>🚨 Incidents logged in a register — same one happens again next year</span>
+        </div>
+      </div>
+
+      <!-- Glowing divider with VS badge -->
+      <div class="ba-divider">
+        <div class="ba-vs">VS</div>
+      </div>
+
+      <!-- After panel -->
+      <div class="ba-panel ba-panel-after">
+        <div class="ba-panel-header" style="color:var(--green-lt);">
+          <span style="font-size:1rem;">✓</span> With Vigilo
+        </div>
+
+        <div class="ba-row ba-row-after">
+          <span class="ba-tick">✓</span>
+          <span>📋 Every hazard structured, assigned, alerted, and manager-verified closed</span>
+        </div>
+        <div class="ba-row ba-row-after">
+          <span class="ba-tick">✓</span>
+          <span>🔐 Digital PTW — approval gated, LOTO captured, full audit trail</span>
+        </div>
+        <div class="ba-row ba-row-after">
+          <span class="ba-tick">✓</span>
+          <span>⚠️ Live HIRA register — ISO 45001 scoring, review alerts auto-fire</span>
+        </div>
+        <div class="ba-row ba-row-after">
+          <span class="ba-tick">✓</span>
+          <span>✅ Corrective actions assigned, overdue reminders sent daily automatically</span>
+        </div>
+        <div class="ba-row ba-row-after">
+          <span class="ba-tick">✓</span>
+          <span>🔍 Mobile checklists — auto-scored, critical failures raise CAs instantly</span>
+        </div>
+        <div class="ba-row ba-row-after">
+          <span class="ba-tick">✓</span>
+          <span>📁 One-click CSV / PDF export — audit prep takes 10 minutes</span>
+        </div>
+        <div class="ba-row ba-row-after">
+          <span class="ba-tick">✓</span>
+          <span>🚦 Traffic-light compliance register — overdue alerts before expiry</span>
+        </div>
+        <div class="ba-row ba-row-after">
+          <span class="ba-tick">✓</span>
+          <span>🔬 RCA documented, corrective actions tracked — loop closed for good</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Stat strip -->
+    <div class="ba-stat-strip reveal">
+      <div class="text-center">
+        <div class="ba-stat-num">3 min</div>
+        <div class="ba-stat-label">to report any hazard from any device</div>
+      </div>
+      <div class="text-center">
+        <div class="ba-stat-num">10 min</div>
+        <div class="ba-stat-label">audit prep — not 2 days</div>
+      </div>
+      <div class="text-center">
+        <div class="ba-stat-num">8</div>
+        <div class="ba-stat-label">modules — one platform, zero gaps</div>
+      </div>
+      <div class="text-center">
+        <div class="ba-stat-num">0</div>
+        <div class="ba-stat-label">items missed — every action logged</div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -644,7 +1256,7 @@
     <div class="row justify-content-center text-center mb-5">
       <div class="col-lg-7 reveal">
         <div class="section-kicker">Core Modules</div>
-        <h2 class="section-h">Three modules.<br>One safety ecosystem.</h2>
+        <h2 class="section-h">Eight modules.<br>One safety ecosystem.</h2>
       </div>
     </div>
     <div class="module-showcase reveal">
@@ -652,6 +1264,11 @@
         <button class="module-tab active" onclick="switchTab('obs')">📋 Safety Observations</button>
         <button class="module-tab" onclick="switchTab('ptw')">🔐 Permit to Work</button>
         <button class="module-tab" onclick="switchTab('training')">🎓 Training &amp; Skills</button>
+        <button class="module-tab" onclick="switchTab('hira')">⚠️ HIRA</button>
+        <button class="module-tab" onclick="switchTab('incidents')">🚨 Incidents</button>
+        <button class="module-tab" onclick="switchTab('inspections')">🔍 Inspections</button>
+        <button class="module-tab" onclick="switchTab('compliance')">⚖️ Legal Compliance</button>
+        <button class="module-tab" onclick="switchTab('actions')">✅ Corrective Actions</button>
       </div>
 
       <!-- Observations pane -->
@@ -758,15 +1375,41 @@
             <div class="workflow-wrap">
               <div style="color:#94a3b8;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px;">Permit Workflow</div>
               <div style="display:flex;flex-direction:column;gap:20px;">
-                {% for wf in ptw_steps %}
                 <div class="wf-step">
-                  <div class="wf-num">{{ forloop.counter }}</div>
+                  <div class="wf-num">1</div>
                   <div>
-                    <div class="wf-title">{{ wf.icon }} {{ wf.title }}</div>
-                    <div class="wf-desc">{{ wf.desc }}</div>
+                    <div class="wf-title">📝 Draft Permit</div>
+                    <div class="wf-desc">Requestor fills work details — type, location, hazards, controls, isolation points and crew list.</div>
                   </div>
                 </div>
-                {% endfor %}
+                <div class="wf-step">
+                  <div class="wf-num">2</div>
+                  <div>
+                    <div class="wf-title">📤 Submit for Approval</div>
+                    <div class="wf-desc">Permit submitted to Safety Manager — automatic email notification sent instantly.</div>
+                  </div>
+                </div>
+                <div class="wf-step">
+                  <div class="wf-num">3</div>
+                  <div>
+                    <div class="wf-title">🛡️ Manager Approves</div>
+                    <div class="wf-desc">Safety Manager reviews, signs off and formally approves. No work begins without this gate.</div>
+                  </div>
+                </div>
+                <div class="wf-step">
+                  <div class="wf-num">4</div>
+                  <div>
+                    <div class="wf-title">⚡ Activate & Work</div>
+                    <div class="wf-desc">Requestor activates the permit on-site after pre-work checklist and toolbox talk are complete.</div>
+                  </div>
+                </div>
+                <div class="wf-step">
+                  <div class="wf-num">5</div>
+                  <div>
+                    <div class="wf-title">✅ Close & Restore</div>
+                    <div class="wf-desc">Work done — site restoration confirmed, permit closed. Full audit trail retained permanently.</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -843,7 +1486,469 @@
         </div>
       </div>
 
+      <!-- HIRA pane -->
+      <div class="module-pane" id="pane-hira">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-6">
+            <h3 style="font-size:1.5rem;font-weight:800;margin-bottom:6px;">HIRA — Hazard Identification &amp; Risk Assessment</h3>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px;">
+              Proactively identify, score, and control every workplace hazard before it becomes an incident — using an ISO 45001-aligned risk matrix.
+            </p>
+            <div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fef2f2;">🎯</div>
+                <div><div class="mfi-title">5×5 ISO 45001 risk matrix</div><div class="mfi-desc">Likelihood × Severity scoring (1–25) with automatic risk band classification</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fff7ed;">🛡️</div>
+                <div><div class="mfi-title">Control hierarchy documentation</div><div class="mfi-desc">Elimination → Substitution → Engineering → Administrative → PPE — structured per hazard</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#f0fdf4;">📉</div>
+                <div><div class="mfi-title">Residual risk assessment</div><div class="mfi-desc">Calculate residual risk score after controls are applied, track improvement over time</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#eff6ff;">🔗</div>
+                <div><div class="mfi-title">Linked incidents &amp; observations</div><div class="mfi-desc">Connect hazards to real incidents and observations for evidence-based risk management</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#faf5ff;">⏰</div>
+                <div><div class="mfi-title">Periodic review alerts</div><div class="mfi-desc">Automated reminders when HIRA registers are due for review per your schedule</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+              <div style="background:linear-gradient(135deg,#b45309,#d97706);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:white;font-weight:700;font-size:.85rem;">⚠️ HIRA Register — Welding Bay</span>
+                <span style="background:rgba(255,255,255,.2);color:white;font-size:.72rem;padding:2px 10px;border-radius:100px;">3 hazards</span>
+              </div>
+              <div style="padding:16px;">
+                <table style="width:100%;font-size:.82rem;border-collapse:collapse;">
+                  <thead>
+                    <tr style="border-bottom:1px solid var(--border);">
+                      <td style="padding:6px 4px;color:var(--muted);font-weight:600;">Hazard</td>
+                      <td style="padding:6px 4px;color:var(--muted);font-weight:600;text-align:center;">L</td>
+                      <td style="padding:6px 4px;color:var(--muted);font-weight:600;text-align:center;">S</td>
+                      <td style="padding:6px 4px;color:var(--muted);font-weight:600;text-align:center;">Score</td>
+                      <td style="padding:6px 4px;color:var(--muted);font-weight:600;text-align:center;">Band</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                      <td style="padding:7px 4px;color:var(--navy);font-weight:600;">UV radiation</td>
+                      <td style="padding:7px 4px;text-align:center;">4</td>
+                      <td style="padding:7px 4px;text-align:center;">3</td>
+                      <td style="padding:7px 4px;text-align:center;font-weight:700;">12</td>
+                      <td style="padding:7px 4px;text-align:center;"><span style="background:#fff7ed;color:#b45309;font-weight:700;padding:2px 8px;border-radius:4px;font-size:.75rem;">HIGH</span></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                      <td style="padding:7px 4px;color:var(--navy);font-weight:600;">Fume inhalation</td>
+                      <td style="padding:7px 4px;text-align:center;">3</td>
+                      <td style="padding:7px 4px;text-align:center;">4</td>
+                      <td style="padding:7px 4px;text-align:center;font-weight:700;">12</td>
+                      <td style="padding:7px 4px;text-align:center;"><span style="background:#fff7ed;color:#b45309;font-weight:700;padding:2px 8px;border-radius:4px;font-size:.75rem;">HIGH</span></td>
+                    </tr>
+                    <tr>
+                      <td style="padding:7px 4px;color:var(--navy);font-weight:600;">Fire &amp; explosion</td>
+                      <td style="padding:7px 4px;text-align:center;">2</td>
+                      <td style="padding:7px 4px;text-align:center;">5</td>
+                      <td style="padding:7px 4px;text-align:center;font-weight:700;">10</td>
+                      <td style="padding:7px 4px;text-align:center;"><span style="background:#fff7ed;color:#b45309;font-weight:700;padding:2px 8px;border-radius:4px;font-size:.75rem;">HIGH</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div style="margin-top:14px;padding:8px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;font-size:.78rem;color:#b91c1c;font-weight:600;">
+                  🔴 2 corrective actions auto-raised for HIGH residual risk hazards
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Incidents pane -->
+      <div class="module-pane" id="pane-incidents">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-6">
+            <h3 style="font-size:1.5rem;font-weight:800;margin-bottom:6px;">Incident Management Module</h3>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px;">
+              Report, investigate, and close every incident with a structured workflow — from near miss to lost-time injury — with full root cause analysis and performance metrics.
+            </p>
+            <div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fef2f2;">🚨</div>
+                <div><div class="mfi-title">Full incident type classification</div><div class="mfi-desc">Near Miss · First Aid · Medical Treatment · LTI · Fatality — each with its own investigation depth</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fff7ed;">🔬</div>
+                <div><div class="mfi-title">Root Cause Analysis (RCA)</div><div class="mfi-desc">Structured investigation with contributing factors and documented corrective measures</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#f0fdf4;">📊</div>
+                <div><div class="mfi-title">LTIFR &amp; TRIFR auto-calculation</div><div class="mfi-desc">Lost-Time and Total Recordable Injury Frequency Rates calculated automatically from your data</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#eff6ff;">🔄</div>
+                <div><div class="mfi-title">Convert observation → incident</div><div class="mfi-desc">Escalate any safety observation to a full incident record with one click</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#faf5ff;">📈</div>
+                <div><div class="mfi-title">Trend charts &amp; location heatmap</div><div class="mfi-desc">Monthly incident trend, type breakdown, and location-based charts — no spreadsheets needed</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+              <div style="background:linear-gradient(135deg,#991b1b,#dc2626);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:white;font-weight:700;font-size:.85rem;">🚨 INC-2026-0041 — LTI</span>
+                <span style="background:rgba(255,255,255,.2);color:white;font-size:.72rem;padding:2px 10px;border-radius:100px;">Under Investigation</span>
+              </div>
+              <div style="padding:16px;">
+                <table style="width:100%;font-size:.82rem;border-collapse:collapse;">
+                  <tr><td style="padding:6px 0;color:var(--muted);width:42%;">Type</td><td style="font-weight:600;color:var(--navy);">Lost-Time Injury</td></tr>
+                  <tr><td style="padding:6px 0;color:var(--muted);">Severity</td><td><span style="background:#fef2f2;color:#991b1b;font-weight:700;padding:2px 8px;border-radius:4px;">CRITICAL</span></td></tr>
+                  <tr><td style="padding:6px 0;color:var(--muted);">Location</td><td style="font-weight:600;color:var(--navy);">Warehouse — Bay 3</td></tr>
+                  <tr><td style="padding:6px 0;color:var(--muted);">Investigator</td><td style="font-weight:600;color:var(--navy);">Priya Nair</td></tr>
+                  <tr><td style="padding:6px 0;color:var(--muted);">Days Lost</td><td style="font-weight:600;color:#dc2626;">4 days</td></tr>
+                </table>
+                <div style="margin-top:12px;padding:10px 12px;background:#fffbeb;border-radius:8px;border:1px solid #fde68a;">
+                  <div style="font-size:.75rem;font-weight:700;color:#92400e;margin-bottom:4px;">Root Cause Analysis</div>
+                  <div style="font-size:.78rem;color:#78350f;">Inadequate manual handling training + missing floor marking. Corrective action raised and assigned.</div>
+                </div>
+                <div style="margin-top:10px;display:flex;gap:8px;">
+                  <div style="flex:1;text-align:center;padding:8px;background:var(--off);border-radius:8px;">
+                    <div style="font-size:1.1rem;font-weight:800;color:var(--navy);">0.42</div>
+                    <div style="font-size:.7rem;color:var(--muted);">LTIFR</div>
+                  </div>
+                  <div style="flex:1;text-align:center;padding:8px;background:var(--off);border-radius:8px;">
+                    <div style="font-size:1.1rem;font-weight:800;color:var(--navy);">1.26</div>
+                    <div style="font-size:.7rem;color:var(--muted);">TRIFR</div>
+                  </div>
+                  <div style="flex:1;text-align:center;padding:8px;background:var(--off);border-radius:8px;">
+                    <div style="font-size:1.1rem;font-weight:800;color:var(--navy);">41</div>
+                    <div style="font-size:.7rem;color:var(--muted);">YTD Incidents</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inspections pane -->
+      <div class="module-pane" id="pane-inspections">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-6">
+            <h3 style="font-size:1.5rem;font-weight:800;margin-bottom:6px;">Inspections &amp; Audits Module</h3>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px;">
+              Run structured safety inspections on any device — build custom templates, conduct mobile-friendly checklists, and auto-raise corrective actions for every critical failure.
+            </p>
+            <div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#eff6ff;">🏗️</div>
+                <div><div class="mfi-title">Custom template builder</div><div class="mfi-desc">Build reusable inspection templates with sections, items, and critical-item flags</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#f0fdf4;">📱</div>
+                <div><div class="mfi-title">Mobile-optimised checklist</div><div class="mfi-desc">Pass / Fail / N/A styled buttons with photo capture — works in the field without a laptop</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fef2f2;">⚡</div>
+                <div><div class="mfi-title">Auto-raise corrective actions</div><div class="mfi-desc">Every critical item marked Fail instantly creates a corrective action assigned to the right person</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fff7ed;">📊</div>
+                <div><div class="mfi-title">Auto-scoring</div><div class="mfi-desc">Pass rate calculated automatically (Pass ÷ total, excluding N/A items) — shown on every report</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#faf5ff;">📄</div>
+                <div><div class="mfi-title">PDF inspection report</div><div class="mfi-desc">One-click PDF export with findings, scores, photos, and corrective action summary</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+              <div style="background:linear-gradient(135deg,#1e40af,#3b82f6);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:white;font-weight:700;font-size:.85rem;">🔍 Monthly Fire Safety Audit</span>
+                <span style="background:rgba(255,255,255,.2);color:white;font-size:.72rem;padding:2px 10px;border-radius:100px;">In Progress</span>
+              </div>
+              <div style="padding:16px;">
+                <div style="font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Fire Suppression Systems</div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid #bbf7d0;border-radius:8px;background:#f0fdf4;">
+                    <span style="font-size:.82rem;font-weight:600;color:var(--navy);">Extinguishers in date</span>
+                    <span style="background:#16a34a;color:white;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:6px;">PASS</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid #fecaca;border-radius:8px;background:#fef2f2;">
+                    <span style="font-size:.82rem;font-weight:600;color:var(--navy);">Sprinkler heads clear ⚠️ Critical</span>
+                    <span style="background:#dc2626;color:white;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:6px;">FAIL</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--off);">
+                    <span style="font-size:.82rem;font-weight:600;color:var(--navy);">Suppression panel tested</span>
+                    <span style="background:#94a3b8;color:white;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:6px;">N/A</span>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                  <span style="font-size:.72rem;color:var(--muted);">Score</span>
+                  <span style="font-size:.72rem;font-weight:700;color:#b45309;">50% — 1 critical failure</span>
+                </div>
+                <div style="height:5px;border-radius:3px;background:#e9ecef;">
+                  <div style="width:50%;height:100%;border-radius:3px;background:linear-gradient(90deg,#f59e0b,#d97706);"></div>
+                </div>
+                <div style="margin-top:10px;padding:8px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;font-size:.78rem;color:#b91c1c;font-weight:600;">
+                  ⚡ Corrective action auto-raised → Maintenance Team
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal Compliance pane -->
+      <div class="module-pane" id="pane-compliance">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-6">
+            <h3 style="font-size:1.5rem;font-weight:800;margin-bottom:6px;">Legal Compliance Module</h3>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px;">
+              Track every legal and regulatory obligation in one place — with a traffic-light urgency system, evidence uploads, and automated overdue alerts so nothing slips through.
+            </p>
+            <div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fef2f2;">🚦</div>
+                <div><div class="mfi-title">Traffic-light urgency system</div><div class="mfi-desc">Green / Amber / Red urgency auto-calculated from due date proximity</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#f0fdf4;">📊</div>
+                <div><div class="mfi-title">Compliance score %</div><div class="mfi-desc">Organisation-wide compliance percentage updated in real time as items are closed</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#eff6ff;">📎</div>
+                <div><div class="mfi-title">Evidence document upload</div><div class="mfi-desc">Attach certificates, reports, or photos as proof of compliance — stored securely in S3</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fff7ed;">🔁</div>
+                <div><div class="mfi-title">Frequency-based scheduling</div><div class="mfi-desc">Daily · Weekly · Monthly · Quarterly · Annual — each item renews automatically on compliance</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#faf5ff;">⏰</div>
+                <div><div class="mfi-title">Automated overdue alerts</div><div class="mfi-desc">Daily email digest sent to managers listing all overdue compliance obligations</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+              <div style="background:linear-gradient(135deg,#065f46,#059669);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:white;font-weight:700;font-size:.85rem;">⚖️ Legal Compliance Register</span>
+                <span style="background:rgba(255,255,255,.2);color:white;font-size:.72rem;padding:2px 10px;border-radius:100px;">Score: 78%</span>
+              </div>
+              <div style="padding:16px;">
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid #bbf7d0;border-radius:8px;background:#f0fdf4;">
+                    <div>
+                      <div style="font-size:.82rem;font-weight:600;color:var(--navy);">Fire NOC Renewal</div>
+                      <div style="font-size:.72rem;color:var(--muted);">Annual · Due 30 Jun 2026</div>
+                    </div>
+                    <span style="background:#16a34a;color:white;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:6px;">🟢 OK</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid #fde68a;border-radius:8px;background:#fffbeb;">
+                    <div>
+                      <div style="font-size:.82rem;font-weight:600;color:var(--navy);">MSDS Review</div>
+                      <div style="font-size:.72rem;color:var(--muted);">Quarterly · Due 20 Apr 2026</div>
+                    </div>
+                    <span style="background:#d97706;color:white;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:6px;">🟡 DUE SOON</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid #fecaca;border-radius:8px;background:#fef2f2;">
+                    <div>
+                      <div style="font-size:.82rem;font-weight:600;color:var(--navy);">Contractor Safety Induction Log</div>
+                      <div style="font-size:.72rem;color:var(--muted);">Monthly · Due 01 Apr 2026</div>
+                    </div>
+                    <span style="background:#dc2626;color:white;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:6px;">🔴 OVERDUE</span>
+                  </div>
+                </div>
+                <div style="height:8px;border-radius:4px;background:#e9ecef;overflow:hidden;">
+                  <div style="width:78%;height:100%;border-radius:4px;background:linear-gradient(90deg,#059669,#34d399);"></div>
+                </div>
+                <div style="margin-top:6px;font-size:.75rem;color:var(--muted);text-align:right;">78% compliance · 1 overdue</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corrective Actions pane -->
+      <div class="module-pane" id="pane-actions">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-6">
+            <h3 style="font-size:1.5rem;font-weight:800;margin-bottom:6px;">Corrective Actions Module</h3>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px;">
+              One unified tracker for every corrective action — whether raised from an observation, incident, inspection, HIRA hazard, or compliance gap. Nothing falls through the cracks.
+            </p>
+            <div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#eff6ff;">🔗</div>
+                <div><div class="mfi-title">Cross-module sourcing</div><div class="mfi-desc">Actions raised from Observations · HIRA · Incidents · Inspections · Compliance · or manually</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fef2f2;">🎯</div>
+                <div><div class="mfi-title">Priority classification</div><div class="mfi-desc">Critical / High / Medium / Low — with colour-coded status on every list view</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#f0fdf4;">📎</div>
+                <div><div class="mfi-title">Evidence on closure</div><div class="mfi-desc">Action owner must upload photo or document proof before an action can be marked Closed</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#fff7ed;">⏰</div>
+                <div><div class="mfi-title">Overdue email alerts</div><div class="mfi-desc">Daily automated reminders to action owners for every past-due item — no manual chasing</div></div>
+              </div>
+              <div class="module-feature-item">
+                <div class="mfi-icon" style="background:#faf5ff;">📊</div>
+                <div><div class="mfi-title">Closure rate analytics</div><div class="mfi-desc">Track open vs closed actions by source, priority, and assignee — exportable to CSV</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+              <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:white;font-weight:700;font-size:.85rem;">✅ Corrective Actions</span>
+                <span style="background:rgba(255,255,255,.2);color:white;font-size:.72rem;padding:2px 10px;border-radius:100px;">5 open</span>
+              </div>
+              <div style="padding:16px;">
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                  <div style="padding:10px 12px;border:1px solid #fecaca;border-radius:8px;background:#fef2f2;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                      <span style="font-size:.82rem;font-weight:600;color:var(--navy);">Fix sprinkler head obstruction</span>
+                      <span style="background:#dc2626;color:white;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:4px;">CRITICAL</span>
+                    </div>
+                    <div style="font-size:.72rem;color:var(--muted);">Source: Inspection · Assigned: Maintenance Team · <span style="color:#dc2626;font-weight:600;">Overdue</span></div>
+                  </div>
+                  <div style="padding:10px 12px;border:1px solid #fde68a;border-radius:8px;background:#fffbeb;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                      <span style="font-size:.82rem;font-weight:600;color:var(--navy);">Install UV-protective screens — Welding Bay</span>
+                      <span style="background:#d97706;color:white;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:4px;">HIGH</span>
+                    </div>
+                    <div style="font-size:.72rem;color:var(--muted);">Source: HIRA · Assigned: Facilities · Due 25 Apr 2026</div>
+                  </div>
+                  <div style="padding:10px 12px;border:1px solid #bbf7d0;border-radius:8px;background:#f0fdf4;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                      <span style="font-size:.82rem;font-weight:600;color:var(--navy);">Manual handling refresher training</span>
+                      <span style="background:#16a34a;color:white;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;">CLOSED ✓</span>
+                    </div>
+                    <div style="font-size:.72rem;color:var(--muted);">Source: Incident INC-2026-0041 · Closed by: Priya Nair · Evidence uploaded</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <div style="flex:1;text-align:center;padding:8px;background:var(--off);border-radius:8px;">
+                    <div style="font-size:1.1rem;font-weight:800;color:#dc2626;">4</div>
+                    <div style="font-size:.7rem;color:var(--muted);">Open</div>
+                  </div>
+                  <div style="flex:1;text-align:center;padding:8px;background:var(--off);border-radius:8px;">
+                    <div style="font-size:1.1rem;font-weight:800;color:#d97706;">1</div>
+                    <div style="font-size:.7rem;color:var(--muted);">Overdue</div>
+                  </div>
+                  <div style="flex:1;text-align:center;padding:8px;background:var(--off);border-radius:8px;">
+                    <div style="font-size:1.1rem;font-weight:800;color:#16a34a;">12</div>
+                    <div style="font-size:.7rem;color:var(--muted);">Closed this month</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
+</section>
+
+<!-- ── PLATFORM CONNECTION DIAGRAM ──────────────────────────────────────── -->
+<section class="pcd-section py-5">
+  <div class="container">
+
+    <!-- Heading -->
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-7 reveal">
+        <div class="section-kicker" style="color:var(--green-lt);">Platform Architecture</div>
+        <h2 class="section-h" style="color:white;">Eight modules. One connected<br>safety ecosystem.</h2>
+        <p style="color:#64748b;font-size:1rem;margin-top:12px;line-height:1.7;">
+          Every finding feeds the next step. Nothing is siloed. Every record flows to your audit.
+        </p>
+      </div>
+    </div>
+
+    <!-- Diagram -->
+    <div class="reveal">
+
+      <!-- Main flow row -->
+      <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+
+        <!-- Source modules column -->
+        <div class="pcd-col-sources">
+          <div class="pcd-node">📋 Safety Observations</div>
+          <div class="pcd-node">⚠️ HIRA Assessment</div>
+          <div class="pcd-node">🚨 Incidents</div>
+          <div class="pcd-node">🔍 Inspections</div>
+          <div class="pcd-node">⚖️ Legal Compliance</div>
+        </div>
+
+        <!-- Arrow group -->
+        <div class="pcd-col-center" style="gap:6px;">
+          <div class="pcd-arrow">→</div>
+          <div class="pcd-arrow">→</div>
+          <div class="pcd-arrow">→</div>
+          <div class="pcd-arrow">→</div>
+          <div class="pcd-arrow">→</div>
+        </div>
+
+        <!-- Hub: Corrective Actions -->
+        <div class="d-flex flex-column align-items-center gap-2">
+          <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:4px;">Central Hub</div>
+          <div class="pcd-node pcd-node-hub">✅ Corrective Actions</div>
+          <div style="font-size:.72rem;color:#475569;text-align:center;max-width:160px;line-height:1.5;">Every source auto-raises<br>a tracked action</div>
+        </div>
+
+        <!-- Arrow to output -->
+        <div class="pcd-arrow" style="font-size:1.4rem;">→</div>
+
+        <!-- Output: Analytics -->
+        <div class="d-flex flex-column align-items-center gap-2">
+          <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#93c5fd;margin-bottom:4px;">Output</div>
+          <div class="pcd-node pcd-node-out">📊 Analytics &amp; Audit Export</div>
+          <div style="font-size:.72rem;color:#475569;text-align:center;max-width:160px;line-height:1.5;">All records → dashboard<br>CSV · PDF · Excel</div>
+        </div>
+
+      </div>
+
+      <!-- Direct modules row (PTW + Training → Analytics directly) -->
+      <div class="d-flex align-items-center justify-content-center gap-3 mt-3 flex-wrap">
+        <div class="d-flex align-items-center gap-3">
+          <div class="pcd-node">🔐 Permit to Work</div>
+          <div class="pcd-arrow">———————————————————————————→</div>
+          <div style="width:160px;text-align:center;">
+            <div style="font-size:.72rem;color:#475569;line-height:1.5;">Permit history &amp; approval<br>stats feed the dashboard</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-center gap-3 mt-2 flex-wrap">
+        <div class="d-flex align-items-center gap-3">
+          <div class="pcd-node">🎓 Training &amp; Skills</div>
+          <div class="pcd-arrow">—————————————————————————→</div>
+          <div style="width:160px;text-align:center;">
+            <div style="font-size:.72rem;color:#475569;line-height:1.5;">Skill matrix &amp; pass rates<br>exported for auditors</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tagline -->
+    <div class="pcd-tagline reveal">
+      <span>Every finding becomes an action.</span> &nbsp;
+      Every action has an owner. &nbsp;
+      <span>Every record feeds your audit.</span>
+    </div>
+
   </div>
 </section>
 
@@ -858,26 +1963,61 @@
       </div>
     </div>
     <div class="row g-0 align-items-stretch">
-      {% for step in steps %}
-      <div class="col-md reveal" style="transition-delay:{{ forloop.counter0 }}00ms;">
-        <div style="text-align:center;padding:28px 16px;position:relative;height:100%;
-                    {% if not forloop.last %}border-right:1px dashed var(--border);{% endif %}">
-          <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);
-                      border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;
-                      font-size:1.4rem;margin:0 auto 14px;">{{ step.icon }}</div>
-          <div style="position:absolute;top:50px;left:calc(50% + 26px);right:0;
-                      height:2px;background:repeating-linear-gradient(90deg,#bbf7d0 0,#bbf7d0 6px,transparent 6px,transparent 12px);
-                      {% if forloop.last %}display:none;{% endif %}"></div>
-          <div style="background:var(--green);color:white;font-family:'Plus Jakarta Sans',sans-serif;
-                      font-weight:800;font-size:.7rem;width:20px;height:20px;border-radius:50%;
-                      display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
-            {{ forloop.counter }}
-          </div>
-          <h5 style="font-size:.95rem;font-weight:700;margin-bottom:6px;">{{ step.title }}</h5>
-          <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin:0;">{{ step.desc }}</p>
+
+      <!-- Step 1 -->
+      <div class="col-md reveal" style="transition-delay:0ms;">
+        <div style="text-align:center;padding:28px 16px;position:relative;height:100%;border-right:1px dashed var(--border);">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;">🔍</div>
+          <div style="position:absolute;top:50px;left:calc(50% + 26px);right:0;height:2px;background:repeating-linear-gradient(90deg,#bbf7d0 0,#bbf7d0 6px,transparent 6px,transparent 12px);"></div>
+          <div style="background:var(--green);color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.7rem;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">1</div>
+          <h5 style="font-size:.95rem;font-weight:700;margin-bottom:6px;">Spot &amp; Report</h5>
+          <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin:0;">Worker reports any hazard or near miss in under 3 minutes — photo, severity, location, assignee — from any device on-site.</p>
         </div>
       </div>
-      {% endfor %}
+
+      <!-- Step 2 -->
+      <div class="col-md reveal" style="transition-delay:100ms;">
+        <div style="text-align:center;padding:28px 16px;position:relative;height:100%;border-right:1px dashed var(--border);">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;">⚠️</div>
+          <div style="position:absolute;top:50px;left:calc(50% + 26px);right:0;height:2px;background:repeating-linear-gradient(90deg,#bbf7d0 0,#bbf7d0 6px,transparent 6px,transparent 12px);"></div>
+          <div style="background:var(--green);color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.7rem;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">2</div>
+          <h5 style="font-size:.95rem;font-weight:700;margin-bottom:6px;">Assess the Risk</h5>
+          <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin:0;">HIRA register scores likelihood × severity on an ISO 45001 matrix. Controls documented, residual risk assigned, alerts raised automatically.</p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="col-md reveal" style="transition-delay:200ms;">
+        <div style="text-align:center;padding:28px 16px;position:relative;height:100%;border-right:1px dashed var(--border);">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;">🔐</div>
+          <div style="position:absolute;top:50px;left:calc(50% + 26px);right:0;height:2px;background:repeating-linear-gradient(90deg,#bbf7d0 0,#bbf7d0 6px,transparent 6px,transparent 12px);"></div>
+          <div style="background:var(--green);color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.7rem;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">3</div>
+          <h5 style="font-size:.95rem;font-weight:700;margin-bottom:6px;">Control the Work</h5>
+          <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin:0;">High-risk tasks require a Permit to Work — formally drafted, safety manager approved, and activated on-site before work begins.</p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="col-md reveal" style="transition-delay:300ms;">
+        <div style="text-align:center;padding:28px 16px;position:relative;height:100%;border-right:1px dashed var(--border);">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;">✅</div>
+          <div style="position:absolute;top:50px;left:calc(50% + 26px);right:0;height:2px;background:repeating-linear-gradient(90deg,#bbf7d0 0,#bbf7d0 6px,transparent 6px,transparent 12px);"></div>
+          <div style="background:var(--green);color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.7rem;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">4</div>
+          <h5 style="font-size:.95rem;font-weight:700;margin-bottom:6px;">Act &amp; Verify</h5>
+          <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin:0;">Corrective action raised, owner notified automatically. Daily overdue reminders chase progress. Safety manager verifies every closure.</p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="col-md reveal" style="transition-delay:400ms;">
+        <div style="text-align:center;padding:28px 16px;position:relative;height:100%;">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;">📊</div>
+          <div style="background:var(--green);color:white;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.7rem;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">5</div>
+          <h5 style="font-size:.95rem;font-weight:700;margin-bottom:6px;">Learn &amp; Improve</h5>
+          <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin:0;">Incidents, inspections and compliance items tracked — trend charts, LTIFR/TRIFR, audit exports. Every finding closes the loop.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -970,7 +2110,7 @@
     <div class="row g-4">
       <div class="col-lg-4">
         <div class="footer-brand">🦺 Vigilo</div>
-        <div class="footer-tagline">Safety · Permits · Training<br>Built for the field. Trusted by managers.</div>
+        <div class="footer-tagline">Observations · Permits · HIRA · Incidents<br>Inspections · Compliance · Actions · Training<br>Built for the field. Trusted by managers.</div>
       </div>
       <div class="col-6 col-lg-2">
         <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Product</div>
@@ -978,17 +2118,23 @@
         <a href="{% url 'core:pricing' %}" class="footer-link">Pricing</a>
         <a href="{% url 'core:request_demo' %}" class="footer-link">Request Demo</a>
       </div>
-      <div class="col-6 col-lg-2">
+      <div class="col-6 col-lg-3">
         <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Features</div>
-        <a href="{% url 'core:organization_signup' %}" class="footer-link">Safety Observations</a>
-        <a href="{% url 'core:organization_signup' %}" class="footer-link">Permit to Work</a>
-        <a href="{% url 'core:organization_signup' %}" class="footer-link">Training &amp; Skills</a>
-        <a href="{% url 'core:organization_signup' %}" class="footer-link">Analytics</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">📋 Safety Observations</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">🔐 Permit to Work</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">⚠️ HIRA Assessment</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">🚨 Incidents</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">🔍 Inspections &amp; Audits</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">⚖️ Legal Compliance</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">✅ Corrective Actions</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">🎓 Training &amp; Skills</a>
       </div>
       <div class="col-6 col-lg-2">
         <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Account</div>
         <a href="{% url 'users:login' %}" class="footer-link">Login</a>
         <a href="{% url 'core:organization_signup' %}" class="footer-link">Sign Up</a>
+        <a href="{% url 'core:request_demo' %}" class="footer-link">Request Demo</a>
+        <a href="{% url 'core:pricing' %}" class="footer-link">Pricing</a>
       </div>
     </div>
     <hr class="footer-divider">
@@ -1014,23 +2160,71 @@ const revealObs = new IntersectionObserver(entries => {
 }, { threshold: 0.1 });
 revealEls.forEach(el => revealObs.observe(el));
 
-// ── Count-up numbers ──────────────────────────────────────────────────
-const countEls = document.querySelectorAll('.countup');
-const countObs = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (!e.isIntersecting) return;
-    const el = e.target, target = parseInt(el.dataset.to), dur = 1400;
-    const step = target / (dur / 16);
-    let cur = 0;
-    const t = setInterval(() => {
-      cur += step;
-      if (cur >= target) { el.textContent = target; clearInterval(t); }
-      else { el.textContent = Math.floor(cur); }
-    }, 16);
-    countObs.unobserve(el);
+// ── Activity ticker ───────────────────────────────────────────────────
+const tickerEvents = [
+  { module:'Observations',      color:'#16a34a', bg:'rgba(22,163,74,.18)',    icon:'📋', text:'Observation #112 — HIGH hazard closed & verified by Safety Manager',          time:'Just now'   },
+  { module:'Permit to Work',    color:'#3b82f6', bg:'rgba(59,130,246,.18)',   icon:'🔐', text:'PTW-2026-0047 approved for Hot Work — Boiler Room, Exp 17:00',                time:'2 min ago'  },
+  { module:'HIRA',              color:'#f59e0b', bg:'rgba(245,158,11,.18)',   icon:'⚠️', text:'Welding Bay hazard scored 12 — HIGH band, 2 engineering controls documented', time:'5 min ago'  },
+  { module:'Incidents',         color:'#ef4444', bg:'rgba(239,68,68,.18)',    icon:'🚨', text:'Incident INC-0089 reported — Lost-Time Injury, investigation workflow opened', time:'8 min ago'  },
+  { module:'Inspections',       color:'#6366f1', bg:'rgba(99,102,241,.18)',   icon:'🔍', text:'Monthly Fire Safety Audit completed — Score 94%, 1 critical finding raised',   time:'12 min ago' },
+  { module:'Corrective Actions',color:'#8b5cf6', bg:'rgba(139,92,246,.18)',   icon:'✅', text:'Corrective Action CA-0203 closed — photo evidence uploaded & manager verified', time:'17 min ago' },
+  { module:'Legal Compliance',  color:'#0d9488', bg:'rgba(13,148,136,.18)',   icon:'⚖️', text:'Fire NOC renewal marked complied — certificate attached and filed',             time:'24 min ago' },
+  { module:'Training',          color:'#ec4899', bg:'rgba(236,72,153,.18)',   icon:'🎓', text:'Ahmed Al-Rashid passed Fire Safety Assessment — Level 3 certified',            time:'33 min ago' },
+  { module:'Alerts',            color:'#f97316', bg:'rgba(249,115,22,.18)',   icon:'⏰', text:'Overdue alert dispatched — 3 open observations past target date',               time:'46 min ago' },
+  { module:'Analytics',         color:'#64748b', bg:'rgba(100,116,139,.18)', icon:'📊', text:'Monthly report exported — 47 observations, 12 CAs raised, 0 LTI this month',  time:'1 hr ago'   },
+];
+
+const tickerViewport   = document.getElementById('tickerViewport');
+const tickerDotsWrap   = document.getElementById('tickerDots');
+let   tickerIdx        = 0;
+
+// Build dot indicators
+if (tickerDotsWrap) {
+  tickerEvents.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'ticker-dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => { clearInterval(tickerTimer); tickerIdx = i; showTick(i); tickerTimer = setInterval(advanceTicker, 3600); });
+    tickerDotsWrap.appendChild(d);
   });
-}, { threshold: 0.5 });
-countEls.forEach(el => countObs.observe(el));
+}
+
+function buildEventEl(ev) {
+  const el = document.createElement('div');
+  el.className = 'ticker-event';
+  el.innerHTML =
+    `<span style="font-size:1.05rem;flex-shrink:0;">${ev.icon}</span>` +
+    `<span class="ticker-module" style="color:${ev.color};background:${ev.bg};">${ev.module}</span>` +
+    `<span class="ticker-text">${ev.text}</span>` +
+    `<span class="ticker-time">${ev.time}</span>`;
+  return el;
+}
+
+function showTick(idx) {
+  // Transition out current
+  const current = tickerViewport.querySelector('.active');
+  if (current) {
+    current.classList.remove('active');
+    current.classList.add('leaving');
+    setTimeout(() => { if (current.parentNode) current.remove(); }, 420);
+  }
+  // Build & transition in next
+  const next = buildEventEl(tickerEvents[idx]);
+  tickerViewport.appendChild(next);
+  requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('active')));
+  // Update dots
+  if (tickerDotsWrap) {
+    tickerDotsWrap.querySelectorAll('.ticker-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+  }
+}
+
+function advanceTicker() {
+  tickerIdx = (tickerIdx + 1) % tickerEvents.length;
+  showTick(tickerIdx);
+}
+
+// Kick off — small delay so page renders first
+setTimeout(() => { showTick(0); }, 400);
+var tickerTimer = setInterval(advanceTicker, 3600);
 
 // ── Module tabs ───────────────────────────────────────────────────────
 function switchTab(tab) {
@@ -1039,5 +2233,57 @@ function switchTab(tab) {
   event.target.classList.add('active');
   document.getElementById('pane-' + tab).classList.add('active');
 }
+
+// ── Hero floating card rotation ───────────────────────────────────────
+const heroCard1Events = [
+  { color: 'var(--green)', label: '✅ Rectification Verified',          body: 'Floor hazard cleared &amp; signed off',          meta: 'Safety Manager · 2 mins ago'   },
+  { color: '#3b82f6',      label: '🔐 Permit PTW-0047 Approved',        body: 'Hot Work authorised — Boiler Room',              meta: 'Safety Manager · 5 mins ago'   },
+  { color: '#6366f1',      label: '🔍 Inspection Score: 94%',           body: 'Fire Safety Audit — 1 finding raised',           meta: 'Inspector · 12 mins ago'       },
+  { color: '#ec4899',      label: '🏅 Level 3 Certified',               body: 'Ahmed Al-Rashid passed Fire Safety Assessment',  meta: 'Training Module · 20 mins ago' },
+  { color: '#0d9488',      label: '⚖️ Fire NOC — Complied',             body: 'Certificate uploaded &amp; filed in compliance', meta: 'Compliance · 35 mins ago'      },
+];
+
+const heroCard2Events = [
+  { color: 'var(--red)',   label: '🔴 HIGH Risk Alert Sent',            body: 'Email dispatched to action owner',               meta: 'Automated · Just now'          },
+  { color: '#f59e0b',      label: '⚠️ HIRA Hazard Scored HIGH',         body: 'Welding Bay — risk score 12, controls needed',   meta: 'HIRA Module · 3 mins ago'      },
+  { color: '#ef4444',      label: '🚨 Incident INC-0089 Opened',        body: 'Lost-Time Injury — investigation started',       meta: 'Incidents · 9 mins ago'        },
+  { color: '#f97316',      label: '⏰ 3 Actions Overdue',               body: 'Daily overdue alert dispatched to owners',       meta: 'Automated · 18 mins ago'       },
+  { color: '#dc2626',      label: '📝 Critical Inspection Failure',     body: 'Sprinkler obstruction — corrective action raised',meta: 'Inspections · 28 mins ago'     },
+];
+
+function swapFloatCard(innerId, events, idx) {
+  const inner = document.getElementById(innerId);
+  if (!inner) return;
+  const ev = events[idx];
+
+  // Fade out
+  inner.classList.remove('card-float-visible');
+  inner.classList.add('card-float-fading');
+
+  setTimeout(() => {
+    // Swap content
+    inner.innerHTML =
+      `<div style="font-size:.7rem;font-weight:700;color:${ev.color};text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">${ev.label}</div>` +
+      `<div style="font-size:.78rem;color:var(--slate);font-weight:500;">${ev.body}</div>` +
+      `<div style="font-size:.68rem;color:var(--muted);margin-top:4px;">${ev.meta}</div>`;
+    // Fade in
+    inner.classList.remove('card-float-fading');
+    inner.classList.add('card-float-visible');
+  }, 300);
+}
+
+let fc1Idx = 0, fc2Idx = 0;
+
+// Card 1 — cycles every 4 s
+setInterval(() => {
+  fc1Idx = (fc1Idx + 1) % heroCard1Events.length;
+  swapFloatCard('floatCard1Inner', heroCard1Events, fc1Idx);
+}, 4000);
+
+// Card 2 — cycles every 5.5 s (offset so they never swap simultaneously)
+setInterval(() => {
+  fc2Idx = (fc2Idx + 1) % heroCard2Events.length;
+  swapFloatCard('floatCard2Inner', heroCard2Events, fc2Idx);
+}, 5500);
 </script>
 {% endblock %}

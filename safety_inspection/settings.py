@@ -49,6 +49,10 @@ INSTALLED_APPS = [
     "permits.apps.PermitsConfig",
     "training.apps.TrainingConfig",
     "compliance.apps.ComplianceConfig",
+    "hira.apps.HiraConfig",
+    "actions.apps.ActionsConfig",
+    "incidents.apps.IncidentsConfig",
+    "inspections.apps.InspectionsConfig",
 ]
 
 # ---------------------------------------------------------------------------

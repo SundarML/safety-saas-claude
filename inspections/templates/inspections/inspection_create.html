@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Schedule Inspection — Vigilo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'inspections:list' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <h5 class="fw-bold mb-0">Schedule Inspection</h5>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius:12px; max-width:640px;">
+  <div class="card-body p-4">
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label fw-semibold small">Inspection Title <span class="text-danger">*</span></label>
+          {{ form.title }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Template <span class="text-danger">*</span></label>
+          {{ form.template }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Scheduled Date <span class="text-danger">*</span></label>
+          {{ form.scheduled_date }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Inspector <span class="text-danger">*</span></label>
+          {{ form.inspector }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Location</label>
+          {{ form.location }}
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold small">Or enter location manually</label>
+          {{ form.location_text }}
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold small">Notes</label>
+          {{ form.notes }}
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-calendar-plus me-1"></i>Schedule
+        </button>
+        <a href="{% url 'inspections:list' %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

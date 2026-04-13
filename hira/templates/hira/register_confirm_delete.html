@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Delete HIRA Register — Vigilo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'hira:register_detail' register.pk %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+</div>
+
+<div class="card border-danger" style="border-radius:12px; max-width:520px;">
+  <div class="card-body p-4">
+    <h5 class="fw-bold text-danger mb-1"><i class="bi bi-trash me-2"></i>Delete Register</h5>
+    <p class="text-muted small mb-3">This will permanently delete the register and all its hazards.</p>
+    <div class="p-3 mb-3 rounded-2" style="background:#f8f9fb; border:1px solid #e2e8f0;">
+      <div class="fw-semibold">{{ register.title }}</div>
+      <div class="text-muted small">{{ register.activity }} &nbsp;·&nbsp; {{ register.hazards.count }} hazard{{ register.hazards.count|pluralize }}</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'hira:register_detail' register.pk %}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-sm">
+          <i class="bi bi-trash me-1"></i>Yes, Delete
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

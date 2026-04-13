@@ -77,6 +77,19 @@
             <i class="bi bi-check-circle me-1"></i>Verify / Close
           </a>
         {% endif %}
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'observations:pdf_report' object.pk %}">
+          <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+        </a>
+        {% if user.is_manager or user.is_safety_manager %}
+        <a class="btn btn-outline-warning btn-sm"
+           href="{% url 'actions:create' %}?source_module=observation&source_observation={{ object.pk }}&title={{ object.title|urlencode }}&priority={% if object.severity == 'HIGH' %}high{% elif object.severity == 'MEDIUM' %}medium{% else %}low{% endif %}">
+          <i class="bi bi-plus-circle me-1"></i>Raise Action
+        </a>
+        <a class="btn btn-outline-danger btn-sm"
+           href="{% url 'incidents:create' %}?source_observation={{ object.pk }}">
+          <i class="bi bi-exclamation-octagon me-1"></i>Convert to Incident
+        </a>
+        {% endif %}
       {% endif %}
     </div>
   </div>
@@ -269,6 +282,71 @@
     </div>
   </div>
 </div>
+
+{% with ca_list=object.corrective_actions.all %}
+{% if ca_list %}
+<div class="container-fluid px-0 mt-3">
+  <div class="card border-0 shadow-sm" style="border-radius:12px;">
+    <div class="card-body py-3 px-4">
+      <div class="fw-semibold mb-2" style="font-size:.85rem; color:#1a2c52;">
+        <i class="bi bi-check2-square me-1"></i>Corrective Actions
+        <span class="ms-1 badge rounded-pill" style="background:#e0e7ff;color:#3730a3;font-size:.65rem;">{{ ca_list|length }}</span>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        {% for ca in ca_list %}
+        <a href="{% url 'actions:detail' ca.pk %}"
+           class="text-decoration-none d-inline-flex align-items-center gap-2 px-3 py-2 rounded"
+           style="background:#f8f9fb;border:1px solid #e2e8f0;font-size:.8rem;color:#1a2c52;">
+          <span style="font-family:monospace;font-size:.72rem;color:#94a3b8;">CA-{{ ca.pk|stringformat:"04d" }}</span>
+          {{ ca.title|truncatechars:50 }}
+          <span class="badge rounded-pill" style="font-size:.62rem;
+            {% if ca.status == 'closed' %}background:#f0fdf4;color:#16a34a;
+            {% elif ca.status == 'pending_verification' %}background:#fff7ed;color:#c2410c;
+            {% elif ca.status == 'in_progress' %}background:#f5f3ff;color:#7c3aed;
+            {% else %}background:#eff6ff;color:#2563eb;{% endif %}">
+            {{ ca.get_status_display }}
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endwith %}
+
+{% with hazards=object.linked_hazards.all %}
+{% if hazards %}
+<div class="container-fluid px-0 mt-3">
+  <div class="card border-0 shadow-sm" style="border-radius:12px;">
+    <div class="card-body py-3 px-4">
+      <div class="fw-semibold mb-2" style="font-size:.85rem; color:#1a2c52;">
+        <i class="bi bi-exclamation-triangle me-1 text-warning"></i>
+        Linked HIRA Hazards
+        <span class="ms-1 badge rounded-pill" style="background:#e0e7ff;color:#3730a3;font-size:.65rem;">{{ hazards|length }}</span>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        {% for hazard in hazards %}
+        <a href="{% url 'hira:register_detail' hazard.register_id %}"
+           class="text-decoration-none d-inline-flex align-items-center gap-2 px-3 py-2 rounded"
+           style="background:#f8f9fb;border:1px solid #e2e8f0;font-size:.8rem;color:#1a2c52;transition:border-color .15s;"
+           onmouseover="this.style.borderColor='#1a2c52'" onmouseout="this.style.borderColor='#e2e8f0'">
+          <i class="bi bi-shield-exclamation text-warning"></i>
+          <span>{{ hazard.hazard_description|truncatechars:50 }}</span>
+          <span class="badge" style="background:
+            {% if hazard.effective_risk_level == 'critical' %}#fee2e2;color:#991b1b;
+            {% elif hazard.effective_risk_level == 'high' %}#ffedd5;color:#9a3412;
+            {% elif hazard.effective_risk_level == 'medium' %}#fef9c3;color:#854d0e;
+            {% else %}#dcfce7;color:#15803d;{% endif %}
+            font-size:.65rem;">{{ hazard.effective_risk_level|title }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endwith %}
 
 <!-- BEFORE IMAGE MODAL -->
 {% if object.photo_before %}

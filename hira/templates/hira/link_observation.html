@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Link Observation — HIRA{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'hira:register_detail' hazard.register_id %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <div>
+    <h5 class="fw-bold mb-0">Link Observation to Hazard</h5>
+    <p class="text-muted small mb-0">{{ hazard.hazard_description|truncatechars:80 }}</p>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius:12px; max-width:720px;">
+  <div class="card-body p-4">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Select Observation to Link</label>
+        <select name="observation_pk" class="form-select" required>
+          <option value="">— choose an observation —</option>
+          {% for obs in available_obs %}
+          <option value="{{ obs.pk }}">
+            #{{ obs.pk }} · {{ obs.title|truncatechars:60 }} [{{ obs.get_severity_display }}, {{ obs.get_status_display }}]
+            — {{ obs.date_observed|date:"d M Y" }}
+          </option>
+          {% empty %}
+          <option disabled>No unlinked observations found</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-link-45deg me-1"></i>Link
+        </button>
+        <a href="{% url 'hira:register_detail' hazard.register_id %}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

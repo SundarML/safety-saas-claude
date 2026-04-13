@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Close Incident — {{ incident.reference_no }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{% url 'incidents:detail' incident.pk %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <h5 class="fw-bold mb-0">Close Incident — {{ incident.reference_no }}</h5>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius:12px; max-width:640px;">
+  <div class="card-body p-4">
+    <p class="text-muted small mb-4">
+      Closing this incident confirms that the investigation is complete and preventive measures have been implemented.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label class="form-label fw-semibold">{{ form.preventive_measures.label }} <span class="text-danger">*</span></label>
+        {{ form.preventive_measures }}
+        {% for e in form.preventive_measures.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-check-circle me-1"></i>Close Incident
+        </button>
+        <a href="{% url 'incidents:detail' incident.pk %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
