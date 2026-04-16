@@ -369,6 +369,26 @@
   padding: 64px 48px; text-align: center;
 }
 
+/* ─── Use-case chips (hero) ─────────────────────────────────────────────── */
+.use-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 20px; border-radius: 100px;
+  font-size: .87rem; font-weight: 600;
+  border: 1.5px solid var(--border);
+  background: var(--white); color: var(--slate);
+  cursor: pointer; transition: all .2s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  user-select: none;
+}
+.use-chip:hover {
+  border-color: var(--green); color: var(--green); background: var(--green-bg);
+}
+.use-chip.active-chip {
+  border-color: var(--green); color: var(--green);
+  background: var(--green-bg);
+  box-shadow: 0 2px 10px rgba(22,163,74,.18);
+}
+
 /* ─── Footer ───────────────────────────────────────────────────────────── */
 .mkt-footer {
   background: var(--navy); padding: 48px 0 32px;
@@ -740,144 +760,82 @@
 ══════════════════════════════════════════════════ -->
 
 <!-- ── HERO ─────────────────────────────────────────────────────────── -->
-<section class="hero-wrap">
-  <div class="container" style="position:relative;z-index:2;">
-    <div class="row align-items-center g-5">
+<section style="background:#fff;padding:96px 0 80px;">
+  <div class="container">
+    <div style="max-width:780px;margin:0 auto;text-align:center;">
 
-      <!-- Left: Copy -->
-      <div class="col-lg-6">
-        <div class="eyebrow">
-          <span class="eyebrow-dot"></span>
-          Safety Management Platform · 2026
+      <!-- Headline -->
+      <h1 style="font-family:'Plus Jakarta Sans',sans-serif;
+                 font-size:clamp(1.8rem,4.5vw,3.5rem);font-weight:800;
+                 line-height:1.12;letter-spacing:-.03em;color:var(--navy);
+                 margin-bottom:22px;white-space:nowrap;">
+        Every hazard closed.<br>Every permit controlled.
+      </h1>
+
+      <!-- Subheadline -->
+      <p style="font-size:1.1rem;color:var(--muted);line-height:1.8;
+                max-width:540px;margin:0 auto 36px;">
+        Replace clipboards, WhatsApp groups, and paper permits with one
+        digital system — built for the field, trusted by managers.
+      </p>
+
+      <!-- CTAs -->
+      <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+        <a href="{% url 'core:organization_signup' %}" class="btn-primary-mkt"
+           style="font-size:1rem;padding:14px 34px;">
+          Get started free
+        </a>
+        <a href="{% url 'core:request_demo' %}" class="btn-secondary-mkt"
+           style="font-size:1rem;padding:13px 32px;">
+          Request a demo
+        </a>
+      </div>
+
+      <!-- Fine print -->
+      <p style="font-size:.8rem;color:#94a3b8;margin-bottom:52px;">
+        No credit card required &nbsp;·&nbsp; 14-day free trial &nbsp;·&nbsp; Cancel anytime
+      </p>
+
+      <!-- Use-case chips -->
+      <div style="margin-bottom:52px;">
+        <div style="font-size:.75rem;font-weight:700;color:#94a3b8;
+                    text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">
+          What safety teams use Vigilo for
         </div>
-
-        <h1 class="hero-h1">
-          Every Hazard Closed.<br>
-          Every Permit <mark>Controlled.</mark><br>
-          Zero Incidents.
-        </h1>
-
-        <p class="hero-sub">
-          Vigilo replaces clipboards, WhatsApp groups and spreadsheets with
-          a single digital system — observation tracking, corrective actions,
-          and high-risk work permits, all in one place.
-        </p>
-
-        <!-- Dual CTA — HubSpot pattern -->
-        <div class="d-flex flex-wrap gap-3 mt-4">
-          <a href="{% url 'core:request_demo' %}" class="btn-primary-mkt">
-            Get a Demo
-          </a>
-          <a href="{% url 'core:organization_signup' %}" class="btn-secondary-mkt">
-            Start Free — No Card Needed
-          </a>
-        </div>
-
-        <!-- Already have an account -->
-        <p style="margin-top:14px;margin-bottom:0;font-size:.83rem;color:var(--muted);">
-          Already have an account?
-          <a href="{% url 'users:login' %}" class="btn-link-mkt" style="font-size:.83rem;">
-            Log in <i class="bi bi-arrow-right" style="font-size:.75rem;"></i>
-          </a>
-        </p>
-
-        <!-- Trust signals -->
-        <div class="trust-strip">
-          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> Free 14-day trial</span>
-          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> No credit card</span>
-          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> Setup in minutes</span>
-          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> Cancel anytime</span>
+        <div id="useCaseChips" style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;">
+          <span class="use-chip active-chip">🔍 Report a hazard</span>
+          <span class="use-chip">🔐 Issue a permit</span>
+          <span class="use-chip">📝 Conduct an inspection</span>
+          <span class="use-chip">✅ Track corrective actions</span>
+          <span class="use-chip">📁 Prepare for an audit</span>
+          <span class="use-chip">⚠️ Assess risks</span>
+          <span class="use-chip">🚨 Investigate incidents</span>
+          <span class="use-chip">🎓 Train your team</span>
         </div>
       </div>
 
-      <!-- Right: Product illustration -->
-      <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center">
-        <div class="hero-visual" style="width:100%;max-width:500px;position:relative;padding:60px 50px;">
-
-          <!-- Main dashboard card -->
-          <div style="background:white;border-radius:16px;border:1px solid var(--border);
-                      box-shadow:0 20px 60px rgba(0,0,0,.12);padding:20px;position:relative;z-index:2;">
-
-            <!-- Top bar -->
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-              <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.95rem;color:var(--navy);">
-                🦺 Vigilo &nbsp;<span style="color:var(--muted);font-weight:400;font-size:.8rem;">/ Observations</span>
-              </div>
-              <span style="background:var(--green-bg);color:var(--green);font-size:.72rem;
-                           font-weight:700;padding:3px 10px;border-radius:100px;border:1px solid #bbf7d0;">
-                Live
-              </span>
-            </div>
-
-            <!-- KPI row -->
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
-              <div style="background:var(--off);border-radius:8px;padding:10px;text-align:center;">
-                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--navy);">14</div>
-                <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">Open</div>
-              </div>
-              <div style="background:#fff7ed;border-radius:8px;padding:10px;text-align:center;">
-                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--orange);">3</div>
-                <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">Overdue</div>
-              </div>
-              <div style="background:var(--green-bg);border-radius:8px;padding:10px;text-align:center;">
-                <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--green);">52</div>
-                <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">Closed</div>
-              </div>
-            </div>
-
-            <!-- Observation items -->
-            <div style="display:flex;flex-direction:column;gap:8px;">
-              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fef2f2;border-radius:8px;border-left:3px solid var(--red);">
-                <span style="font-size:1rem;">🔴</span>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:600;font-size:.82rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Exposed live wire — Block C</div>
-                  <div style="font-size:.72rem;color:var(--muted);">HIGH · Assigned → John D. · Due Today</div>
-                </div>
-                <span style="background:#fecaca;color:var(--red);font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">Overdue</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff7ed;border-radius:8px;border-left:3px solid var(--orange);">
-                <span style="font-size:1rem;">🟡</span>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:600;font-size:.82rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Slippery walkway — Warehouse 2</div>
-                  <div style="font-size:.72rem;color:var(--muted);">MEDIUM · In Progress · Due 20 Feb</div>
-                </div>
-                <span style="background:#fed7aa;color:var(--orange);font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">In Progress</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--green-bg);border-radius:8px;border-left:3px solid var(--green);">
-                <span style="font-size:1rem;">✅</span>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:600;font-size:.82rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Missing PPE signage — Gate 3</div>
-                  <div style="font-size:.72rem;color:var(--muted);">LOW · Verified & Closed</div>
-                </div>
-                <span style="background:#bbf7d0;color:var(--green);font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">Closed</span>
-              </div>
-            </div>
-
-            <!-- PTW badge at bottom -->
-            <div style="margin-top:12px;padding:10px 14px;background:linear-gradient(135deg,#eff6ff,#f0fdf4);
-                        border-radius:8px;border:1px solid #bfdbfe;display:flex;justify-content:space-between;align-items:center;">
-              <div style="font-size:.8rem;font-weight:600;color:#1e40af;">🔐 PTW-20260217-0003 Active</div>
-              <div style="font-size:.72rem;color:var(--muted);">Hot Work · Boiler Room · Exp 17:00</div>
-            </div>
-          </div>
-
-          <!-- Floating cards — content rotated by JS -->
-          <div class="card-float float-1" id="floatCard1">
-            <div id="floatCard1Inner" class="card-float-visible">
-              <div style="font-size:.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">✅ Rectification Verified</div>
-              <div style="font-size:.78rem;color:var(--slate);font-weight:500;">Floor hazard cleared &amp; signed off</div>
-              <div style="font-size:.68rem;color:var(--muted);margin-top:4px;">Safety Manager · 2 mins ago</div>
-            </div>
-          </div>
-
-          <div class="card-float float-2" id="floatCard2">
-            <div id="floatCard2Inner" class="card-float-visible">
-              <div style="font-size:.7rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">🔴 HIGH Risk Alert Sent</div>
-              <div style="font-size:.78rem;color:var(--slate);font-weight:500;">Email dispatched to action owner</div>
-              <div style="font-size:.68rem;color:var(--muted);margin-top:4px;">Automated · Just now</div>
-            </div>
-          </div>
-
+      <!-- Trust strip -->
+      <div style="border-top:1px solid #f1f5f9;padding-top:32px;">
+        <div style="font-size:.75rem;font-weight:700;color:#94a3b8;
+                    text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px;">
+          Trusted by safety teams across
+        </div>
+        <div style="display:flex;flex-wrap:wrap;justify-content:center;
+                    align-items:center;gap:10px 28px;">
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+                       font-size:.92rem;color:#cbd5e1;">Manufacturing</span>
+          <span style="width:4px;height:4px;background:#e2e8f0;border-radius:50%;flex-shrink:0;"></span>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+                       font-size:.92rem;color:#cbd5e1;">Oil &amp; Gas</span>
+          <span style="width:4px;height:4px;background:#e2e8f0;border-radius:50%;flex-shrink:0;"></span>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+                       font-size:.92rem;color:#cbd5e1;">Construction</span>
+          <span style="width:4px;height:4px;background:#e2e8f0;border-radius:50%;flex-shrink:0;"></span>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+                       font-size:.92rem;color:#cbd5e1;">Logistics &amp; Warehousing</span>
+          <span style="width:4px;height:4px;background:#e2e8f0;border-radius:50%;flex-shrink:0;"></span>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+                       font-size:.92rem;color:#cbd5e1;">Chemical &amp; Process</span>
         </div>
       </div>
 
@@ -2108,18 +2066,36 @@
 <footer class="mkt-footer">
   <div class="container">
     <div class="row g-4">
-      <div class="col-lg-4">
-        <div class="footer-brand">🦺 Vigilo</div>
-        <div class="footer-tagline">Observations · Permits · HIRA · Incidents<br>Inspections · Compliance · Actions · Training<br>Built for the field. Trusted by managers.</div>
+      <div class="col-lg-2">
+        <div class="footer-brand" style="display:flex;align-items:center;gap:10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 46" width="28" height="32" style="flex-shrink:0;">
+            <path d="M6,2 L34,2 Q38,2 38,6 L38,27 Q38,38 20,44 Q2,38 2,27 L2,6 Q2,2 6,2 Z" fill="#16a34a"/>
+            <path d="M6,2 L34,2 Q38,2 38,6 L38,10 Q20,6 2,10 L2,6 Q2,2 6,2 Z" fill="rgba(255,255,255,0.12)"/>
+            <polyline points="11,15 20,30 29,15" fill="none" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Vigilo
+        </div>
+        <div class="footer-tagline" style="margin-top:10px;">Built for the field.<br>Trusted by managers.</div>
+        <div style="margin-top:18px;display:flex;flex-direction:column;gap:8px;">
+          <a href="{% url 'core:organization_signup' %}"
+             style="display:inline-block;padding:9px 18px;background:#16a34a;color:#fff;
+                    font-size:.83rem;font-weight:700;border-radius:7px;text-decoration:none;
+                    font-family:'Plus Jakarta Sans',sans-serif;text-align:center;">
+            Get started free
+          </a>
+          <a href="{% url 'core:request_demo' %}"
+             style="display:inline-block;padding:8px 18px;color:#94a3b8;
+                    font-size:.83rem;font-weight:600;border:1px solid rgba(255,255,255,.12);
+                    border-radius:7px;text-decoration:none;text-align:center;transition:color .2s;"
+             onmouseover="this.style.color='#e2e8f0';"
+             onmouseout="this.style.color='#94a3b8';">
+            Request a demo
+          </a>
+        </div>
       </div>
+      <!-- Features col 1: Modules -->
       <div class="col-6 col-lg-2">
-        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Product</div>
-        <a href="{% url 'core:organization_signup' %}" class="footer-link">Start Free Trial</a>
-        <a href="{% url 'core:pricing' %}" class="footer-link">Pricing</a>
-        <a href="{% url 'core:request_demo' %}" class="footer-link">Request Demo</a>
-      </div>
-      <div class="col-6 col-lg-3">
-        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Features</div>
+        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Modules</div>
         <a href="{% url 'core:organization_signup' %}" class="footer-link">📋 Safety Observations</a>
         <a href="{% url 'core:organization_signup' %}" class="footer-link">🔐 Permit to Work</a>
         <a href="{% url 'core:organization_signup' %}" class="footer-link">⚠️ HIRA Assessment</a>
@@ -2129,12 +2105,26 @@
         <a href="{% url 'core:organization_signup' %}" class="footer-link">✅ Corrective Actions</a>
         <a href="{% url 'core:organization_signup' %}" class="footer-link">🎓 Training &amp; Skills</a>
       </div>
+      <!-- Features col 2: Capabilities -->
+      <div class="col-6 col-lg-2">
+        <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Capabilities</div>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">📊 Analytics &amp; Dashboards</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">📁 CSV &amp; PDF Export</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">📧 Automated Email Alerts</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">📱 Mobile Optimised</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">🔒 Full Audit Trail</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">🏢 Multi-tenant SaaS</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">👤 Role-based Access</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">🏅 Performance Profiles</a>
+      </div>
+      <!-- Account -->
       <div class="col-6 col-lg-2">
         <div style="color:#64748b;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Account</div>
-        <a href="{% url 'users:login' %}" class="footer-link">Login</a>
-        <a href="{% url 'core:organization_signup' %}" class="footer-link">Sign Up</a>
+        <a href="{% url 'users:login' %}" class="footer-link">Sign In</a>
+        <a href="{% url 'core:organization_signup' %}" class="footer-link">Start Free Trial</a>
         <a href="{% url 'core:request_demo' %}" class="footer-link">Request Demo</a>
         <a href="{% url 'core:pricing' %}" class="footer-link">Pricing</a>
+        <a href="{% url 'core:help' %}" class="footer-link">Help &amp; User Guide</a>
       </div>
     </div>
     <hr class="footer-divider">
@@ -2285,5 +2275,24 @@ setInterval(() => {
   fc2Idx = (fc2Idx + 1) % heroCard2Events.length;
   swapFloatCard('floatCard2Inner', heroCard2Events, fc2Idx);
 }, 5500);
+
+// ── Use-case chip auto-cycling ────────────────────────────────────────
+const usechips = document.querySelectorAll('.use-chip');
+let activeChipIdx = 0;
+if (usechips.length) {
+  function cycleChip() {
+    usechips.forEach(c => c.classList.remove('active-chip'));
+    activeChipIdx = (activeChipIdx + 1) % usechips.length;
+    usechips[activeChipIdx].classList.add('active-chip');
+  }
+  const chipTimer = setInterval(cycleChip, 2200);
+  usechips.forEach((chip, i) => {
+    chip.addEventListener('click', () => {
+      usechips.forEach(c => c.classList.remove('active-chip'));
+      chip.classList.add('active-chip');
+      activeChipIdx = i;
+    });
+  });
+}
 </script>
 {% endblock %}
