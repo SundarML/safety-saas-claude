@@ -770,6 +770,15 @@
 
     {% if not user.is_contractor %}
 
+    <!-- ── ISO 45001 EVIDENCE PACK (pinned, all staff) ── -->
+    <a href="{% url 'audit_export:generate' %}"
+       class="sb-link {% if 'audit' in request.path %}active{% endif %}"
+       data-bs-toggle="tooltip" data-bs-placement="right"
+       title="Generate ISO 45001 Evidence Pack — 10-section ZIP with all audit-ready compliance documentation">
+      <i class="bi bi-file-earmark-zip-fill"></i> ISO 45001 Pack
+    </a>
+    <hr class="sb-divider mx-3">
+
     <!-- ══ GROUP: SAFETY OPERATIONS ══ -->
     <button class="sb-group-header" type="button"
             data-bs-toggle="collapse" data-bs-target="#grp-safety-ops"

@@ -1,19 +1,201 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
+{% block title %}Create Organisation — Vigilo{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="card mx-auto" style="max-width: 500px;">
-    <div class="card-body">
-      <h4 class="mb-3 text-center">Create Your Organization</h4>
-      <form method="post">
-        {% csrf_token %}
-        {{ form|crispy }}
-        <button type="submit" class="btn btn-primary w-100">
-          Create Organization
-        </button>
-      </form>
+<div class="row justify-content-center py-4">
+  <div class="col-lg-5 col-md-7">
+
+    <!-- Page header -->
+    <div class="text-center mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 46" width="36" height="42">
+        <path d="M6,2 L34,2 Q38,2 38,6 L38,27 Q38,38 20,44 Q2,38 2,27 L2,6 Q2,2 6,2 Z" fill="#16a34a"/>
+        <path d="M6,2 L34,2 Q38,2 38,6 L38,10 Q20,6 2,10 L2,6 Q2,2 6,2 Z" fill="rgba(255,255,255,0.12)"/>
+        <polyline points="11,15 20,30 29,15" fill="none" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h4 class="fw-bold mt-2 mb-1" style="color:#0f172a;font-family:'Plus Jakarta Sans',sans-serif;">
+        Create Your Organisation
+      </h4>
+      <p class="text-muted mb-0" style="font-size:.85rem;">
+        You will become the <strong>Manager</strong> of this account.
+      </p>
     </div>
+
+    <!-- ── ARE YOU JOINING A TEAM? ──────────────────────────────────────────
+         This is the most important element on the page. It must be impossible
+         to miss. Team members who land here should be redirected away BEFORE
+         they accidentally create a duplicate organisation.
+    ─────────────────────────────────────────────────────────────────────── -->
+    <div class="mb-4 rounded-3 overflow-hidden" style="border:2px solid #f97316;">
+
+      <!-- Header bar -->
+      <div class="d-flex align-items-center gap-2 px-3 py-2"
+           style="background:#f97316;">
+        <i class="bi bi-people-fill text-white" style="font-size:1rem;"></i>
+        <span class="fw-bold text-white" style="font-size:.88rem;">
+          Are you joining your company's existing Vigilo account?
+        </span>
+      </div>
+
+      <!-- Body -->
+      <div class="px-3 py-3" style="background:#fff7ed;">
+        <p class="mb-2" style="font-size:.84rem;color:#7c2d12;">
+          <strong>Do not sign up here.</strong> This form creates a completely new,
+          empty organisation. Your colleagues' data will not be visible to you.
+        </p>
+        <p class="mb-2" style="font-size:.84rem;color:#7c2d12;">
+          Instead, ask your <strong>manager or admin</strong> to invite you:
+        </p>
+        <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-2 mb-2"
+             style="background:rgba(249,115,22,.10);border:1px solid #fed7aa;">
+          <i class="bi bi-envelope-fill" style="color:#ea580c;font-size:.9rem;flex-shrink:0;"></i>
+          <span style="font-size:.82rem;color:#9a3412;font-weight:600;">
+            They go to: Settings → Invite Team Members → enter your email → you get a link.
+          </span>
+        </div>
+        <p class="mb-0 mt-2" style="font-size:.79rem;color:#92400e;">
+          <i class="bi bi-info-circle me-1"></i>
+          Already received an invite email? Click the link inside it — do not sign up here.
+        </p>
+      </div>
+    </div>
+
+    <!-- Domain collision warning (soft — shown when email domain already exists) -->
+    {% if domain_collision %}
+    <div class="mb-3 p-3 rounded-3" style="background:#fefce8;border:1px solid #fde047;">
+      <div class="d-flex gap-2 align-items-start">
+        <i class="bi bi-exclamation-triangle-fill mt-1" style="color:#ca8a04;flex-shrink:0;"></i>
+        <div style="font-size:.82rem;color:#713f12;">
+          <strong>Heads up:</strong> We found Vigilo accounts using the same email domain as yours.
+          Your company may already be on Vigilo. If so, ask your manager to invite you instead of
+          creating a duplicate account. Only continue if you're intentionally setting up a
+          separate organisation.
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── SIGNUP FORM ────────────────────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm" style="border-radius:14px;">
+      <div class="card-body p-4">
+
+        <!-- Confirmation badge -->
+        <div class="d-flex align-items-center gap-2 mb-4 px-3 py-2 rounded-3"
+             style="background:#f0fdf4;border:1px solid #bbf7d0;">
+          <i class="bi bi-person-gear" style="color:#16a34a;font-size:1rem;flex-shrink:0;"></i>
+          <span style="font-size:.82rem;color:#14532d;font-weight:600;">
+            I am the manager / admin setting up Vigilo for my company.
+          </span>
+        </div>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 px-3 mb-3" style="font-size:.85rem;">
+              {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Organisation Name -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.84rem;">
+              Organisation Name <span class="text-danger">*</span>
+            </label>
+            <input type="text" name="organization_name"
+                   class="form-control {% if form.organization_name.errors %}is-invalid{% endif %}"
+                   placeholder="Acme Steel Ltd."
+                   value="{{ form.organization_name.value|default:'' }}">
+            {% for err in form.organization_name.errors %}
+              <div class="invalid-feedback">{{ err }}</div>
+            {% endfor %}
+          </div>
+
+          <!-- Domain / Slug -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.84rem;">
+              Domain / Slug <span class="text-danger">*</span>
+            </label>
+            <input type="text" name="domain"
+                   class="form-control {% if form.domain.errors %}is-invalid{% endif %}"
+                   placeholder="acmesteel"
+                   value="{{ form.domain.value|default:'' }}">
+            {% for err in form.domain.errors %}
+              <div class="invalid-feedback">{{ err }}</div>
+            {% endfor %}
+            <div class="form-text">
+              Letters, numbers and underscores only — e.g. <code>acmesteel</code>
+            </div>
+          </div>
+
+          <!-- Full Name -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.84rem;">
+              Your Full Name <span class="text-danger">*</span>
+            </label>
+            <input type="text" name="full_name"
+                   class="form-control {% if form.full_name.errors %}is-invalid{% endif %}"
+                   placeholder="Rajesh Kumar"
+                   value="{{ form.full_name.value|default:'' }}">
+            {% for err in form.full_name.errors %}
+              <div class="invalid-feedback">{{ err }}</div>
+            {% endfor %}
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.84rem;">
+              Your Work Email <span class="text-danger">*</span>
+            </label>
+            <input type="email" name="email"
+                   class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                   placeholder="you@yourcompany.com"
+                   value="{{ form.email.value|default:'' }}">
+            {% for err in form.email.errors %}
+              <div class="invalid-feedback">{{ err }}</div>
+            {% endfor %}
+          </div>
+
+          <!-- Password -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" style="font-size:.84rem;">
+              Password <span class="text-danger">*</span>
+            </label>
+            <input type="password" name="password1"
+                   class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                   placeholder="At least 8 characters">
+            {% for err in form.password1.errors %}
+              <div class="invalid-feedback">{{ err }}</div>
+            {% endfor %}
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold" style="font-size:.84rem;">
+              Confirm Password <span class="text-danger">*</span>
+            </label>
+            <input type="password" name="password2"
+                   class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                   placeholder="Repeat password">
+            {% for err in form.password2.errors %}
+              <div class="invalid-feedback">{{ err }}</div>
+            {% endfor %}
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 fw-bold py-2"
+                  style="font-size:.92rem;border-radius:8px;">
+            <i class="bi bi-building-add me-2"></i>Create Organisation Account
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+    <!-- Bottom link -->
+    <p class="text-center mt-3 mb-0" style="font-size:.83rem;color:#64748b;">
+      Already have an account?
+      <a href="{% url 'users:login' %}" class="fw-semibold" style="color:#16a34a;">Sign in</a>
+    </p>
+
   </div>
 </div>
 {% endblock %}

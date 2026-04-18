@@ -220,8 +220,15 @@ def organization_signup(request):
 
             # Prevent duplicate accounts
             if CustomUser.objects.filter(email=email).exists():
-                form.add_error("email", "An account with this email already exists.")
+                form.add_error("email", "An account with this email already exists. Please sign in instead.")
                 return render(request, "core/signup.html", {"form": form})
+
+            # Soft warning: check if another org already uses this email domain
+            email_domain = email.split("@")[-1].lower()
+            domain_collision = CustomUser.objects.filter(
+                email__iendswith=f"@{email_domain}",
+                organization__isnull=False,
+            ).exclude(email=email).exists()
 
             # 1. Create Organisation (signal fires → Free Subscription created)
             org = Organization.objects.create(
@@ -233,6 +240,7 @@ def organization_signup(request):
             user = CustomUser.objects.create_user(
                 email=email,
                 password=form.cleaned_data["password1"],
+                full_name=form.cleaned_data["full_name"],
                 organization=org,
                 role=CustomUser.ROLE_MANAGER,
             )
@@ -241,14 +249,19 @@ def organization_signup(request):
             login(request, user)
             messages.success(
                 request,
-                f"Welcome! Your organization '{org.name}' has been created.",
+                f"Welcome, {user.full_name}! Your organisation '{org.name}' has been created. "
+                f"Invite your team from Settings \u2192 Invite Team Members.",
             )
             return redirect("core:app_dashboard")
 
     else:
         form = OrganizationSignupForm()
+        domain_collision = False
 
-    return render(request, "core/signup.html", {"form": form})
+    return render(request, "core/signup.html", {
+        "form": form,
+        "domain_collision": domain_collision if request.method == "POST" else False,
+    })
 
 
 # ---------------------------------------------------------------------------

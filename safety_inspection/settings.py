@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "actions.apps.ActionsConfig",
     "incidents.apps.IncidentsConfig",
     "inspections.apps.InspectionsConfig",
+    "audit_export.apps.AuditExportConfig",
 ]
 
 # ---------------------------------------------------------------------------

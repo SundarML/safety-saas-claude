@@ -7,18 +7,23 @@ from .models import DemoRequest, FreePlanRequest, Organization, UserInvite, Cont
 class OrganizationSignupForm(forms.Form):
     organization_name = forms.CharField(
         max_length=255,
-        label="Organization Name",
-        widget=forms.TextInput(attrs={"placeholder": "Acme Safety Ltd."}),
+        label="Organisation Name",
+        widget=forms.TextInput(attrs={"placeholder": "Acme Steel Ltd."}),
     )
     domain = forms.CharField(
         max_length=255,
         label="Domain / Slug",
-        help_text="A unique identifier for your organization, e.g. acme",
-        widget=forms.TextInput(attrs={"placeholder": "acme"}),
+        help_text="Short unique ID for your org — letters, numbers, underscores only. E.g. acmesteel",
+        widget=forms.TextInput(attrs={"placeholder": "acmesteel"}),
+    )
+    full_name = forms.CharField(
+        max_length=255,
+        label="Your Full Name",
+        widget=forms.TextInput(attrs={"placeholder": "Rajesh Kumar"}),
     )
     email = forms.EmailField(
-        label="Your Email",
-        widget=forms.EmailInput(attrs={"placeholder": "you@example.com"}),
+        label="Your Work Email",
+        widget=forms.EmailInput(attrs={"placeholder": "you@yourcompany.com"}),
     )
     password1 = forms.CharField(
         label="Password",

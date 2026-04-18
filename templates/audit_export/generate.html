@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}ISO 45001 Evidence Pack — Vigilo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <!-- Page header -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div style="width:48px;height:48px;border-radius:12px;
+                  background:linear-gradient(135deg,#1a2c52,#4f46e5);
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="bi bi-file-earmark-zip-fill text-white" style="font-size:1.4rem;"></i>
+      </div>
+      <div>
+        <h4 class="mb-0 fw-bold" style="color:#1a2c52;">ISO 45001 Evidence Pack</h4>
+        <small class="text-muted">Single-click audit export — all compliance evidence in one ZIP</small>
+      </div>
+    </div>
+
+    <!-- What's included card -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius:14px;">
+      <div class="card-header border-0 pb-0 pt-3 px-4"
+           style="background:transparent;">
+        <h6 class="fw-bold mb-0" style="color:#1a2c52;">
+          <i class="bi bi-list-check me-2" style="color:#4f46e5;"></i>What's included
+        </h6>
+      </div>
+      <div class="card-body px-4 pt-3 pb-4">
+        <div class="row g-2">
+
+          {% with items="|IG-01|Clause 4|Organisation Profile & Team Roster|bi-building|#1a2c52|#eff6ff,|IG-02|Clause 6.1|HIRA Risk Register & Hazard Inventory|bi-exclamation-triangle-fill|#ea580c|#fff7ed,|IG-03|Clause 6.1.3|Legal Compliance Register|bi-shield-check|#16a34a|#f0fdf4,|IG-04|Clause 7.2|Training Records & Skills Matrix|bi-mortarboard-fill|#4f46e5|#eef2ff,|IG-05|Clause 8.1|Observations & Permit to Work Log|bi-clipboard2-check-fill|#0d9488|#f0fdfa,|IG-06|Clause 9.2|Inspection & Internal Audit Log|bi-search|#ca8a04|#fefce8,|IG-07|Clause 9.1|LTIFR / TRIFR Performance Metrics|bi-bar-chart-fill|#dc2626|#fef2f2,|IG-08|Clause 10.2|Incident Register & RCA Records|bi-exclamation-octagon-fill|#dc2626|#fef2f2,|IG-09|Clause 10.2|Corrective Action Register|bi-check2-circle|#16a34a|#f0fdf4" %}
+          {% endwith %}
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#eff6ff;">
+              <div style="width:32px;height:32px;background:#1a2c52;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-building text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-01 · Clause 4</div>
+                <div style="font-size:.75rem;color:#64748b;">Organisation Profile & Team Roster</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#fff7ed;">
+              <div style="width:32px;height:32px;background:#ea580c;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-exclamation-triangle-fill text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-02 · Clause 6.1</div>
+                <div style="font-size:.75rem;color:#64748b;">HIRA Risk Register & Hazard Inventory</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#f0fdf4;">
+              <div style="width:32px;height:32px;background:#16a34a;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-shield-check text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-03 · Clause 6.1.3</div>
+                <div style="font-size:.75rem;color:#64748b;">Legal Compliance Register</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#eef2ff;">
+              <div style="width:32px;height:32px;background:#4f46e5;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-mortarboard-fill text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-04 · Clause 7.2</div>
+                <div style="font-size:.75rem;color:#64748b;">Training Records & Skills Matrix</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#f0fdfa;">
+              <div style="width:32px;height:32px;background:#0d9488;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-clipboard2-check-fill text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-05 · Clause 8.1</div>
+                <div style="font-size:.75rem;color:#64748b;">Observations & Permit to Work Log</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#fefce8;">
+              <div style="width:32px;height:32px;background:#ca8a04;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-search text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-06 · Clause 9.2</div>
+                <div style="font-size:.75rem;color:#64748b;">Inspection & Internal Audit Log</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#fef2f2;">
+              <div style="width:32px;height:32px;background:#dc2626;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-bar-chart-fill text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-07 · Clause 9.1</div>
+                <div style="font-size:.75rem;color:#64748b;">LTIFR / TRIFR Performance Metrics</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#fef2f2;">
+              <div style="width:32px;height:32px;background:#dc2626;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-exclamation-octagon-fill text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-08 · Clause 10.2</div>
+                <div style="font-size:.75rem;color:#64748b;">Incident Register & RCA Records</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#f0fdf4;">
+              <div style="width:32px;height:32px;background:#16a34a;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-check2-circle text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-09 · Clause 10.2</div>
+                <div style="font-size:.75rem;color:#64748b;">Corrective Action Register</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-flex align-items-start gap-2 p-2 rounded-3" style="background:#f8fafc;border:1px solid #e2e8f0;">
+              <div style="width:32px;height:32px;background:#64748b;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-file-earmark-text text-white" style="font-size:.85rem;"></i>
+              </div>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;color:#1a2c52;">IG-00 · Master Index</div>
+                <div style="font-size:.75rem;color:#64748b;">Cover page & clause evidence checklist</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate form -->
+    <div class="card border-0 shadow-sm" style="border-radius:14px;">
+      <div class="card-header border-0 pb-0 pt-3 px-4" style="background:transparent;">
+        <h6 class="fw-bold mb-0" style="color:#1a2c52;">
+          <i class="bi bi-calendar-range me-2" style="color:#4f46e5;"></i>Select Coverage Period
+        </h6>
+      </div>
+      <div class="card-body px-4 pb-4">
+
+        <form method="post" id="auditForm">
+          {% csrf_token %}
+
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold" style="font-size:.83rem;color:#475569;">
+                From Date
+              </label>
+              <input type="date" name="from_date" id="from_date" class="form-control"
+                     value="{{ from_date }}" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold" style="font-size:.83rem;color:#475569;">
+                To Date
+              </label>
+              <input type="date" name="to_date" id="to_date" class="form-control"
+                     value="{{ to_date }}" required>
+            </div>
+          </div>
+
+          <!-- Info note -->
+          <div class="d-flex gap-2 p-3 rounded-3 mb-4"
+               style="background:#f0f9ff;border:1px solid #bae6fd;">
+            <i class="bi bi-info-circle-fill" style="color:#0284c7;flex-shrink:0;margin-top:1px;"></i>
+            <div style="font-size:.8rem;color:#0c4a6e;line-height:1.5;">
+              <strong>Tip:</strong> For an annual ISO 45001 audit, select the past 12 months.
+              Compliance register and skill proficiencies are always included in full (they are cumulative records).
+              The ZIP file will download automatically — open it with any archive tool.
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-lg w-100 fw-bold" id="generateBtn"
+                  style="background:linear-gradient(135deg,#1a2c52,#4f46e5);color:#fff;
+                         border-radius:10px;padding:14px;font-size:1rem;
+                         box-shadow:0 4px 14px rgba(79,70,229,.30);">
+            <i class="bi bi-file-earmark-zip-fill me-2"></i>
+            Generate ISO 45001 Evidence Pack
+          </button>
+          <p class="text-center mt-2 mb-0" style="font-size:.75rem;color:#94a3b8;">
+            Downloads a ZIP file containing 10 structured PDF sections
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- ISO 45001 context note -->
+    <div class="mt-4 p-3 rounded-3" style="background:#f8f9fb;border:1px solid #e2e8f0;">
+      <h6 class="fw-bold mb-2" style="font-size:.82rem;color:#475569;">What is ISO 45001?</h6>
+      <p class="mb-0" style="font-size:.78rem;color:#64748b;line-height:1.6;">
+        ISO 45001:2018 is the international standard for Occupational Health &amp; Safety (OH&amp;S) management systems.
+        It requires organisations to demonstrate documented evidence of hazard identification, risk assessment,
+        legal compliance, employee competence, operational controls, performance monitoring, incident investigation
+        and continual improvement. This Evidence Pack compiles all of that evidence from Vigilo in a single,
+        audit-ready ZIP file.
+      </p>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+document.getElementById("auditForm").addEventListener("submit", function () {
+  const btn = document.getElementById("generateBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Generating pack — please wait…';
+});
+</script>
+{% endblock %}
