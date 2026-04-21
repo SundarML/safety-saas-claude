@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils import timezone
-from .models import Organization, Subscription, DemoRequest, FreePlanRequest, ContractorInvite
+from .models import Organization, Plan, Subscription, DemoRequest, FreePlanRequest, ContractorInvite
 from users.models import CustomUser
 
 
@@ -84,6 +84,18 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 
 # ---------------------------------------------------------------------------
+# Plan
+# ---------------------------------------------------------------------------
+
+@admin.register(Plan)
+class PlanAdmin(admin.ModelAdmin):
+    list_display  = ("name", "price_monthly", "max_users", "max_observations", "active")
+    list_filter   = ("active",)
+    search_fields = ("name",)
+    fields        = ("name", "price_monthly", "max_users", "max_observations", "razorpay_plan_id", "active")
+
+
+# ---------------------------------------------------------------------------
 # Subscription
 # ---------------------------------------------------------------------------
 
@@ -97,17 +109,53 @@ def _trial(obj):
     return "Yes" if obj.is_trial() else "No"
 _trial.short_description = "Trial?"
 
-def _active(obj):
-    return "Yes" if obj.is_active else "No"
-_active.short_description = "Active?"
+
+def extend_30_days(modeladmin, request, queryset):
+    for sub in queryset:
+        base = sub.expires_at if sub.expires_at and sub.expires_at > timezone.now() else timezone.now()
+        sub.expires_at = base + timezone.timedelta(days=30)
+        sub.is_active = True
+        sub.save()
+extend_30_days.short_description = "Extend expiry by 30 days"
+
+def extend_365_days(modeladmin, request, queryset):
+    for sub in queryset:
+        base = sub.expires_at if sub.expires_at and sub.expires_at > timezone.now() else timezone.now()
+        sub.expires_at = base + timezone.timedelta(days=365)
+        sub.is_active = True
+        sub.save()
+extend_365_days.short_description = "Extend expiry by 1 year"
+
+def deactivate_sub(modeladmin, request, queryset):
+    queryset.update(is_active=False)
+deactivate_sub.short_description = "Deactivate selected subscriptions"
+
+def activate_sub(modeladmin, request, queryset):
+    queryset.update(is_active=True)
+activate_sub.short_description = "Activate selected subscriptions"
 
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display  = ("organization", "plan", _trial, _active, _expires)
+    list_display  = ("organization", "plan", _trial, "is_active", _expires, "updated_at")
     list_filter   = ("is_active", "plan")
     search_fields = ("organization__name",)
     ordering      = ("-created_at",)
+    readonly_fields = ("created_at", "updated_at", "started_at")
+    fields        = (
+        "organization",
+        "plan",
+        "is_active",
+        "expires_at",
+        "started_at",
+        "created_at",
+        "updated_at",
+        "stripe_customer_id",
+        "stripe_subscription_id",
+        "razorpay_customer_id",
+        "razorpay_subscription_id",
+    )
+    actions = [extend_30_days, extend_365_days, activate_sub, deactivate_sub]
 
 
 # ---------------------------------------------------------------------------
