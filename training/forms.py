@@ -14,10 +14,11 @@ LEVEL_CHOICES = [
 class TrainingModuleForm(forms.ModelForm):
     class Meta:
         model = TrainingModule
-        fields = ["title", "description", "skills", "is_active"]
+        fields = ["title", "description", "content_url", "skills", "is_active"]
         widgets = {
             "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Fire Safety Awareness"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Describe what this module covers…"}),
+            "content_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "Paste a YouTube, Google Drive, or Google Slides link…", "id": "id_content_url"}),
             "skills": forms.CheckboxSelectMultiple(),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }

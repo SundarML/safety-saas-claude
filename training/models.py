@@ -1,6 +1,8 @@
-from django.db import models
+import re
+
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from django.utils import timezone
 
 
@@ -91,6 +93,10 @@ class TrainingModule(models.Model):
         null=True,
         related_name="created_modules",
     )
+    content_url = models.URLField(
+        blank=True,
+        help_text="YouTube video, Google Drive file, or Google Slides presentation link.",
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -104,6 +110,37 @@ class TrainingModule(models.Model):
     @property
     def has_assessment(self):
         return hasattr(self, "assessment")
+
+    def get_embed_url(self):
+        """Return an iframe-safe embed URL, or '' if the URL can't be embedded."""
+        url = self.content_url or ""
+        # YouTube: watch?v= or youtu.be/
+        yt = re.search(r"(?:youtube\.com/watch\?.*v=|youtu\.be/)([A-Za-z0-9_-]{11})", url)
+        if yt:
+            return f"https://www.youtube.com/embed/{yt.group(1)}"
+        # Google Slides
+        if "docs.google.com/presentation" in url:
+            base = re.sub(r"/(edit|pub|view|present)[^/]*$", "", url.split("?")[0])
+            return f"{base}/embed?start=false&loop=false"
+        # Google Drive file preview
+        m = re.search(r"drive\.google\.com/file/d/([^/]+)", url)
+        if m:
+            return f"https://drive.google.com/file/d/{m.group(1)}/preview"
+        return ""
+
+    @property
+    def content_type(self):
+        """Returns 'youtube', 'slides', 'drive', 'link', or '' for labelling."""
+        url = self.content_url or ""
+        if "youtube.com" in url or "youtu.be" in url:
+            return "youtube"
+        if "docs.google.com/presentation" in url:
+            return "slides"
+        if "drive.google.com" in url:
+            return "drive"
+        if url:
+            return "link"
+        return ""
 
 
 class Assessment(models.Model):

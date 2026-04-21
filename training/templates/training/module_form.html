@@ -38,6 +38,25 @@
             </div>
 
             <div class="mb-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-play-circle-fill text-primary me-1"></i>Training Content Link
+                <span class="text-muted fw-normal" style="font-size:.82rem;">(optional)</span>
+              </label>
+              {{ form.content_url }}
+              <div class="form-text text-muted">
+                Supported: <strong>YouTube</strong> videos &bull; <strong>Google Slides</strong> &bull; <strong>Google Drive</strong> files (PDF, Doc, etc.)
+              </div>
+              <div id="url-preview" class="d-none mt-2 p-3 rounded-3 d-flex align-items-center gap-3"
+                   style="background:#f0eeff;border:1px solid #c7d2fe;">
+                <span id="url-preview-icon" style="font-size:1.6rem;"></span>
+                <div>
+                  <div id="url-preview-type" class="fw-semibold" style="font-size:.88rem;"></div>
+                  <div id="url-preview-desc" class="text-muted" style="font-size:.78rem;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
               <label class="form-label fw-semibold">Related Skills</label>
               <div class="border rounded p-3" style="max-height:200px;overflow-y:auto;">
                 {{ form.skills }}
@@ -66,4 +85,45 @@
   </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const input = document.getElementById('id_content_url');
+  const box   = document.getElementById('url-preview');
+  const icon  = document.getElementById('url-preview-icon');
+  const type  = document.getElementById('url-preview-type');
+  const desc  = document.getElementById('url-preview-desc');
+
+  function detect(url) {
+    if (!url) { box.classList.add('d-none'); return; }
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      icon.innerHTML = '<i class="bi bi-youtube text-danger"></i>';
+      type.textContent = 'YouTube Video';
+      desc.textContent = 'Will be embedded as a full-width video player.';
+    } else if (url.includes('docs.google.com/presentation')) {
+      icon.innerHTML = '<i class="bi bi-file-slides" style="color:#f59e0b;"></i>';
+      type.textContent = 'Google Slides Presentation';
+      desc.textContent = 'Will be embedded as an inline slideshow.';
+    } else if (url.includes('drive.google.com')) {
+      icon.innerHTML = '<i class="bi bi-file-earmark-pdf text-danger"></i>';
+      type.textContent = 'Google Drive File';
+      desc.textContent = 'Will be embedded as an inline preview.';
+    } else if (url.startsWith('http')) {
+      icon.innerHTML = '<i class="bi bi-link-45deg text-secondary"></i>';
+      type.textContent = 'External Link';
+      desc.textContent = 'Will open in a new tab (no embed for this URL).';
+    } else {
+      box.classList.add('d-none'); return;
+    }
+    box.classList.remove('d-none');
+  }
+
+  if (input) {
+    input.addEventListener('input', () => detect(input.value.trim()));
+    detect(input.value.trim());
+  }
+})();
+</script>
 {% endblock %}
