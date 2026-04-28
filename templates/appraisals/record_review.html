@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block title %}Review — {{ record.employee.full_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cat-section   { border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:24px; }
+  .cat-header    { background:#1a2c52;color:#fff;padding:14px 20px; }
+  .item-block    { padding:18px 20px;border-bottom:1px solid #f1f5f9; }
+  .item-block:last-child { border-bottom:none; }
+  .col-self      { background:#f0f9ff;border-radius:8px;padding:12px; }
+  .col-manager   { background:#f0fdf4;border-radius:8px;padding:12px; }
+  .gap-warn      { background:#fef3c7;border-radius:8px;padding:12px; }
+  .rating-label  { font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px; }
+  .star-btn {
+    width:34px;height:34px;border-radius:50%;border:2px solid #e2e8f0;
+    font-size:.82rem;font-weight:700;cursor:pointer;transition:all .12s;
+    background:#fff;color:#94a3b8;display:inline-flex;align-items:center;justify-content:center;
+  }
+  .star-btn:hover   { border-color:#3b82f6;background:#eff6ff;color:#3b82f6; }
+  .star-btn.sel1    { border-color:#ef4444;background:#ef4444;color:#fff; }
+  .star-btn.sel2    { border-color:#f59e0b;background:#f59e0b;color:#fff; }
+  .star-btn.sel3    { border-color:#6366f1;background:#6366f1;color:#fff; }
+  .star-btn.sel4    { border-color:#0ea5e9;background:#0ea5e9;color:#fff; }
+  .star-btn.sel5    { border-color:#16a34a;background:#16a34a;color:#fff; }
+  .self-star {
+    width:28px;height:28px;border-radius:50%;border:2px solid #e2e8f0;
+    font-size:.75rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;
+    background:#f0f9ff;color:#0ea5e9;
+  }
+  .gap-badge { background:#f59e0b;color:#fff;border-radius:10px;padding:2px 8px;font-size:.68rem;font-weight:700; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-start gap-3 mb-4">
+  <a href="{% url 'appraisals:cycle_detail' pk=cycle.pk %}" class="btn btn-sm btn-outline-secondary mt-1">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div class="flex-grow-1">
+    <h5 class="fw-bold mb-1">Manager Review — {{ record.employee.full_name }}</h5>
+    <div class="text-muted small d-flex gap-3 flex-wrap">
+      <span><i class="bi bi-clipboard2-check me-1"></i>{{ cycle.name }}</span>
+      <span class="badge bg-light text-secondary border">{{ record.get_status_display }}</span>
+    </div>
+  </div>
+  <a href="{% url 'appraisals:record_pdf' record_pk=record.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank">
+    <i class="bi bi-file-earmark-pdf me-1"></i>Preview PDF
+  </a>
+</div>
+
+<div class="alert alert-info d-flex gap-3 align-items-start mb-4">
+  <i class="bi bi-info-circle-fill fs-5 mt-1"></i>
+  <div class="small">
+    <strong>Side-by-side review.</strong> The employee's self-rating is shown in blue (read-only).
+    Enter your manager rating for each item. Ratings that differ by more than 1 point are flagged in amber.
+    Complete all items, then add your summary and development plan at the bottom.
+  </div>
+</div>
+
+<form method="post">
+{% csrf_token %}
+
+<div class="row g-0">
+<div class="col-lg-9">
+
+{% for cat in categories %}
+{% with cat_items=items_by_cat|default_if_none:cat.id %}
+
+<div class="cat-section shadow-sm">
+  <div class="cat-header d-flex justify-content-between align-items-center">
+    <div>
+      <span class="fw-bold">{{ cat.name }}</span>
+      <span class="badge bg-light text-secondary ms-2" style="font-size:.65rem;">{{ cat.get_category_type_display }}</span>
+    </div>
+    <span style="font-size:.8rem;opacity:.7;">Category weight: {{ cat.weight }}%</span>
+  </div>
+
+  {% for item_cat_id, items in items_by_cat.items %}{% if item_cat_id == cat.id %}
+    {% if not items %}
+    <div class="text-center text-muted py-3 small">No approved items in this category.</div>
+    {% endif %}
+
+    {% for item in items %}
+    {% with r=ratings_by_item|default_if_none:item.pk %}
+    <div class="item-block">
+      <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+        <span class="fw-semibold">{{ item.title }}</span>
+        <span class="badge bg-light text-secondary border" style="font-size:.65rem;">{{ item.get_item_type_display }}</span>
+        {% if item.goal_type == 'self_set' %}
+        <span class="badge" style="background:#ede9fe;color:#5b21b6;font-size:.62rem;">Employee Proposed</span>
+        {% endif %}
+        {% if item.target_value %}
+        <span class="text-muted small"><i class="bi bi-bullseye me-1"></i>Target: {{ item.target_value }} {{ item.target_unit }}</span>
+        {% endif %}
+        <span class="text-muted small ms-auto">Weight: {{ item.weight }}%</span>
+      </div>
+
+      {% if item.description %}
+      <p class="text-muted small mb-3">{{ item.description }}</p>
+      {% endif %}
+
+      <div class="row g-3">
+
+        <!-- Self rating column -->
+        <div class="col-md-5">
+          <div class="col-self">
+            <div class="rating-label">Employee Self-Rating (read-only)</div>
+
+            {% if item.item_type == ITEM_MEASURABLE %}
+            <div class="mb-2">
+              <span class="text-muted small">Actual reported: </span>
+              {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}
+                <strong>{{ r_obj.actual_value|default:"—" }} {{ item.target_unit }}</strong>
+              {% endif %}{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-1 mb-2">
+              {% for n in "12345" %}
+              <div class="self-star {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}{% if r_obj.self_rating == forloop.parentloop.counter %}active{% endif %}{% endif %}{% endfor %}"
+                   style="{% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}{% if r_obj.self_rating == forloop.parentloop.counter %}background:#0ea5e9;color:#fff;{% endif %}{% endif %}{% endfor %}">
+                {{ forloop.counter }}
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="text-muted small">
+              {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}
+                {% if r_obj.self_comment %}
+                  &ldquo;{{ r_obj.self_comment|truncatechars:120 }}&rdquo;
+                {% else %}
+                  <em>No comment provided</em>
+                {% endif %}
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Manager rating column -->
+        <div class="col-md-7">
+          {% comment %}Check gap{% endcomment %}
+          {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}
+            {% if r_obj.self_rating and r_obj.manager_rating %}
+              {% if r_obj.manager_rating|add:r_obj.self_rating > 0 %}
+              {% endif %}
+            {% endif %}
+          {% endif %}{% endfor %}
+
+          <div class="col-manager" id="mgr_panel_{{ item.pk }}">
+            <div class="rating-label">Your Manager Rating</div>
+
+            {% if item.item_type == ITEM_MEASURABLE %}
+            <div class="mb-2">
+              <label class="small fw-semibold">Actual Value (confirm / update)</label>
+              <div class="input-group input-group-sm" style="max-width:200px;">
+                <input type="number" name="actual_value_{{ item.pk }}"
+                       class="form-control"
+                       value="{% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}{{ r_obj.actual_value|default:'' }}{% endif %}{% endfor %}"
+                       step="any">
+                {% if item.target_unit %}<span class="input-group-text">{{ item.target_unit }}</span>{% endif %}
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-2 mb-2 flex-wrap" id="mgrstars_{{ item.pk }}">
+              {% for n in "12345" %}
+              <button type="button"
+                      class="star-btn {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}{% if r_obj.manager_rating == forloop.parentloop.counter %}sel{{ forloop.parentloop.counter }}{% endif %}{% endif %}{% endfor %}"
+                      onclick="setManagerRating({{ item.pk }}, {{ forloop.counter }})"
+                      title="{% if forloop.counter == 1 %}Unsatisfactory{% elif forloop.counter == 2 %}Needs Improvement{% elif forloop.counter == 3 %}Meets Expectations{% elif forloop.counter == 4 %}Exceeds Expectations{% else %}Exceptional{% endif %}">
+                {{ forloop.counter }}
+              </button>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="manager_rating_{{ item.pk }}" id="mgr_rating_{{ item.pk }}"
+                   value="{% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}{{ r_obj.manager_rating|default:'' }}{% endif %}{% endfor %}">
+
+            <div id="gap_{{ item.pk }}" class="gap-badge mb-2" style="display:none;">
+              Gap &gt; 1 — consider discussing with employee
+            </div>
+
+            <label class="small fw-semibold">Manager Comment</label>
+            <textarea name="manager_comment_{{ item.pk }}" class="form-control form-control-sm" rows="2"
+                      placeholder="Brief feedback on this item…">{% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}{{ r_obj.manager_comment }}{% endif %}{% endfor %}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  {% endif %}{% endfor %}
+</div>
+
+{% endwith %}
+{% endfor %}
+
+<!-- Manager summary + dev plan -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-4">
+    <h6 class="fw-bold mb-3">Manager Summary &amp; Development Plan</h6>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold small">Overall Manager Summary <span class="text-muted fw-normal">(shown to employee)</span></label>
+      <textarea name="manager_summary" class="form-control" rows="4"
+                placeholder="Summarise the employee's overall performance this cycle — strengths, key contributions, areas worked on…">{{ record.manager_summary }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold small">Development Plan <span class="text-muted fw-normal">(training, goals for next cycle)</span></label>
+      <textarea name="development_plan" class="form-control" rows="4"
+                placeholder="What should this employee focus on to grow? Specific training, courses, stretch assignments, target skills…">{{ record.development_plan }}</textarea>
+    </div>
+  </div>
+</div>
+
+<div class="d-grid">
+  <button type="submit" class="btn btn-success btn-lg fw-bold"
+          onclick="return confirm('Submit review for {{ record.employee.full_name }}? Score will be calculated and employee will be notified.')">
+    <i class="bi bi-check-circle me-2"></i>Submit Review &amp; Calculate Score
+  </button>
+</div>
+
+</div><!-- /col-lg-9 -->
+
+<!-- Sidebar tips -->
+<div class="col-lg-3 ps-lg-3">
+  <div class="card border-0 shadow-sm" style="position:sticky;top:80px;">
+    <div class="card-body p-3">
+      <p class="fw-semibold small mb-2">Rating Guide</p>
+      <div class="d-flex flex-column gap-1">
+        <div class="d-flex align-items-center gap-2">
+          <div class="star-btn sel5" style="pointer-events:none;">5</div>
+          <span class="small text-success fw-semibold">Exceptional</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div class="star-btn sel4" style="pointer-events:none;">4</div>
+          <span class="small" style="color:#0ea5e9;font-weight:600;">Exceeds Expectations</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div class="star-btn sel3" style="pointer-events:none;">3</div>
+          <span class="small" style="color:#6366f1;font-weight:600;">Meets Expectations</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div class="star-btn sel2" style="pointer-events:none;">2</div>
+          <span class="small text-warning fw-semibold">Needs Improvement</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div class="star-btn sel1" style="pointer-events:none;">1</div>
+          <span class="small text-danger fw-semibold">Unsatisfactory</span>
+        </div>
+      </div>
+      <hr>
+      <p class="small text-muted mb-0">
+        <i class="bi bi-exclamation-circle text-warning me-1"></i>
+        Ratings differing from self-assessment by more than 1 point are flagged amber — be prepared to discuss with employee.
+      </p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /row -->
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SELF_RATINGS = {
+  {% for item_id, r_obj in ratings_by_item.items %}
+  {{ item_id }}: {{ r_obj.self_rating|default:"null" }},
+  {% endfor %}
+};
+
+function setManagerRating(itemPk, value) {
+  document.getElementById('mgr_rating_' + itemPk).value = value;
+  const container = document.getElementById('mgrstars_' + itemPk);
+  container.querySelectorAll('.star-btn').forEach((btn, idx) => {
+    btn.className = 'star-btn';
+    if (idx < value) btn.classList.add('sel' + value);
+  });
+
+  // Check gap
+  const selfRating = SELF_RATINGS[itemPk];
+  const gapEl = document.getElementById('gap_' + itemPk);
+  if (gapEl && selfRating !== null) {
+    const gap = Math.abs(value - selfRating);
+    gapEl.style.display = (gap > 1) ? 'inline-block' : 'none';
+  }
+}
+
+// Restore existing manager ratings on load
+document.addEventListener('DOMContentLoaded', () => {
+  {% for item_id, r_obj in ratings_by_item.items %}
+  {% if r_obj.manager_rating %}
+  setManagerRating({{ item_id }}, {{ r_obj.manager_rating }});
+  {% endif %}
+  {% endfor %}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Manage Team — Reporting Lines{% endblock %}
+
+{% block extra_head %}
+<style>
+  .member-row { transition: background .12s; }
+  .member-row:hover { background: #f8fafc; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .role-badge {
+    font-size: .68rem; padding: 2px 8px; border-radius: 10px;
+    background: #f1f5f9; color: #475569; font-weight: 600;
+  }
+  .reports-pill {
+    font-size: .72rem; background: #dbeafe; color: #1e40af;
+    padding: 2px 10px; border-radius: 10px; font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-start gap-3 mb-4">
+  <div class="flex-grow-1">
+    <h4 class="fw-bold mb-1">Manage Team — Reporting Lines</h4>
+    <p class="text-muted mb-0 small">
+      Assign each employee a direct manager so they appear in appraisal cycles.
+      Managers can only see their direct reports when creating appraisal cycles.
+    </p>
+  </div>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show mb-3" role="alert">
+  {{ msg }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+      <span class="fw-semibold">Team Members</span>
+      <span class="text-muted small">{{ all_users.count }} active user{{ all_users.count|pluralize }}</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" style="font-size:.88rem;">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Employee</th>
+            <th>Role</th>
+            <th>Currently Reports To</th>
+            <th class="pe-4">Change</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for member in all_users %}
+        <tr class="member-row">
+          <td class="ps-4 py-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar">{{ member.full_name|first|upper }}</div>
+              <div>
+                <div class="fw-semibold">{{ member.full_name }}</div>
+                <div class="text-muted" style="font-size:.72rem;">{{ member.email|default:"—" }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3">
+            <span class="role-badge">{{ member.get_role_display }}</span>
+          </td>
+          <td class="py-3">
+            {% if member.reports_to %}
+            <span class="reports-pill">
+              <i class="bi bi-person-fill me-1"></i>{{ member.reports_to.full_name }}
+            </span>
+            {% else %}
+            <span class="text-muted small">Not set</span>
+            {% endif %}
+          </td>
+          <td class="pe-4 py-3">
+            <form method="post" class="d-flex align-items-center gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="user_id" value="{{ member.pk }}">
+              <select name="manager_id" class="form-select form-select-sm" style="width:180px;">
+                <option value="">— No manager —</option>
+                {% for mgr in managers %}
+                {% if mgr.pk != member.pk %}
+                <option value="{{ mgr.pk }}" {% if member.reports_to_id == mgr.pk %}selected{% endif %}>
+                  {{ mgr.full_name }}
+                </option>
+                {% endif %}
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-check"></i> Save
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center text-muted py-5">
+            No active team members found.
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-info mt-4 d-flex gap-3">
+  <i class="bi bi-info-circle-fill fs-5 mt-1"></i>
+  <div>
+    <strong>How this works:</strong>
+    When a manager creates an appraisal cycle, only their direct reports appear in the employee selection list.
+    Safety Managers see all team members. Set reporting lines here before launching appraisal cycles.
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Performance Appraisals{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cycle-card { border-radius: 12px; border: 1px solid #e2e8f0; transition: box-shadow .15s; }
+  .cycle-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.10); }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600;
+  }
+  .status-draft           { background: #f1f5f9; color: #64748b; }
+  .status-goal_setting    { background: #fef9c3; color: #854d0e; }
+  .status-self_assessment { background: #dbeafe; color: #1e40af; }
+  .status-manager_review  { background: #fce7f3; color: #9d174d; }
+  .status-calibration     { background: #ede9fe; color: #5b21b6; }
+  .status-completed       { background: #dcfce7; color: #166534; }
+  .progress-step {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    flex: 1; position: relative;
+  }
+  .progress-step::before {
+    content: ''; position: absolute; top: 10px; left: -50%;
+    width: 100%; height: 2px; background: #e2e8f0; z-index: 0;
+  }
+  .progress-step:first-child::before { display: none; }
+  .step-dot {
+    width: 20px; height: 20px; border-radius: 50%; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .6rem; font-weight: 700;
+  }
+  .step-dot.done    { background: #16a34a; color: #fff; }
+  .step-dot.current { background: #3b82f6; color: #fff; }
+  .step-dot.future  { background: #e2e8f0; color: #94a3b8; }
+  .step-label { font-size: .58rem; color: #94a3b8; text-align: center; line-height: 1.2; }
+  .step-label.current { color: #3b82f6; font-weight: 700; }
+  .step-label.done    { color: #16a34a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Performance Appraisals</h4>
+    <p class="text-muted mb-0 small">
+      {% if is_manager %}Manage appraisal cycles for your team.{% else %}Your active and past appraisal cycles.{% endif %}
+    </p>
+  </div>
+  {% if is_manager %}
+  <a href="{% url 'appraisals:cycle_create' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-plus-circle me-1"></i>New Cycle
+  </a>
+  {% endif %}
+</div>
+
+{% if not cycles %}
+<div class="card border-0 shadow-sm text-center py-5">
+  <div class="card-body">
+    <div style="width:64px;height:64px;background:#f1f5f9;border-radius:16px;
+                display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <i class="bi bi-award" style="font-size:1.8rem;color:#94a3b8;"></i>
+    </div>
+    <h5 class="fw-bold text-muted">No appraisal cycles yet</h5>
+    {% if is_manager %}
+    <p class="text-muted small">Create your first appraisal cycle to start evaluating your team.</p>
+    <a href="{% url 'appraisals:cycle_create' %}" class="btn btn-success btn-sm mt-2">
+      <i class="bi bi-plus-circle me-1"></i>Create First Cycle
+    </a>
+    {% else %}
+    <p class="text-muted small">Your manager hasn't started an appraisal cycle yet. Check back later.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="d-flex flex-column gap-3">
+{% for cycle in cycles %}
+<div class="card cycle-card shadow-sm">
+  <div class="card-body p-3">
+
+    <div class="d-flex justify-content-between align-items-start mb-2">
+      <div>
+        <h6 class="fw-bold mb-1">{{ cycle.name }}</h6>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="status-pill status-{{ cycle.status }}">
+            <i class="bi bi-circle-fill" style="font-size:.45rem;"></i>
+            {{ cycle.get_status_display }}
+          </span>
+          <span class="badge bg-light text-secondary border" style="font-size:.7rem;">
+            {{ cycle.get_period_display }}
+          </span>
+          <span class="text-muted" style="font-size:.78rem;">
+            <i class="bi bi-calendar3 me-1"></i>{{ cycle.start_date|date:"d M Y" }} – {{ cycle.end_date|date:"d M Y" }}
+          </span>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        {% if is_manager %}
+        <a href="{% url 'appraisals:cycle_detail' pk=cycle.pk %}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-eye me-1"></i>Manage
+        </a>
+        {% else %}
+        {% with cycle.records.all as recs %}
+          {% for rec in recs %}
+            {% if rec.employee == request.user %}
+            <a href="{% url 'appraisals:my_record_detail' record_pk=rec.pk %}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-eye me-1"></i>View
+            </a>
+            {% endif %}
+          {% endfor %}
+        {% endwith %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Stage progress bar -->
+    <div class="d-flex align-items-start mt-3 px-1" style="gap:0;">
+      {% with cycle.status_index as curr_idx %}
+      {% for stage_key in STATUS_ORDER %}
+        {% with forloop.counter0 as s_idx %}
+        <div class="progress-step">
+          <div class="step-dot {% if s_idx < curr_idx %}done{% elif s_idx == curr_idx %}current{% else %}future{% endif %}">
+            {% if s_idx < curr_idx %}<i class="bi bi-check"></i>{% else %}{{ forloop.counter }}{% endif %}
+          </div>
+          <span class="step-label {% if s_idx < curr_idx %}done{% elif s_idx == curr_idx %}current{% endif %}">
+            {{ STATUS_LABELS|default_if_none:stage_key }}
+          </span>
+        </div>
+        {% endwith %}
+      {% endfor %}
+      {% endwith %}
+    </div>
+
+    <!-- Stats row -->
+    <div class="d-flex gap-3 mt-3 pt-2 border-top flex-wrap">
+      <span class="text-muted small">
+        <i class="bi bi-people me-1"></i>{{ cycle.records.count }} employee{{ cycle.records.count|pluralize }}
+      </span>
+      <span class="text-muted small">
+        <i class="bi bi-grid me-1"></i>{{ cycle.categories.count }} categor{{ cycle.categories.count|pluralize:"y,ies" }}
+      </span>
+      <span class="text-muted small">
+        <i class="bi bi-calendar-check me-1"></i>Review by {{ cycle.review_deadline|date:"d M Y" }}
+      </span>
+    </div>
+
+  </div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

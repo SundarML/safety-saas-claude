@@ -79,6 +79,15 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     # PIN hash — for worker accounts that log in with Employee ID + PIN (no email)
     pin_hash = models.CharField(max_length=128, blank=True)
 
+    # Solid-line manager — who this user reports to directly
+    reports_to = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="direct_reports",
+    )
+
     # Contractor access expiry (null = no expiry / not a contractor)
     access_expires_at = models.DateTimeField(null=True, blank=True)
 

@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block title %}New Appraisal Cycle{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cat-row { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
+  .weight-bar { height: 6px; border-radius: 3px; background: #e2e8f0; overflow: hidden; }
+  .weight-fill { height: 100%; border-radius: 3px; transition: width .25s, background .25s; background: #16a34a; }
+  .weight-fill.warn { background: #f59e0b; }
+  .weight-fill.over { background: #ef4444; }
+  .emp-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; cursor: pointer; transition: border-color .15s, background .15s; }
+  .emp-card:hover { border-color: #3b82f6; background: #eff6ff; }
+  .emp-card.selected { border-color: #16a34a; background: #f0fdf4; }
+  .emp-card input[type=checkbox] { display: none; }
+  .section-header { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #64748b; margin-bottom: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+  <a href="{% url 'appraisals:cycle_list' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div>
+    <h4 class="fw-bold mb-0">New Appraisal Cycle</h4>
+    <p class="text-muted mb-0 small">Set the review period, define score categories, and choose your team.</p>
+  </div>
+</div>
+
+<form method="post" id="cycleForm">
+  {% csrf_token %}
+
+  <div class="row g-4">
+
+    <!-- LEFT: Cycle details + Categories -->
+    <div class="col-lg-7">
+
+      <!-- Cycle info card -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+          <p class="section-header">Cycle Details</p>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Cycle Name <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Annual Review 2026 — Operations Team" required>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">Period</label>
+              <select name="period" class="form-select">
+                {% for val, label in period_choices %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
+              <input type="date" name="start_date" class="form-control" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold">End Date <span class="text-danger">*</span></label>
+              <input type="date" name="end_date" class="form-control" required>
+            </div>
+          </div>
+
+          <p class="section-header mt-4">Deadlines</p>
+          <div class="row g-3">
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Goal Setting</label>
+              <input type="date" name="goal_setting_deadline" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Self Assessment</label>
+              <input type="date" name="self_assessment_deadline" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Manager Review</label>
+              <input type="date" name="review_deadline" class="form-control form-control-sm" required>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories card -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="section-header mb-0">Score Categories</p>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCategory()">
+              <i class="bi bi-plus-circle me-1"></i>Add Category
+            </button>
+          </div>
+
+          <!-- Weight counter -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="small text-muted">Total weight used</span>
+              <span id="weightDisplay" class="small fw-bold text-success">0%</span>
+            </div>
+            <div class="weight-bar">
+              <div class="weight-fill" id="weightFill" style="width:0%"></div>
+            </div>
+            <div id="weightMsg" class="small text-muted mt-1">Add categories until total reaches 100%.</div>
+          </div>
+
+          <div id="categories-container" class="d-flex flex-column gap-3">
+            <!-- Default starter category -->
+            <div class="cat-row" data-cat-row>
+              <div class="row g-2 align-items-start">
+                <div class="col-md-5">
+                  <label class="form-label small fw-semibold mb-1">Category Name</label>
+                  <input type="text" name="cat_name" class="form-control form-control-sm"
+                         placeholder="e.g. Goals & Targets" oninput="updateWeight()">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-semibold mb-1">Type</label>
+                  <select name="cat_type" class="form-select form-select-sm">
+                    {% for val, label in category_type_choices %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-semibold mb-1">Weight (%)</label>
+                  <input type="number" name="cat_weight" class="form-control form-control-sm"
+                         min="1" max="100" placeholder="e.g. 40" oninput="updateWeight()">
+                </div>
+                <div class="col-md-1 pt-4">
+                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCategory(this)" title="Remove">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-3 py-2 small">
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>Tip:</strong> Define categories that matter for your team — Safety Behavior, Goals, Competency, Attendance etc. Weights must total 100%.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Employee selection -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm" style="position:sticky;top:80px;">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="section-header mb-0">Select Employees</p>
+            <button type="button" class="btn btn-link btn-sm p-0 text-muted" onclick="toggleAll()">
+              Select / Deselect All
+            </button>
+          </div>
+
+          {% if direct_reports %}
+          <p class="text-muted small mb-3">
+            <i class="bi bi-people me-1"></i>{{ direct_reports.count }} direct report{{ direct_reports.count|pluralize }} (Solid Line)
+          </p>
+          <div class="d-flex flex-column gap-2" id="empList">
+            {% for emp in direct_reports %}
+            <label class="emp-card d-flex align-items-center gap-3" onclick="toggleEmp(this)">
+              <input type="checkbox" name="employees" value="{{ emp.pk }}" checked>
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                          display:flex;align-items:center;justify-content:center;
+                          font-size:.78rem;font-weight:700;color:#fff;flex-shrink:0;">
+                {{ emp.full_name|first|upper }}
+              </div>
+              <div>
+                <div class="fw-semibold small">{{ emp.full_name }}</div>
+                <div class="text-muted" style="font-size:.72rem;">{{ emp.get_role_display }} {% if emp.trade %}· {{ emp.trade }}{% endif %}</div>
+              </div>
+              <i class="bi bi-check-circle-fill ms-auto text-success emp-check" style="font-size:1rem;"></i>
+            </label>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-people" style="font-size:2rem;opacity:.3;"></i>
+            <p class="mt-2 small">No direct reports found.</p>
+            <p class="small">Assign <strong>reports_to</strong> on employee profiles first, or add employees after creating the cycle.</p>
+          </div>
+          {% endif %}
+
+          <div class="mt-4 pt-3 border-top">
+            <button type="submit" id="submitBtn" class="btn btn-success w-100 fw-bold" disabled>
+              <i class="bi bi-check-circle me-1"></i>Create Appraisal Cycle
+            </button>
+            <p class="text-muted text-center mt-2 small" id="submitHint">
+              Add categories totalling 100% to continue.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addCategory() {
+  const container = document.getElementById('categories-container');
+  const firstRow   = container.querySelector('[data-cat-row]');
+  const clone      = firstRow.cloneNode(true);
+  clone.querySelectorAll('input').forEach(i => { i.value = ''; });
+  container.appendChild(clone);
+  updateWeight();
+}
+
+function removeCategory(btn) {
+  const rows = document.querySelectorAll('[data-cat-row]');
+  if (rows.length <= 1) return;
+  btn.closest('[data-cat-row]').remove();
+  updateWeight();
+}
+
+function updateWeight() {
+  const inputs  = document.querySelectorAll('input[name="cat_weight"]');
+  let total = 0;
+  inputs.forEach(i => { total += parseFloat(i.value) || 0; });
+
+  const display = document.getElementById('weightDisplay');
+  const fill    = document.getElementById('weightFill');
+  const msg     = document.getElementById('weightMsg');
+  const btn     = document.getElementById('submitBtn');
+  const hint    = document.getElementById('submitHint');
+
+  display.textContent = total.toFixed(1) + '%';
+  fill.style.width    = Math.min(total, 100) + '%';
+
+  fill.classList.remove('warn', 'over');
+  if (total > 100) {
+    fill.classList.add('over');
+    display.className = 'small fw-bold text-danger';
+    msg.textContent   = `Over by ${(total - 100).toFixed(1)}% — reduce weights.`;
+    btn.disabled = true;
+    hint.textContent = 'Total must equal exactly 100%.';
+  } else if (total === 100) {
+    display.className = 'small fw-bold text-success';
+    msg.textContent   = 'Perfect — weights sum to 100%.';
+    btn.disabled = false;
+    hint.textContent  = '';
+  } else {
+    fill.classList.add('warn');
+    display.className = 'small fw-bold text-warning';
+    msg.textContent   = `${(100 - total).toFixed(1)}% remaining to allocate.`;
+    btn.disabled = true;
+    hint.textContent  = 'Total must equal exactly 100%.';
+  }
+}
+
+function toggleEmp(label) {
+  const cb    = label.querySelector('input[type=checkbox]');
+  const icon  = label.querySelector('.emp-check');
+  cb.checked  = !cb.checked;
+  label.classList.toggle('selected', cb.checked);
+  if (icon) icon.style.opacity = cb.checked ? '1' : '0.15';
+}
+
+function toggleAll() {
+  const labels  = document.querySelectorAll('#empList label.emp-card');
+  const anyOn   = [...labels].some(l => l.querySelector('input').checked);
+  labels.forEach(l => {
+    const cb   = l.querySelector('input');
+    const icon = l.querySelector('.emp-check');
+    cb.checked = !anyOn;
+    l.classList.toggle('selected', cb.checked);
+    if (icon) icon.style.opacity = cb.checked ? '1' : '0.15';
+  });
+}
+
+// Init: mark all pre-checked employees as selected
+document.querySelectorAll('#empList label.emp-card').forEach(l => {
+  const cb   = l.querySelector('input');
+  const icon = l.querySelector('.emp-check');
+  if (cb.checked) {
+    l.classList.add('selected');
+    if (icon) icon.style.opacity = '1';
+  } else {
+    if (icon) icon.style.opacity = '0.15';
+  }
+});
+
+updateWeight();
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}{{ cycle.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .status-pill {
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;
+  }
+  .status-pending_goals  { background:#fef9c3;color:#854d0e; }
+  .status-goals_set      { background:#dbeafe;color:#1e40af; }
+  .status-self_assessment{ background:#fce7f3;color:#9d174d; }
+  .status-pending_review { background:#ede9fe;color:#5b21b6; }
+  .status-acknowledged   { background:#dcfce7;color:#166534; }
+  .cycle-stage-bar { display:flex;align-items:center;gap:0; }
+  .cs-step {
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;
+  }
+  .cs-step::before {
+    content:'';position:absolute;top:12px;left:-50%;width:100%;height:2px;
+    background:#e2e8f0;z-index:0;
+  }
+  .cs-step:first-child::before { display:none; }
+  .cs-dot {
+    width:24px;height:24px;border-radius:50%;z-index:1;
+    display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;
+  }
+  .cs-dot.done    { background:#16a34a;color:#fff; }
+  .cs-dot.current { background:#3b82f6;color:#fff;box-shadow:0 0 0 4px rgba(59,130,246,.2); }
+  .cs-dot.future  { background:#e2e8f0;color:#94a3b8; }
+  .cs-label { font-size:.62rem;color:#94a3b8;text-align:center;line-height:1.2;max-width:70px; }
+  .cs-label.done    { color:#16a34a; }
+  .cs-label.current { color:#3b82f6;font-weight:700; }
+  .stat-box {
+    background:#f8fafc;border-radius:10px;padding:14px 18px;text-align:center;
+    border:1px solid #e2e8f0;
+  }
+  .stat-num  { font-size:1.5rem;font-weight:800;color:#0f172a; }
+  .stat-lbl  { font-size:.72rem;color:#64748b;margin-top:2px; }
+  .emp-row:hover { background:#f8fafc; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="d-flex align-items-start gap-3 mb-4">
+  <a href="{% url 'appraisals:cycle_list' %}" class="btn btn-sm btn-outline-secondary mt-1">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div class="flex-grow-1">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <h4 class="fw-bold mb-1">{{ cycle.name }}</h4>
+      <span class="badge bg-light text-secondary border" style="font-size:.72rem;">
+        {{ cycle.get_period_display }}
+      </span>
+    </div>
+    <div class="d-flex gap-3 text-muted small flex-wrap">
+      <span><i class="bi bi-calendar3 me-1"></i>{{ cycle.start_date|date:"d M Y" }} – {{ cycle.end_date|date:"d M Y" }}</span>
+      <span><i class="bi bi-person me-1"></i>Created by {{ cycle.created_by.full_name|default:"—" }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'appraisals:cycle_stats' pk=cycle.pk %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-bar-chart-line me-1"></i>Stats
+    </a>
+    {% if user.is_safety_manager and cycle.status == 'calibration' or cycle.status == 'completed' %}
+    <a href="{% url 'appraisals:cycle_calibrate' pk=cycle.pk %}" class="btn btn-sm btn-outline-primary">
+      <i class="bi bi-sliders me-1"></i>Calibrate
+    </a>
+    {% endif %}
+    {% if cycle.next_status %}
+    <form method="post" action="{% url 'appraisals:cycle_advance' pk=cycle.pk %}"
+          onsubmit="return confirm('Move cycle to: {{ cycle.next_status_label }}?')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="bi bi-arrow-right-circle me-1"></i>Advance to {{ cycle.next_status_label }}
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Stage progress -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-4">
+    <div class="cycle-stage-bar">
+      {% with cycle.status_index as curr_idx %}
+      {% for stage_key in STATUS_ORDER %}
+        {% with forloop.counter0 as s_idx %}
+        <div class="cs-step">
+          <div class="cs-dot {% if s_idx < curr_idx %}done{% elif s_idx == curr_idx %}current{% else %}future{% endif %}">
+            {% if s_idx < curr_idx %}<i class="bi bi-check"></i>{% else %}{{ forloop.counter }}{% endif %}
+          </div>
+          <span class="cs-label {% if s_idx < curr_idx %}done{% elif s_idx == curr_idx %}current{% endif %}">
+            {{ STATUS_LABELS|default_if_none:stage_key }}
+          </span>
+        </div>
+        {% endwith %}
+      {% endfor %}
+      {% endwith %}
+    </div>
+  </div>
+</div>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="stat-num">{{ records.count }}</div>
+      <div class="stat-lbl">Employees</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="stat-num">{{ categories.count }}</div>
+      <div class="stat-lbl">Categories</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="stat-num text-success">{{ status_counts.acknowledged|default:0 }}</div>
+      <div class="stat-lbl">Acknowledged</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-box">
+      <div class="stat-num {% if pending_approvals > 0 %}text-warning{% endif %}">{{ pending_approvals }}</div>
+      <div class="stat-lbl">Pending Approvals</div>
+    </div>
+  </div>
+</div>
+
+<!-- Pending approvals alert -->
+{% if pending_approvals > 0 %}
+<div class="alert alert-warning d-flex align-items-center gap-3 mb-4">
+  <i class="bi bi-hourglass-split fs-5"></i>
+  <div class="flex-grow-1">
+    <strong>{{ pending_approvals }} employee-proposed goal{{ pending_approvals|pluralize }} waiting for approval.</strong>
+    <span class="text-muted small d-block">Review and approve or reject before advancing to Self-Assessment.</span>
+  </div>
+  <a href="{% url 'appraisals:pending_goals' cycle_pk=cycle.pk %}" class="btn btn-warning btn-sm">
+    Review Goals <i class="bi bi-arrow-right ms-1"></i>
+  </a>
+</div>
+{% endif %}
+
+<!-- Category summary -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-3">
+    <p class="fw-semibold mb-2 small text-uppercase text-muted" style="letter-spacing:.05em;">Score Categories</p>
+    <div class="d-flex flex-wrap gap-2">
+      {% for cat in categories %}
+      <div style="background:#f1f5f9;border-radius:8px;padding:6px 14px;">
+        <span class="fw-semibold small">{{ cat.name }}</span>
+        <span class="text-muted small ms-1">{{ cat.weight }}%</span>
+        <span class="badge bg-light text-secondary border ms-1" style="font-size:.65rem;">{{ cat.get_category_type_display }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Employee records table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+      <p class="fw-semibold mb-0">Team Progress</p>
+      <span class="text-muted small">{{ records.count }} employee{{ records.count|pluralize }}</span>
+    </div>
+
+    {% if not records %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-people" style="font-size:2rem;opacity:.3;"></i>
+      <p class="mt-2 small">No employees added to this cycle yet.</p>
+    </div>
+    {% endif %}
+
+    <div class="list-group list-group-flush">
+    {% for record in records %}
+    <div class="list-group-item emp-row px-4 py-3">
+      <div class="d-flex align-items-center gap-3">
+
+        <!-- Avatar -->
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:.8rem;font-weight:700;color:#fff;flex-shrink:0;">
+          {{ record.employee.full_name|first|upper }}
+        </div>
+
+        <!-- Name + role -->
+        <div class="flex-grow-1">
+          <div class="fw-semibold small">{{ record.employee.full_name }}</div>
+          <div class="text-muted" style="font-size:.72rem;">
+            {{ record.employee.get_role_display }}
+            {% if record.employee.trade %} · {{ record.employee.trade }}{% endif %}
+          </div>
+        </div>
+
+        <!-- Status -->
+        <span class="status-pill status-{{ record.status }}">
+          {{ record.get_status_display }}
+        </span>
+
+        <!-- Score (if reviewed) -->
+        {% if record.overall_score %}
+        <span class="fw-bold" style="font-size:.95rem;min-width:42px;text-align:right;">
+          {{ record.overall_score }}%
+        </span>
+        {% endif %}
+
+        <!-- Action -->
+        {% if cycle.status == 'goal_setting' %}
+        <a href="{% url 'appraisals:record_goals' cycle_pk=cycle.pk record_pk=record.pk %}"
+           class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-list-check me-1"></i>Set Goals
+        </a>
+        {% elif record.status == 'pending_review' %}
+        <a href="{% url 'appraisals:record_review' cycle_pk=cycle.pk record_pk=record.pk %}"
+           class="btn btn-sm btn-success">
+          <i class="bi bi-star me-1"></i>Review
+        </a>
+        {% elif record.status == 'manager_reviewed' or record.status == 'acknowledged' %}
+        <a href="{% url 'appraisals:record_view' record_pk=record.pk %}"
+           class="btn btn-sm btn-outline-success">
+          <i class="bi bi-eye me-1"></i>Result
+        </a>
+        <a href="{% url 'appraisals:record_pdf' record_pk=record.pk %}"
+           class="btn btn-sm btn-outline-secondary" target="_blank" title="Download PDF">
+          <i class="bi bi-file-pdf"></i>
+        </a>
+        {% else %}
+        <a href="{% url 'appraisals:record_goals' cycle_pk=cycle.pk record_pk=record.pk %}"
+           class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-eye me-1"></i>View
+        </a>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

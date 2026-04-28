@@ -55,6 +55,9 @@ urlpatterns = [
 
     # ISO 45001 Audit Export
     path("audit/", include("audit_export.urls", namespace="audit_export")),
+
+    # Performance Appraisals
+    path("appraisals/", include("appraisals.urls", namespace="appraisals")),
 ]
 
 if settings.DEBUG:

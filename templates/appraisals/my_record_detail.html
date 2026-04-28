@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block title %}{{ cycle.name }} — My Appraisal{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cat-section  { border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px; }
+  .cat-header   { background:#f8fafc;padding:14px 20px;border-bottom:1px solid #e2e8f0; }
+  .item-block   { padding:16px 20px;border-bottom:1px solid #f1f5f9; }
+  .item-block:last-child { border-bottom:none; }
+  .goal-badge   { font-size:.65rem;font-weight:600;padding:2px 8px;border-radius:10px; }
+  .manager-set  { background:#dbeafe;color:#1e40af; }
+  .self-set-pending  { background:#fef3c7;color:#92400e; }
+  .self-set-approved { background:#dcfce7;color:#166534; }
+  .self-set-rejected { background:#fee2e2;color:#991b1b; }
+  .star-btn {
+    width:36px;height:36px;border-radius:50%;border:2px solid #e2e8f0;
+    font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;
+    background:#fff;color:#94a3b8;display:inline-flex;align-items:center;justify-content:center;
+  }
+  .star-btn:hover, .star-btn.selected {
+    border-color:#3b82f6;background:#3b82f6;color:#fff;
+  }
+  .propose-panel { background:#f0fdf4;border:1px dashed #86efac;border-radius:10px;padding:16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-start gap-3 mb-4">
+  <a href="{% url 'appraisals:my_appraisals' %}" class="btn btn-sm btn-outline-secondary mt-1">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div class="flex-grow-1">
+    <h5 class="fw-bold mb-1">{{ cycle.name }}</h5>
+    <div class="text-muted small d-flex gap-3 flex-wrap">
+      <span><i class="bi bi-calendar3 me-1"></i>{{ cycle.start_date|date:"d M Y" }} – {{ cycle.end_date|date:"d M Y" }}</span>
+      <span><i class="bi bi-person me-1"></i>Reviewer: {{ record.reviewer.full_name|default:"—" }}</span>
+      <span class="badge bg-light text-secondary border">{{ record.get_status_display }}</span>
+    </div>
+  </div>
+</div>
+
+{% if cycle.status == STATUS_SELF_ASSESSMENT and record.status == 'self_assessment' %}
+<div class="alert alert-primary d-flex align-items-center gap-3 mb-4">
+  <i class="bi bi-pencil-square fs-5"></i>
+  <div>
+    <strong>Your self-assessment is open.</strong>
+    Rate yourself on each approved goal below and submit when ready.
+    Deadline: <strong>{{ cycle.self_assessment_deadline|date:"d M Y" }}</strong>
+  </div>
+</div>
+{% endif %}
+
+<form method="post" id="selfAssessForm">
+{% csrf_token %}
+<input type="hidden" name="action" value="submit_self_assessment">
+
+<div class="row g-0">
+  <div class="col-lg-9">
+
+  {% for cat in categories %}
+  <div class="cat-section shadow-sm">
+
+    <div class="cat-header">
+      <span class="fw-bold">{{ cat.name }}</span>
+      <span class="text-muted ms-2 small">{{ cat.weight }}% of total score</span>
+    </div>
+
+    {% with cat_items=items_by_cat %}
+    {% for item_cat_id, items in cat_items.items %}{% if item_cat_id == cat.id %}
+
+      {% for item in items %}
+      {% with rating=ratings_by_item|default_if_none:item.pk %}
+
+      <div class="item-block">
+        <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+              <span class="fw-semibold">{{ item.title }}</span>
+
+              {% if item.goal_type == GOAL_SELF_SET %}
+                {% if item.is_pending_approval %}
+                <span class="goal-badge self-set-pending">Pending approval</span>
+                {% elif item.is_rejected %}
+                <span class="goal-badge self-set-rejected">Rejected</span>
+                {% else %}
+                <span class="goal-badge self-set-approved">Your goal — Approved</span>
+                {% endif %}
+              {% else %}
+                <span class="goal-badge manager-set">Manager Set</span>
+              {% endif %}
+            </div>
+            {% if item.description %}
+            <div class="text-muted small mb-1">{{ item.description }}</div>
+            {% endif %}
+            {% if item.target_value %}
+            <div class="text-muted small">
+              <i class="bi bi-bullseye me-1"></i>Target: <strong>{{ item.target_value }} {{ item.target_unit }}</strong>
+            </div>
+            {% endif %}
+            {% if item.is_rejected %}
+            <div class="alert alert-danger py-1 px-2 mt-2 small">
+              <i class="bi bi-x-circle me-1"></i>Rejection reason: {{ item.rejection_reason }}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Delete own pending goal -->
+          {% if item.goal_type == GOAL_SELF_SET and item.is_pending_approval and cycle.status == STATUS_GOAL_SETTING %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_proposed">
+            <input type="hidden" name="item_id" value="{{ item.pk }}">
+            <button type="submit" class="btn btn-sm btn-outline-danger" title="Withdraw this proposal">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+
+        <!-- Self-rating section (only for approved items during self-assessment) -->
+        {% if item.approved_by_manager and cycle.status == STATUS_SELF_ASSESSMENT %}
+        <div class="mt-2 pt-2 border-top">
+          {% if item.item_type == ITEM_MEASURABLE %}
+          <div class="row g-2 mb-2">
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Actual Value</label>
+              <div class="input-group input-group-sm">
+                <input type="number" name="actual_value_{{ item.pk }}"
+                       class="form-control"
+                       value="{% for rid, r in ratings_by_item.items %}{% if rid == item.pk %}{{ r.actual_value|default:'' }}{% endif %}{% endfor %}"
+                       placeholder="Your actual result" step="any">
+                {% if item.target_unit %}
+                <span class="input-group-text">{{ item.target_unit }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <label class="form-label small fw-semibold">Your Rating</label>
+          <div class="d-flex gap-2 mb-2 flex-wrap" id="stars_{{ item.pk }}">
+            {% for n in "12345" %}
+            {% with n_int=n|add:0 %}
+            <button type="button" class="star-btn
+              {% for rid, r in ratings_by_item.items %}{% if rid == item.pk %}{% if r.self_rating == forloop.parentloop.counter %}selected{% endif %}{% endif %}{% endfor %}"
+              onclick="setRating({{ item.pk }}, {{ forloop.counter }})"
+              title="{% if forloop.counter == 1 %}Unsatisfactory{% elif forloop.counter == 2 %}Needs Improvement{% elif forloop.counter == 3 %}Meets Expectations{% elif forloop.counter == 4 %}Exceeds Expectations{% else %}Exceptional{% endif %}">
+              {{ forloop.counter }}
+            </button>
+            {% endwith %}
+            {% endfor %}
+          </div>
+          <input type="hidden" name="self_rating_{{ item.pk }}" id="rating_{{ item.pk }}"
+                 value="{% for rid, r in ratings_by_item.items %}{% if rid == item.pk %}{{ r.self_rating|default:'' }}{% endif %}{% endfor %}">
+
+          <label class="form-label small fw-semibold">Comment (optional)</label>
+          <textarea name="self_comment_{{ item.pk }}" class="form-control form-control-sm" rows="2"
+                    placeholder="Briefly explain your rating...">{% for rid, r in ratings_by_item.items %}{% if rid == item.pk %}{{ r.self_comment }}{% endif %}{% endfor %}</textarea>
+        </div>
+        {% elif item.approved_by_manager and cycle.status != STATUS_SELF_ASSESSMENT %}
+        <!-- Show previously saved ratings read-only -->
+        {% for rid, r in ratings_by_item.items %}{% if rid == item.pk %}
+        {% if r.self_rating %}
+        <div class="d-flex gap-3 mt-2 pt-2 border-top">
+          <span class="text-muted small">Your rating: <strong>{{ r.self_rating }}/5</strong></span>
+          {% if r.self_comment %}
+          <span class="text-muted small">— {{ r.self_comment }}</span>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endif %}{% endfor %}
+        {% endif %}
+
+      </div>
+      {% endwith %}
+      {% endfor %}
+
+      {% if not items %}
+      <div class="text-center text-muted py-3" style="font-size:.82rem;">
+        No goals set for this category yet.
+      </div>
+      {% endif %}
+
+    {% endif %}{% endfor %}
+    {% endwith %}
+
+    <!-- Propose a goal (only during goal-setting stage) -->
+    {% if cycle.status == STATUS_GOAL_SETTING %}
+    <div style="padding:16px 20px;background:#f0fdf4;border-top:2px dashed #86efac;">
+      <p class="small fw-semibold text-success mb-2">
+        <i class="bi bi-plus-circle me-1"></i>Propose your own goal for this category
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="propose_goal">
+        <input type="hidden" name="category_id" value="{{ cat.pk }}">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <input type="text" name="title" class="form-control form-control-sm"
+                   placeholder="Goal title (e.g. Get ISO 45001 certified)" required>
+          </div>
+          <div class="col-md-3">
+            <select name="item_type" class="form-select form-select-sm" onchange="toggleProposeTarget(this, 'pt_{{ cat.pk }}')">
+              {% for val, label in item_type_choices %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-sm btn-success w-100">
+              <i class="bi bi-send me-1"></i>Propose
+            </button>
+          </div>
+        </div>
+        <div class="row g-2 mt-1 propose-target-{{ cat.pk }}" style="display:none;">
+          <div class="col-md-3">
+            <input type="number" name="target_value" class="form-control form-control-sm"
+                   placeholder="Target value" step="any">
+          </div>
+          <div class="col-md-3">
+            <input type="text" name="target_unit" class="form-control form-control-sm"
+                   placeholder="Unit (%, hrs…)">
+          </div>
+        </div>
+        <div class="mt-1">
+          <textarea name="description" class="form-control form-control-sm" rows="1"
+                    placeholder="Why is this goal important? (optional)"></textarea>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+
+  <!-- Submit self-assessment button -->
+  {% if cycle.status == STATUS_SELF_ASSESSMENT and record.status == 'self_assessment' %}
+  <div class="d-grid mt-2">
+    <button type="submit" class="btn btn-primary btn-lg fw-bold"
+            onclick="return confirm('Submit your self-assessment? You cannot edit after submission.')">
+      <i class="bi bi-check-circle me-2"></i>Submit Self-Assessment
+    </button>
+  </div>
+  {% endif %}
+
+  </div><!-- /col-lg-9 -->
+
+  <!-- Right tips panel -->
+  <div class="col-lg-3 ps-lg-3">
+    <div class="card border-0 shadow-sm" style="position:sticky;top:80px;">
+      <div class="card-body p-3">
+        <p class="fw-semibold small mb-2">Score Categories</p>
+        {% for cat in categories %}
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>{{ cat.name }}</span>
+          <span class="fw-bold text-dark">{{ cat.weight }}%</span>
+        </div>
+        {% endfor %}
+        <hr>
+        <p class="fw-semibold small mb-2">Rating Guide</p>
+        <div class="small text-muted" style="line-height:1.9;">
+          <div><strong>5</strong> — Exceptional</div>
+          <div><strong>4</strong> — Exceeds Expectations</div>
+          <div><strong>3</strong> — Meets Expectations</div>
+          <div><strong>2</strong> — Needs Improvement</div>
+          <div><strong>1</strong> — Unsatisfactory</div>
+        </div>
+        {% if cycle.status == STATUS_GOAL_SETTING %}
+        <hr>
+        <div class="alert alert-success py-2 small mb-0">
+          <i class="bi bi-lightbulb me-1"></i>
+          <strong>Goal setting is open.</strong> Propose your own goals — your manager will review and approve them.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setRating(itemPk, value) {
+  document.getElementById('rating_' + itemPk).value = value;
+  document.querySelectorAll('#stars_' + itemPk + ' .star-btn').forEach((btn, idx) => {
+    btn.classList.toggle('selected', idx < value);
+  });
+}
+
+function toggleProposeTarget(select, panelClass) {
+  const panel = document.querySelector('.' + panelClass);
+  if (panel) panel.style.display = (select.value === '{{ ITEM_MEASURABLE }}') ? 'flex' : 'none';
+}
+</script>
+{% endblock %}

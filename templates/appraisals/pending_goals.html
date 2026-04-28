@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Pending Goal Approvals — {{ cycle.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pending-row { border-radius:10px;border:1px solid #e2e8f0;padding:14px 18px;background:#fff;transition:border-color .15s; }
+  .pending-row:hover { border-color:#3b82f6; }
+  .pending-row.selected-row { border-color:#16a34a;background:#f0fdf4; }
+  .emp-avatar {
+    width:34px;height:34px;border-radius:50%;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    display:flex;align-items:center;justify-content:center;
+    font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-start gap-3 mb-4">
+  <a href="{% url 'appraisals:cycle_detail' pk=cycle.pk %}" class="btn btn-sm btn-outline-secondary mt-1">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div>
+    <h5 class="fw-bold mb-1">Pending Goal Approvals</h5>
+    <p class="text-muted small mb-0">{{ cycle.name }}</p>
+  </div>
+</div>
+
+{% if not pending_items %}
+<div class="card border-0 shadow-sm text-center py-5">
+  <div class="card-body">
+    <i class="bi bi-check-circle" style="font-size:2.5rem;color:#16a34a;"></i>
+    <h5 class="fw-bold mt-3">All caught up!</h5>
+    <p class="text-muted small">No employee-proposed goals are waiting for approval.</p>
+    <a href="{% url 'appraisals:cycle_detail' pk=cycle.pk %}" class="btn btn-outline-primary btn-sm mt-2">
+      Back to Cycle
+    </a>
+  </div>
+</div>
+
+{% else %}
+
+<!-- Bulk action bar -->
+<form method="post" id="bulkForm">
+  {% csrf_token %}
+
+  <div class="card border-0 shadow-sm mb-4 p-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="form-check mb-0">
+        <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll(this)">
+        <label class="form-check-label small fw-semibold" for="selectAll">Select All</label>
+      </div>
+      <button type="submit" name="action" value="bulk_approve"
+              class="btn btn-success btn-sm"
+              onclick="return confirmBulk('approve')">
+        <i class="bi bi-check-circle me-1"></i>Approve Selected
+      </button>
+      <button type="button" class="btn btn-danger btn-sm"
+              onclick="showBulkReject()">
+        <i class="bi bi-x-circle me-1"></i>Reject Selected
+      </button>
+      <span class="text-muted small ms-auto" id="selectedCount">0 selected</span>
+    </div>
+
+    <!-- Bulk reject reason (hidden until triggered) -->
+    <div id="bulkRejectPanel" style="display:none;" class="mt-3 border-top pt-3">
+      <label class="form-label small fw-semibold">Rejection Reason</label>
+      <div class="d-flex gap-2">
+        <textarea name="rejection_reason" class="form-control form-control-sm" rows="2"
+                  placeholder="Explain why these goals are being rejected (optional)"></textarea>
+        <button type="submit" name="action" value="bulk_reject"
+                class="btn btn-danger btn-sm align-self-end"
+                onclick="return confirmBulk('reject')">
+          Confirm Reject
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending items list -->
+  <div class="d-flex flex-column gap-3">
+  {% for item in pending_items %}
+  <div class="pending-row" id="row_{{ item.pk }}">
+    <div class="d-flex align-items-start gap-3">
+
+      <!-- Checkbox -->
+      <input type="checkbox" name="item_ids" value="{{ item.pk }}"
+             class="form-check-input mt-1 item-check"
+             onchange="updateSelectedCount(); document.getElementById('row_{{ item.pk }}').classList.toggle('selected-row', this.checked)">
+
+      <!-- Employee avatar -->
+      <div class="emp-avatar">{{ item.record.employee.full_name|first|upper }}</div>
+
+      <!-- Item details -->
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+          <span class="fw-semibold">{{ item.title }}</span>
+          <span class="badge bg-light text-secondary border" style="font-size:.65rem;">{{ item.category.name }}</span>
+          <span class="badge" style="background:#ede9fe;color:#5b21b6;font-size:.65rem;">{{ item.get_item_type_display }}</span>
+        </div>
+        <div class="text-muted small">
+          <i class="bi bi-person me-1"></i>{{ item.record.employee.full_name }}
+          &nbsp;·&nbsp;
+          <i class="bi bi-calendar3 me-1"></i>Proposed {{ item.created_at|date:"d M Y" }}
+        </div>
+        {% if item.description %}
+        <div class="text-muted small mt-1">{{ item.description }}</div>
+        {% endif %}
+        {% if item.target_value %}
+        <div class="text-muted small mt-1">
+          <i class="bi bi-bullseye me-1"></i>Target: {{ item.target_value }} {{ item.target_unit }}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Individual actions -->
+      <div class="d-flex flex-column gap-2 align-items-end">
+
+        <!-- Approve single with weight -->
+        <div class="d-flex gap-2 align-items-center">
+          <input type="number" class="form-control form-control-sm"
+                 name="weight_{{ item.pk }}" placeholder="Weight %" min="0" max="100" step="0.5"
+                 style="width:90px;" title="Assign weight % to this item on approval">
+          <button type="submit" name="action" value="approve_one"
+                  class="btn btn-success btn-sm"
+                  onclick="return approveOne({{ item.pk }})">
+            <i class="bi bi-check-circle me-1"></i>Approve
+          </button>
+        </div>
+
+        <!-- Reject single -->
+        <button type="button" class="btn btn-outline-danger btn-sm"
+                onclick="showRejectOne({{ item.pk }})">
+          <i class="bi bi-x-circle me-1"></i>Reject
+        </button>
+        <div id="reject_{{ item.pk }}" style="display:none;">
+          <div class="d-flex gap-2">
+            <input type="text" name="rejection_reason" class="form-control form-control-sm"
+                   placeholder="Reason (optional)" style="width:180px;">
+            <button type="submit" name="action" value="reject_one"
+                    class="btn btn-danger btn-sm"
+                    onclick="document.querySelector('[name=item_ids]:checked') || (document.querySelectorAll('.item-check').forEach(cb => cb.checked = false), document.getElementById('item_{{ item.pk }}_cb') && (document.getElementById('item_{{ item.pk }}_cb').checked = true));">
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  {% endfor %}
+  </div>
+
+</form>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSelectAll(master) {
+  document.querySelectorAll('.item-check').forEach(cb => {
+    cb.checked = master.checked;
+    const row = document.getElementById('row_' + cb.value);
+    if (row) row.classList.toggle('selected-row', master.checked);
+  });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const count = document.querySelectorAll('.item-check:checked').length;
+  document.getElementById('selectedCount').textContent = count + ' selected';
+}
+
+function showBulkReject() {
+  const count = document.querySelectorAll('.item-check:checked').length;
+  if (count === 0) { alert('Select at least one item first.'); return; }
+  const panel = document.getElementById('bulkRejectPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function confirmBulk(type) {
+  const count = document.querySelectorAll('.item-check:checked').length;
+  if (count === 0) { alert('Select at least one item.'); return false; }
+  return confirm(`${type === 'approve' ? 'Approve' : 'Reject'} ${count} selected goal(s)?`);
+}
+
+function approveOne(itemPk) {
+  // Ensure only this item's checkbox is checked for the submit
+  document.querySelectorAll('.item-check').forEach(cb => cb.checked = false);
+  const row = document.getElementById('row_' + itemPk);
+  const cb  = row ? row.querySelector('.item-check') : null;
+  if (cb) cb.checked = true;
+  return confirm('Approve this goal?');
+}
+
+function showRejectOne(itemPk) {
+  const panel = document.getElementById('reject_' + itemPk);
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

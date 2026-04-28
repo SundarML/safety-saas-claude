@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Set Goals — {{ record.employee.full_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cat-section { border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px; }
+  .cat-header  { background:#f8fafc;padding:14px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between; }
+  .cat-title   { font-weight:700;font-size:.9rem; }
+  .cat-weight  { font-size:.8rem;color:#64748b; }
+  .item-row    { display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #f1f5f9; }
+  .item-row:last-child { border-bottom:none; }
+  .item-badge  { font-size:.65rem;font-weight:600;padding:2px 8px;border-radius:10px; }
+  .badge-measurable { background:#dbeafe;color:#1e40af; }
+  .badge-rating     { background:#dcfce7;color:#166534; }
+  .badge-yes_no     { background:#fef3c7;color:#92400e; }
+  .weight-warn { color:#f59e0b;font-size:.72rem; }
+  .weight-ok   { color:#16a34a;font-size:.72rem; }
+  .add-item-panel { background:#f8fafc;padding:18px 20px;border-top:2px dashed #e2e8f0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="d-flex align-items-start gap-3 mb-4">
+  <a href="{% url 'appraisals:cycle_detail' pk=cycle.pk %}" class="btn btn-sm btn-outline-secondary mt-1">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div class="flex-grow-1">
+    <h5 class="fw-bold mb-1">Set Goals — {{ record.employee.full_name }}</h5>
+    <div class="text-muted small">
+      <i class="bi bi-clipboard2-check me-1"></i>{{ cycle.name }}
+      &nbsp;·&nbsp;
+      <span class="badge bg-light text-secondary border">{{ record.get_status_display }}</span>
+    </div>
+  </div>
+  {% if record.status == 'pending_goals' or record.status == 'goals_set' %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="mark_goals_set">
+    <button type="submit" class="btn btn-success btn-sm"
+            onclick="return confirm('Mark goals as finalised for {{ record.employee.full_name }}?')">
+      <i class="bi bi-check-circle me-1"></i>Finalise Goals
+    </button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="row g-0">
+  <div class="col-lg-9">
+
+  {% for cat in categories %}
+  {% with items=items_by_cat|default_if_none:cat.id total=weight_totals|default_if_none:cat.id %}
+
+  <div class="cat-section shadow-sm">
+
+    <div class="cat-header">
+      <div>
+        <span class="cat-title">{{ cat.name }}</span>
+        <span class="badge bg-light text-secondary border ms-2" style="font-size:.65rem;">{{ cat.get_category_type_display }}</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        {% with wt=weight_totals|default_if_none:0 %}
+        {% for k, v in weight_totals.items %}{% if k == cat.id %}
+          {% if v == 100 %}
+            <span class="weight-ok"><i class="bi bi-check-circle-fill me-1"></i>Items: {{ v }}%</span>
+          {% elif v > 0 %}
+            <span class="weight-warn"><i class="bi bi-exclamation-circle me-1"></i>Items: {{ v }}% of 100%</span>
+          {% endif %}
+        {% endif %}{% endfor %}
+        {% endwith %}
+        <span class="cat-weight">Category weight: <strong>{{ cat.weight }}%</strong> of total</span>
+      </div>
+    </div>
+
+    <!-- Items list -->
+    {% with cat_items=items_by_cat %}
+    {% for item_cat_id, items in cat_items.items %}{% if item_cat_id == cat.id %}
+      {% if items %}
+        {% for item in items %}
+        <div class="item-row">
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="fw-semibold small">{{ item.title }}</span>
+              <span class="item-badge badge-{{ item.item_type }}">{{ item.get_item_type_display }}</span>
+              {% if item.goal_type == 'self_set' %}
+              <span class="badge bg-purple text-white" style="background:#7c3aed;font-size:.62rem;">Employee Proposed</span>
+              {% endif %}
+            </div>
+            {% if item.description %}
+            <div class="text-muted small">{{ item.description }}</div>
+            {% endif %}
+            <div class="d-flex gap-3 mt-1">
+              {% if item.target_value %}
+              <span class="text-muted small"><i class="bi bi-bullseye me-1"></i>Target: {{ item.target_value }} {{ item.target_unit }}</span>
+              {% endif %}
+              <span class="text-muted small"><i class="bi bi-percent me-1"></i>Weight: {{ item.weight }}%</span>
+            </div>
+          </div>
+          {% if item.goal_type == 'manager_set' %}
+          <form method="post" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_item">
+            <input type="hidden" name="item_id" value="{{ item.pk }}">
+            <button type="submit" class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Remove this item?')" title="Remove">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center text-muted py-3" style="font-size:.82rem;">
+          <i class="bi bi-plus-circle me-1"></i>No items added yet for this category.
+        </div>
+      {% endif %}
+    {% endif %}{% endfor %}
+    {% endwith %}
+
+    <!-- Add item form -->
+    <div class="add-item-panel">
+      <p class="small fw-semibold mb-2 text-muted">Add Item to {{ cat.name }}</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_item">
+        <input type="hidden" name="category_id" value="{{ cat.pk }}">
+
+        <div class="row g-2 mb-2">
+          <div class="col-md-6">
+            <input type="text" name="title" class="form-control form-control-sm"
+                   placeholder="Item title (e.g. Reduce incident rate by 20%)" required>
+          </div>
+          <div class="col-md-3">
+            <select name="item_type" class="form-select form-select-sm" onchange="toggleTarget(this, '{{ cat.pk }}')">
+              {% for val, label in item_type_choices %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <input type="number" name="weight" class="form-control form-control-sm"
+                   placeholder="Weight %" min="0" max="100" step="0.5" title="Weight of this item within the category (0–100%)">
+          </div>
+          <div class="col-md-1">
+            <button type="submit" class="btn btn-sm btn-success w-100" title="Add item">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Measurable target fields (shown/hidden via JS) -->
+        <div class="row g-2 mb-2 target-fields-{{ cat.pk }}" style="display:none;">
+          <div class="col-md-4">
+            <input type="number" name="target_value" class="form-control form-control-sm"
+                   placeholder="Target value (e.g. 20)" step="any">
+          </div>
+          <div class="col-md-3">
+            <input type="text" name="target_unit" class="form-control form-control-sm"
+                   placeholder="Unit (%, count, hrs…)">
+          </div>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-12">
+            <textarea name="description" class="form-control form-control-sm" rows="2"
+                      placeholder="Description / how it will be measured (optional)"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+  {% endwith %}
+  {% endfor %}
+
+  </div>
+
+  <!-- Right: tips panel -->
+  <div class="col-lg-3 ps-lg-3">
+    <div class="card border-0 shadow-sm" style="position:sticky;top:80px;">
+      <div class="card-body p-3">
+        <p class="fw-semibold mb-2 small">Tips for Good Goals</p>
+        <ul class="small text-muted ps-3 mb-0" style="line-height:1.8;">
+          <li>Use <strong>SMART</strong> goals — Specific, Measurable, Achievable, Relevant, Time-bound</li>
+          <li>Set a <strong>target value</strong> for measurable items so achievement % is auto-computed</li>
+          <li>Keep item weights within each category totalling <strong>100%</strong></li>
+          <li>Employee can <strong>propose their own goals</strong> — you review and approve them</li>
+        </ul>
+
+        {% if pending_approvals %}
+        <hr>
+        <div class="alert alert-warning py-2 small">
+          <i class="bi bi-hourglass me-1"></i>
+          <strong>{{ pending_approvals }} employee-proposed goal{{ pending_approvals|pluralize }}</strong> pending approval.
+          <a href="{% url 'appraisals:pending_goals' cycle_pk=cycle.pk %}" class="d-block mt-1">Review →</a>
+        </div>
+        {% endif %}
+
+        <hr>
+        <p class="small fw-semibold mb-1">Categories in this cycle</p>
+        {% for cat in categories %}
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>{{ cat.name }}</span>
+          <span class="fw-bold">{{ cat.weight }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleTarget(select, catPk) {
+  const panel = document.querySelector('.target-fields-' + catPk);
+  if (!panel) return;
+  panel.style.display = (select.value === '{{ ITEM_MEASURABLE }}') ? 'flex' : 'none';
+}
+</script>
+{% endblock %}

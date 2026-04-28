@@ -966,6 +966,28 @@
          data-bs-toggle="tooltip" data-bs-placement="right" title="Browse available training modules and take assessments to earn skill credits">
         <i class="bi bi-mortarboard"></i> Modules
       </a>
+      <div class="sb-group-label has-divider">Performance Appraisal</div>
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'appraisals:cycle_list' %}"
+         class="sb-link {% if 'appraisals' in request.path and 'my' not in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right"
+         title="Manage appraisal cycles — set goals, review performance and score your team">
+        <i class="bi bi-person-lines-fill"></i> Appraisal Cycles
+      </a>
+      <a href="{% url 'appraisals:cycle_create' %}"
+         class="sb-link {% if 'appraisals' in request.path and 'new' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right"
+         title="Create a new appraisal cycle with custom categories, weights and employees">
+        <i class="bi bi-plus-circle"></i> New Cycle
+      </a>
+      {% endif %}
+      <a href="{% url 'appraisals:my_appraisals' %}"
+         class="sb-link {% if 'appraisals' in request.path and 'my' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right"
+         title="View your appraisal records, propose goals and submit self-assessment">
+        <i class="bi bi-award"></i> My Appraisals
+      </a>
+
       {% if user.is_manager or user.is_safety_manager %}
       <a href="{% url 'training:skill_matrix' %}"
          class="sb-link {% if 'training' in request.path and 'matrix' in request.path %}active{% endif %}"
@@ -990,6 +1012,11 @@
     </button>
     <div class="collapse sb-group-content" id="grp-settings">
       {% if user.is_manager %}
+      <a href="{% url 'core:manage_team' %}"
+         class="sb-link {% if 'manage-team' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Set reporting lines — assign each employee a manager so they appear in appraisal cycles">
+        <i class="bi bi-diagram-3"></i> Manage Team
+      </a>
       <a href="{% url 'core:invite_user' %}"
          class="sb-link {% if request.path == '/core/invite/' %}active{% endif %}"
          data-bs-toggle="tooltip" data-bs-placement="right" title="Send email invitations to add new users to your organisation">

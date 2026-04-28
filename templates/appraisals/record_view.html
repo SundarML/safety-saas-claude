@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}Appraisal Result — {{ record.employee.full_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .score-banner { border-radius:14px;overflow:hidden;margin-bottom:24px; }
+  .score-main   { padding:28px 32px;color:#fff; }
+  .score-num    { font-size:3.2rem;font-weight:800;line-height:1; }
+  .score-label  { font-size:1rem;font-weight:600;opacity:.85;margin-top:4px; }
+  .cat-section  { border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px; }
+  .cat-header   { background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0; }
+  .item-row     { padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:flex-start;gap:16px; }
+  .item-row:last-child { border-bottom:none; }
+  .rating-dot {
+    width:32px;height:32px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.85rem;font-weight:700;color:#fff;
+  }
+  .rd-1 { background:#ef4444; }
+  .rd-2 { background:#f59e0b; }
+  .rd-3 { background:#6366f1; }
+  .rd-4 { background:#0ea5e9; }
+  .rd-5 { background:#16a34a; }
+  .rd-x { background:#e2e8f0;color:#94a3b8; }
+  .gap-indicator { font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#fef3c7;color:#92400e; }
+  .rating-bg-exceptional      { background:linear-gradient(135deg,#16a34a,#15803d); }
+  .rating-bg-exceeds          { background:linear-gradient(135deg,#0ea5e9,#0284c7); }
+  .rating-bg-meets            { background:linear-gradient(135deg,#6366f1,#4f46e5); }
+  .rating-bg-needs_improvement{ background:linear-gradient(135deg,#f59e0b,#d97706); }
+  .rating-bg-unsatisfactory   { background:linear-gradient(135deg,#ef4444,#dc2626); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-start gap-3 mb-4">
+  {% if user_is_employee %}
+  <a href="{% url 'appraisals:my_appraisals' %}" class="btn btn-sm btn-outline-secondary mt-1">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  {% else %}
+  <a href="{% url 'appraisals:cycle_detail' pk=cycle.pk %}" class="btn btn-sm btn-outline-secondary mt-1">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  {% endif %}
+  <div class="flex-grow-1">
+    <h5 class="fw-bold mb-1">{{ cycle.name }}</h5>
+    <div class="text-muted small d-flex gap-3">
+      <span><i class="bi bi-person me-1"></i>{{ record.employee.full_name }}</span>
+      <span><i class="bi bi-calendar3 me-1"></i>{{ cycle.start_date|date:"d M Y" }} – {{ cycle.end_date|date:"d M Y" }}</span>
+    </div>
+  </div>
+  <a href="{% url 'appraisals:record_pdf' record_pk=record.pk %}"
+     class="btn btn-sm btn-outline-primary" target="_blank">
+    <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
+  </a>
+</div>
+
+<!-- Score banner -->
+{% if record.overall_score %}
+<div class="score-banner shadow-sm">
+  <div class="score-main rating-bg-{{ record.overall_rating|default:'meets' }}">
+    <div class="row align-items-center">
+      <div class="col-auto">
+        <div class="score-num">{{ record.overall_score }}%</div>
+        <div class="score-label">{{ record.get_overall_rating_display }}</div>
+      </div>
+      <div class="col">
+        <div class="row g-2 ps-3">
+          {% for cat in categories %}
+          <div class="col-6 col-md-3">
+            <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:8px 12px;">
+              <div style="font-size:.65rem;font-weight:700;opacity:.75;text-transform:uppercase;">{{ cat.name }}</div>
+              <div style="font-size:.85rem;font-weight:700;">{{ cat.weight }}% weight</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-auto text-end">
+        <div style="font-size:.72rem;opacity:.75;">Reviewed by</div>
+        <div style="font-size:.9rem;font-weight:700;">{{ record.reviewer.full_name|default:"—" }}</div>
+        {% if record.acknowledged_at %}
+        <div style="font-size:.72rem;opacity:.75;margin-top:4px;">
+          <i class="bi bi-check-circle me-1"></i>Acknowledged {{ record.acknowledged_at|date:"d M Y" }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Acknowledge button (employee only, when status is manager_reviewed) -->
+{% if user_is_employee and record.status == 'manager_reviewed' %}
+<div class="alert alert-success d-flex align-items-center gap-3 mb-4">
+  <i class="bi bi-hand-thumbs-up-fill fs-5"></i>
+  <div class="flex-grow-1">
+    <strong>Your appraisal review is ready.</strong>
+    Please review your results below, then acknowledge to complete the process.
+  </div>
+  <form method="post" action="{% url 'appraisals:record_acknowledge' record_pk=record.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-success btn-sm"
+            onclick="return confirm('Acknowledge this appraisal? This confirms you have reviewed the results.')">
+      <i class="bi bi-check-circle me-1"></i>Acknowledge &amp; Accept
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<!-- Item ratings by category -->
+{% for cat in categories %}
+{% with cat_items=items_by_cat|default_if_none:cat.id %}
+
+<div class="cat-section shadow-sm">
+  <div class="cat-header d-flex justify-content-between">
+    <span class="fw-bold">{{ cat.name }}</span>
+    <span class="text-muted small">{{ cat.weight }}% of total</span>
+  </div>
+
+  {% for item_cat_id, items in items_by_cat.items %}{% if item_cat_id == cat.id %}
+    {% if not items %}
+    <div class="text-center text-muted py-3 small">No items in this category.</div>
+    {% endif %}
+    {% for item in items %}
+    {% with r=ratings_by_item|default_if_none:item.pk %}
+    <div class="item-row">
+
+      <!-- Manager rating dot -->
+      {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}
+      <div class="rating-dot rd-{{ r_obj.manager_rating|default:'x' }}" title="Manager: {{ r_obj.manager_rating }}/5">
+        {{ r_obj.manager_rating|default:"—" }}
+      </div>
+      {% endif %}{% endfor %}
+
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+          <span class="fw-semibold">{{ item.title }}</span>
+          {% if item.goal_type == 'self_set' %}
+          <span class="badge" style="background:#ede9fe;color:#5b21b6;font-size:.62rem;">Your Goal</span>
+          {% endif %}
+          {% if item.target_value %}
+          <span class="text-muted small"><i class="bi bi-bullseye me-1"></i>Target: {{ item.target_value }} {{ item.target_unit }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Self vs manager comparison -->
+        <div class="d-flex gap-4 mt-1">
+          <div>
+            <div style="font-size:.65rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">Self Rating</div>
+            <div class="d-flex align-items-center gap-1">
+              {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}
+              <strong>{{ r_obj.self_rating|default:"—" }}/5</strong>
+              {% if r_obj.self_comment %}
+              <span class="text-muted small">— {{ r_obj.self_comment|truncatechars:80 }}</span>
+              {% endif %}
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.65rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">Manager Rating</div>
+            <div class="d-flex align-items-center gap-2">
+              {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}
+              <strong>{{ r_obj.manager_rating|default:"—" }}/5</strong>
+              {% if r_obj.self_rating and r_obj.manager_rating %}
+                {% with gap=r_obj.manager_rating|add:"-"|add:r_obj.self_rating %}
+                {% endwith %}
+              {% endif %}
+              {% if r_obj.manager_comment %}
+              <span class="text-muted small">— {{ r_obj.manager_comment|truncatechars:80 }}</span>
+              {% endif %}
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+          {% if item.item_type == ITEM_MEASURABLE %}
+          <div>
+            <div style="font-size:.65rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">Actual</div>
+            {% for rid, r_obj in ratings_by_item.items %}{% if rid == item.pk %}
+            <strong>{{ r_obj.actual_value|default:"—" }} {{ item.target_unit }}</strong>
+            {% endif %}{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="text-muted small text-end">
+        {{ item.weight }}%
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  {% endif %}{% endfor %}
+</div>
+
+{% endwith %}
+{% endfor %}
+
+<!-- Radar chart: self vs manager ratings -->
+{% if radar_html %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-3">
+    <h6 class="fw-bold mb-1"><i class="bi bi-reception-4 me-2 text-primary"></i>Self vs Manager Rating Comparison</h6>
+    <p class="text-muted small mb-2">Radar view shows how your self-ratings compare with the manager's ratings across all goals.</p>
+    {{ radar_html|safe }}
+  </div>
+</div>
+{% endif %}
+
+<!-- Manager summary -->
+{% if record.manager_summary %}
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <h6 class="fw-bold mb-2"><i class="bi bi-chat-square-text me-2 text-primary"></i>Manager Summary</h6>
+    <p class="mb-0" style="white-space:pre-wrap;">{{ record.manager_summary }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Development plan -->
+{% if record.development_plan %}
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+      <h6 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-2 text-success"></i>Development Plan</h6>
+      {% if not user_is_employee %}
+      <a href="{% url 'appraisals:dev_plan_links' record_pk=record.pk %}"
+         class="btn btn-sm btn-outline-success">
+        <i class="bi bi-link-45deg me-1"></i>Link Training Modules
+      </a>
+      {% endif %}
+    </div>
+    <p class="mb-0" style="white-space:pre-wrap;">{{ record.development_plan }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Linked training modules -->
+{% if dev_links %}
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-mortarboard me-2 text-info"></i>Recommended Training</h6>
+    <div class="d-flex flex-column gap-2">
+      {% for link in dev_links %}
+      <div style="background:#f0f9ff;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px;">
+        <i class="bi bi-play-circle text-info" style="font-size:1.2rem;flex-shrink:0;"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold small">{{ link.training_module.title }}</div>
+          {% if link.note %}<div class="text-muted" style="font-size:.75rem;">{{ link.note }}</div>{% endif %}
+        </div>
+        {% if user_is_employee %}
+        <a href="{% url 'training:module_detail' pk=link.training_module.pk %}"
+           class="btn btn-sm btn-outline-info">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Enroll
+        </a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

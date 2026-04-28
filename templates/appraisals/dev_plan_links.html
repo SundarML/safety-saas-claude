@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Development Plan Links — {{ record.employee.full_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .mod-row { border-radius:8px;border:1px solid #e2e8f0;padding:12px 16px; }
+  .mod-row.linked { background:#f0fdf4;border-color:#86efac; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-start gap-3 mb-4">
+  <a href="{% url 'appraisals:record_view' record_pk=record.pk %}" class="btn btn-sm btn-outline-secondary mt-1">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div>
+    <h5 class="fw-bold mb-1">Development Plan — Link Training Modules</h5>
+    <p class="text-muted small mb-0">
+      <i class="bi bi-person me-1"></i>{{ record.employee.full_name }}
+      &nbsp;·&nbsp;
+      <i class="bi bi-clipboard2-check me-1"></i>{{ cycle.name }}
+    </p>
+  </div>
+</div>
+
+<!-- Currently linked -->
+{% if existing_links %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i>Linked Training Modules</h6>
+    <div class="d-flex flex-column gap-2">
+      {% for link in existing_links %}
+      <div class="mod-row linked d-flex align-items-center gap-3">
+        <i class="bi bi-mortarboard text-success" style="font-size:1.1rem;flex-shrink:0;"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold small">{{ link.training_module.title }}</div>
+          {% if link.note %}
+          <div class="text-muted" style="font-size:.72rem;">{{ link.note }}</div>
+          {% endif %}
+          <div style="font-size:.65rem;color:#94a3b8;">Added by {{ link.created_by.full_name|default:"—" }} · {{ link.created_at|date:"d M Y" }}</div>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="remove">
+          <input type="hidden" name="module_id" value="{{ link.training_module.pk }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger"
+                  onclick="return confirm('Remove this training link?')">
+            <i class="bi bi-x"></i>
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Add new link -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+    <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Training Module</h6>
+
+    {% if not modules %}
+    <p class="text-muted small">No training modules exist in your organisation yet. Create some in Training &amp; Skills first.</p>
+    {% else %}
+    <div class="d-flex flex-column gap-2">
+      {% for mod in modules %}
+      <div class="mod-row {% if mod.pk in existing_ids %}linked{% endif %} d-flex align-items-center gap-3">
+        <i class="bi bi-play-circle {% if mod.pk in existing_ids %}text-success{% else %}text-muted{% endif %}"
+           style="font-size:1.1rem;flex-shrink:0;"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold small">{{ mod.title }}</div>
+          {% if mod.description %}
+          <div class="text-muted" style="font-size:.72rem;">{{ mod.description|truncatechars:80 }}</div>
+          {% endif %}
+        </div>
+        {% if mod.pk in existing_ids %}
+        <span class="badge bg-success-subtle text-success border" style="font-size:.65rem;">Linked</span>
+        {% else %}
+        <form method="post" class="d-flex gap-2 align-items-center flex-wrap">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add">
+          <input type="hidden" name="module_id" value="{{ mod.pk }}">
+          <input type="text" name="note" class="form-control form-control-sm"
+                 placeholder="Optional note…" style="max-width:220px;">
+          <button type="submit" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-link-45deg me-1"></i>Link
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

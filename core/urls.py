@@ -20,4 +20,5 @@ urlpatterns = [
     path("workers/create/", views.create_worker_view, name="create_worker"),
     path("workers/<int:worker_id>/reset-pin/", views.reset_worker_pin_view, name="reset_worker_pin"),
     path("workers/<int:worker_id>/toggle-active/", views.toggle_worker_active_view, name="toggle_worker_active"),
+    path("manage-team/", views.manage_team_view, name="manage_team"),
 ]

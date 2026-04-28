@@ -155,6 +155,38 @@ def app_dashboard_view(request):
         status=Inspection.STATUS_SCHEDULED
     ).order_by("scheduled_date")[:4]
 
+    # ── Appraisals ────────────────────────────────────────────────────────────
+    try:
+        from appraisals.models import AppraisalCycle, AppraisalRecord
+        appr_cycle_qs = AppraisalCycle.objects.filter(organization=org)
+        ctx["appr_active_cycles"] = appr_cycle_qs.filter(
+            status__in=[
+                AppraisalCycle.STATUS_GOAL_SETTING,
+                AppraisalCycle.STATUS_SELF_ASSESSMENT,
+                AppraisalCycle.STATUS_MANAGER_REVIEW,
+                AppraisalCycle.STATUS_CALIBRATION,
+            ]
+        ).count()
+        ctx["appr_reviews_pending"] = AppraisalRecord.objects.filter(
+            cycle__organization=org,
+            status=AppraisalRecord.STATUS_PENDING_REVIEW,
+            reviewer=user,
+        ).count() if is_manager else 0
+        ctx["appr_pending_ack"] = AppraisalRecord.objects.filter(
+            cycle__organization=org,
+            status=AppraisalRecord.STATUS_MANAGER_REVIEWED,
+            employee=user,
+        ).count()
+        ctx["my_appraisal"] = (
+            AppraisalRecord.objects
+            .filter(employee=user)
+            .select_related("cycle")
+            .order_by("-cycle__created_at")
+            .first()
+        )
+    except Exception:
+        pass
+
     ctx["is_manager"] = is_manager
     return render(request, "app_dashboard.html", ctx)
 
@@ -618,3 +650,46 @@ def toggle_worker_active_view(request, worker_id):
         messages.success(request, f"{worker.get_full_name()} has been {state}.")
 
     return redirect("core:worker_list")
+
+
+@login_required
+def manage_team_view(request):
+    """Manager: set reports_to relationships so employees appear in appraisal cycles."""
+    _manager_required(request)
+    org = request.organization
+
+    all_users = (
+        CustomUser.objects
+        .filter(organization=org, is_active=True)
+        .order_by("full_name")
+    )
+    managers = all_users.filter(role__in=["manager", "safety_manager"])
+
+    if request.method == "POST":
+        user_id    = request.POST.get("user_id")
+        manager_id = request.POST.get("manager_id") or None
+
+        try:
+            member = CustomUser.objects.get(pk=user_id, organization=org)
+            if manager_id:
+                mgr = CustomUser.objects.get(pk=manager_id, organization=org)
+                if mgr.pk == member.pk:
+                    messages.error(request, "A user cannot report to themselves.")
+                    return redirect("core:manage_team")
+                member.reports_to = mgr
+            else:
+                member.reports_to = None
+            member.save(update_fields=["reports_to"])
+            messages.success(
+                request,
+                f"Updated: {member.full_name} now reports to {member.reports_to.full_name if member.reports_to else 'nobody'}."
+            )
+        except CustomUser.DoesNotExist:
+            messages.error(request, "User not found.")
+
+        return redirect("core:manage_team")
+
+    return render(request, "core/manage_team.html", {
+        "all_users": all_users,
+        "managers": managers,
+    })

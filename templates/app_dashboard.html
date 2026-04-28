@@ -879,6 +879,65 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════
+       9. PERFORMANCE APPRAISALS
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon" style="background:#fdf2f8;">
+      <i class="bi bi-award-fill" style="color:#9333ea;"></i>
+    </div>
+    <div>
+      <div class="section-title">Performance Appraisals</div>
+    </div>
+    {% if is_manager and appr_active_cycles > 0 %}
+    <span class="section-badge badge-info">{{ appr_active_cycles }} active cycle{{ appr_active_cycles|pluralize }}</span>
+    {% elif not is_manager and my_appraisal %}
+    <span class="section-badge badge-info">{{ my_appraisal.get_status_display }}</span>
+    {% endif %}
+    <div class="section-line"></div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    {% if is_manager %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'appraisals:cycle_list' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#fdf2f8;">
+          <i class="bi bi-person-lines-fill" style="color:#9333ea;"></i>
+        </div>
+        <div class="mod-card-title">Appraisal Cycles</div>
+        <div class="mod-card-desc">Manage team performance reviews</div>
+        {% if appr_active_cycles > 0 %}
+        <span class="mod-card-badge badge-info">{{ appr_active_cycles }} active</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'appraisals:cycle_create' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#f0fdf4;">
+          <i class="bi bi-plus-circle" style="color:#16a34a;"></i>
+        </div>
+        <div class="mod-card-title">New Appraisal Cycle</div>
+        <div class="mod-card-desc">Set goals, review &amp; score team</div>
+        {% if appr_reviews_pending > 0 %}
+        <span class="mod-card-badge badge-warn">{{ appr_reviews_pending }} review{{ appr_reviews_pending|pluralize }} pending</span>
+        {% endif %}
+      </a>
+    </div>
+    {% endif %}
+    <div class="col-sm-6 col-lg-3">
+      <a href="{% url 'appraisals:my_appraisals' %}" class="mod-card">
+        <div class="mod-card-icon" style="background:#eff6ff;">
+          <i class="bi bi-award" style="color:#2563eb;"></i>
+        </div>
+        <div class="mod-card-title">My Appraisals</div>
+        <div class="mod-card-desc">View results, propose goals &amp; self-assess</div>
+        {% if appr_pending_ack > 0 %}
+        <span class="mod-card-badge badge-alert">{{ appr_pending_ack }} to acknowledge</span>
+        {% endif %}
+      </a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
        6. ADMINISTRATION (managers only)
   ══════════════════════════════════════════════════════════════════ -->
   {% if user.is_manager %}
