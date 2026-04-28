@@ -948,11 +948,11 @@
       {% endif %}
     </div>
 
-    <!-- ══ GROUP: PEOPLE & TRAINING ══ -->
+    <!-- ══ GROUP: TRAINING & SKILLS ══ -->
     <button class="sb-group-header" type="button"
             data-bs-toggle="collapse" data-bs-target="#grp-training"
             data-sb-group="training" aria-expanded="false">
-      <span><i class="bi bi-mortarboard sb-group-icon"></i>People &amp; Training</span>
+      <span><i class="bi bi-mortarboard sb-group-icon"></i>Training &amp; Skills</span>
       <i class="bi bi-chevron-down sb-chevron"></i>
     </button>
     <div class="collapse sb-group-content" id="grp-training">
@@ -966,7 +966,28 @@
          data-bs-toggle="tooltip" data-bs-placement="right" title="Browse available training modules and take assessments to earn skill credits">
         <i class="bi bi-mortarboard"></i> Modules
       </a>
-      <div class="sb-group-label has-divider">Performance Appraisal</div>
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'training:skill_matrix' %}"
+         class="sb-link {% if 'training' in request.path and 'matrix' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="View employee proficiency levels and identify skill gaps across the team">
+        <i class="bi bi-grid-3x3-gap"></i> Skill Matrix
+      </a>
+      <a href="{% url 'training:manage_skills' %}"
+         class="sb-link {% if 'training' in request.path and 'manage' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Add and manage skill categories and competency definitions">
+        <i class="bi bi-tags"></i> Manage Skills
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- ══ GROUP: PERFORMANCE ══ -->
+    <button class="sb-group-header" type="button"
+            data-bs-toggle="collapse" data-bs-target="#grp-performance"
+            data-sb-group="performance" aria-expanded="false">
+      <span><i class="bi bi-award sb-group-icon"></i>Performance</span>
+      <i class="bi bi-chevron-down sb-chevron"></i>
+    </button>
+    <div class="collapse sb-group-content" id="grp-performance">
       {% if user.is_manager or user.is_safety_manager %}
       <a href="{% url 'appraisals:cycle_list' %}"
          class="sb-link {% if 'appraisals' in request.path and 'my' not in request.path %}active{% endif %}"
@@ -987,19 +1008,6 @@
          title="View your appraisal records, propose goals and submit self-assessment">
         <i class="bi bi-award"></i> My Appraisals
       </a>
-
-      {% if user.is_manager or user.is_safety_manager %}
-      <a href="{% url 'training:skill_matrix' %}"
-         class="sb-link {% if 'training' in request.path and 'matrix' in request.path %}active{% endif %}"
-         data-bs-toggle="tooltip" data-bs-placement="right" title="View employee proficiency levels and identify skill gaps across the team">
-        <i class="bi bi-grid-3x3-gap"></i> Skill Matrix
-      </a>
-      <a href="{% url 'training:manage_skills' %}"
-         class="sb-link {% if 'training' in request.path and 'manage' in request.path %}active{% endif %}"
-         data-bs-toggle="tooltip" data-bs-placement="right" title="Add and manage skill categories and competency definitions">
-        <i class="bi bi-tags"></i> Manage Skills
-      </a>
-      {% endif %}
     </div>
 
     {% if user.is_manager or user.is_safety_manager %}
