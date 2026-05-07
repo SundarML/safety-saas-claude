@@ -11,6 +11,8 @@ urlpatterns = [
     path("", views.module_list, name="module_list"),
     path("new/", views.module_create, name="module_create"),
     path("<int:pk>/", views.module_detail, name="module_detail"),
+    path("<int:pk>/edit/", views.module_edit, name="module_edit"),
+    path("<int:pk>/delete/", views.module_delete, name="module_delete"),
 
     # Assessment management (manager/safety_manager only)
     path("<int:module_pk>/assessment/create/", views.assessment_create, name="assessment_create"),

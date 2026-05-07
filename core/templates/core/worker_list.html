@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Worker Accounts — Vigilo{% endblock %}
+{% block title %}Employee Accounts — Vigilo{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
   <div>
-    <h4 class="fw-bold mb-0">Worker Accounts</h4>
+    <h4 class="fw-bold mb-0">Employee Accounts</h4>
     <small class="text-muted">No-email accounts that log in with Employee ID + PIN</small>
   </div>
   <a href="{% url 'core:create_worker' %}" class="btn btn-success btn-sm">
-    <i class="bi bi-person-plus me-1"></i> Add Worker
+    <i class="bi bi-person-plus me-1"></i> Add Employee
   </a>
 </div>
 
@@ -119,7 +119,7 @@
 {% else %}
 <div class="text-center py-5" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;">
   <div style="font-size:2.5rem;margin-bottom:12px;">👷</div>
-  <div class="fw-bold text-dark mb-1">No worker accounts yet</div>
+  <div class="fw-bold text-dark mb-1">No employee accounts yet</div>
   <p class="text-muted mb-3" style="font-size:.875rem;">
     Create accounts for workers who don't have a company email.
   </p>

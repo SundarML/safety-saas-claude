@@ -121,7 +121,7 @@
           <div class="mt-auto d-flex justify-content-between align-items-center">
             <small class="text-muted">
               <i class="bi bi-person me-1"></i>
-              {{ module.created_by.full_name|default:module.created_by.email|default:"—" }}
+              {{ module.created_by.get_full_name|default:"—" }}
             </small>
             <a href="{% url 'training:module_detail' module.pk %}"
                class="btn btn-sm btn-outline-primary">

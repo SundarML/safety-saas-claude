@@ -278,7 +278,7 @@ def organization_signup(request):
             )
 
             # 3. Log in and go to dashboard
-            login(request, user)
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             messages.success(
                 request,
                 f"Welcome, {user.full_name}! Your organisation '{org.name}' has been created. "
@@ -302,7 +302,7 @@ def organization_signup(request):
 
 @login_required
 def invite_user(request):
-    if not request.user.is_manager:
+    if not (request.user.is_manager or request.user.is_safety_manager):
         raise PermissionDenied
 
     org = request.organization
@@ -408,7 +408,7 @@ def accept_invite(request, token):
             invite.is_used = True
             invite.save()
 
-            login(request, user)
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             messages.success(request, "Account created successfully. Welcome!")
             return redirect("core:app_dashboard")
 
@@ -428,7 +428,7 @@ def accept_invite(request, token):
 
 @login_required
 def invite_contractor(request):
-    if not request.user.is_manager:
+    if not (request.user.is_manager or request.user.is_safety_manager):
         raise PermissionDenied
 
     org = request.organization
@@ -531,7 +531,7 @@ def accept_contractor_invite(request, token):
             invite.is_used = True
             invite.save()
 
-            login(request, user)
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             messages.success(request, "Account created. Welcome to Vigilo!")
             return redirect("permits:permit_list")
 
@@ -563,7 +563,7 @@ def billing_view(request):
 # ---------------------------------------------------------------------------
 
 def _manager_required(request):
-    if not request.user.is_authenticated or not request.user.is_manager:
+    if not request.user.is_authenticated or not (request.user.is_manager or request.user.is_safety_manager):
         raise PermissionDenied
 
 
@@ -606,7 +606,7 @@ def create_worker_view(request):
                 )
                 messages.success(
                     request,
-                    f"Worker account created for {cd['full_name']} (ID: {cd['employee_id']})."
+                    f"Employee account created for {cd['full_name']} (ID: {cd['employee_id']})."
                 )
                 return redirect("core:worker_list")
     else:
@@ -693,3 +693,57 @@ def manage_team_view(request):
         "all_users": all_users,
         "managers": managers,
     })
+
+
+# ---------------------------------------------------------------------------
+# Employee Directory
+# ---------------------------------------------------------------------------
+
+@login_required
+def employee_directory_view(request):
+    _manager_required(request)
+    org = request.organization
+
+    show_inactive = request.GET.get("inactive") == "1"
+    role_filter   = request.GET.get("role", "")
+    search        = request.GET.get("q", "").strip()
+
+    qs = CustomUser.objects.filter(organization=org)
+    if not show_inactive:
+        qs = qs.filter(is_active=True)
+    if role_filter:
+        qs = qs.filter(role=role_filter)
+    if search:
+        qs = qs.filter(full_name__icontains=search) | qs.filter(email__icontains=search) | qs.filter(employee_id__icontains=search)
+
+    qs = qs.select_related("reports_to").order_by("full_name", "employee_id")
+
+    return render(request, "core/employee_directory.html", {
+        "employees":     qs,
+        "role_choices":  CustomUser.ROLE_CHOICES,
+        "role_filter":   role_filter,
+        "search":        search,
+        "show_inactive": show_inactive,
+        "total_active":  CustomUser.objects.filter(organization=org, is_active=True).count(),
+        "total_inactive": CustomUser.objects.filter(organization=org, is_active=False).count(),
+    })
+
+
+@login_required
+def toggle_employee_active_view(request, user_id):
+    _manager_required(request)
+    org      = request.organization
+    employee = get_object_or_404(CustomUser, pk=user_id, organization=org)
+
+    if request.method == "POST":
+        # Prevent managers from deactivating themselves
+        if employee.pk == request.user.pk:
+            messages.error(request, "You cannot deactivate your own account.")
+            return redirect("core:employee_directory")
+
+        employee.is_active = not employee.is_active
+        employee.save(update_fields=["is_active"])
+        state = "reactivated" if employee.is_active else "deactivated"
+        messages.success(request, f"{employee.get_full_name()} has been {state}.")
+
+    return redirect("core:employee_directory")

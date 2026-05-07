@@ -88,6 +88,44 @@ def module_create(request):
 
 
 @login_required
+def module_edit(request, pk):
+    _manager_required(request)
+    org = request.organization
+    module = get_object_or_404(TrainingModule, pk=pk, organization=org)
+
+    if request.method == "POST":
+        form = TrainingModuleForm(request.POST, instance=module)
+        form.fields["skills"].queryset = Skill.objects.filter(organization=org)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Module '{module.title}' updated.")
+            return redirect("training:module_detail", pk=module.pk)
+    else:
+        form = TrainingModuleForm(instance=module)
+        form.fields["skills"].queryset = Skill.objects.filter(organization=org)
+
+    return render(request, "training/module_form.html", {
+        "form": form,
+        "action": "Edit",
+        "module": module,
+    })
+
+
+@login_required
+def module_delete(request, pk):
+    _manager_required(request)
+    module = get_object_or_404(TrainingModule, pk=pk, organization=request.organization)
+
+    if request.method == "POST":
+        title = module.title
+        module.delete()
+        messages.success(request, f"Module '{title}' deleted.")
+        return redirect("training:module_list")
+
+    return redirect("training:module_detail", pk=pk)
+
+
+@login_required
 def module_detail(request, pk):
     _org_required(request)
     module = get_object_or_404(TrainingModule, pk=pk, organization=request.organization)

@@ -21,4 +21,6 @@ urlpatterns = [
     path("workers/<int:worker_id>/reset-pin/", views.reset_worker_pin_view, name="reset_worker_pin"),
     path("workers/<int:worker_id>/toggle-active/", views.toggle_worker_active_view, name="toggle_worker_active"),
     path("manage-team/", views.manage_team_view, name="manage_team"),
+    path("employees/", views.employee_directory_view, name="employee_directory"),
+    path("employees/<int:user_id>/toggle-active/", views.toggle_employee_active_view, name="toggle_employee_active"),
 ]

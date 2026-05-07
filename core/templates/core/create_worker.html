@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-{% block title %}Add Worker Account — Vigilo{% endblock %}
+{% block title %}Add Employee Account — Vigilo{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -11,8 +11,8 @@
         <i class="bi bi-arrow-left"></i>
       </a>
       <div>
-        <h4 class="fw-bold mb-0">Add Worker Account</h4>
-        <small class="text-muted">Creates a no-email account — worker logs in with Employee ID + PIN</small>
+        <h4 class="fw-bold mb-0">Add Employee Account</h4>
+        <small class="text-muted">Creates a no-email account — employee logs in with Employee ID + PIN</small>
       </div>
     </div>
 
@@ -88,7 +88,7 @@
 
           <div class="d-flex gap-2 mt-4">
             <button type="submit" class="btn btn-success">
-              <i class="bi bi-person-plus me-1"></i> Create Worker Account
+              <i class="bi bi-person-plus me-1"></i> Create Employee Account
             </button>
             <a href="{% url 'core:worker_list' %}" class="btn btn-outline-secondary">Cancel</a>
           </div>

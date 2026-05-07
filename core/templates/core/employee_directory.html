@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Employee Directory — Vigilo{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">Employee Directory</h4>
+    <small class="text-muted">
+      {{ total_active }} active
+      {% if total_inactive %} · {{ total_inactive }} inactive{% endif %}
+    </small>
+  </div>
+</div>
+
+<!-- Filters -->
+<form method="get" class="card border-0 shadow-sm mb-4 p-3" style="border-radius:12px;">
+  <div class="row g-2 align-items-end">
+    <div class="col-sm-5">
+      <label class="form-label fw-semibold mb-1" style="font-size:.82rem;">Search</label>
+      <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
+             placeholder="Name, email or employee ID…">
+    </div>
+    <div class="col-sm-3">
+      <label class="form-label fw-semibold mb-1" style="font-size:.82rem;">Role</label>
+      <select name="role" class="form-select form-select-sm">
+        <option value="">All roles</option>
+        {% for value, label in role_choices %}
+          <option value="{{ value }}" {% if role_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-2 d-flex align-items-end">
+      <div class="form-check mb-0">
+        <input class="form-check-input" type="checkbox" name="inactive" value="1" id="chkInactive"
+               {% if show_inactive %}checked{% endif %}>
+        <label class="form-check-label" for="chkInactive" style="font-size:.85rem;">Show inactive</label>
+      </div>
+    </div>
+    <div class="col-sm-2 d-flex gap-2 align-items-end">
+      <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+      <a href="{% url 'core:employee_directory' %}" class="btn btn-outline-secondary btn-sm w-100">Clear</a>
+    </div>
+  </div>
+</form>
+
+{% if employees %}
+<div class="card border-0 shadow-sm" style="border-radius:12px;overflow:hidden;">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" style="font-size:.875rem;">
+      <thead style="background:#f8fafc;">
+        <tr>
+          <th class="ps-4 py-3">Name</th>
+          <th>Role</th>
+          <th>Email / Employee ID</th>
+          <th>Reports To</th>
+          <th>Status</th>
+          <th class="text-end pe-4">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in employees %}
+        <tr {% if not emp.is_active %}style="opacity:.6;"{% endif %}>
+          <td class="ps-4">
+            <div class="d-flex align-items-center gap-2">
+              <span style="width:34px;height:34px;border-radius:50%;
+                           background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                           display:flex;align-items:center;justify-content:center;
+                           font-size:.78rem;font-weight:700;color:#fff;flex-shrink:0;">
+                {{ emp.full_name|first|upper|default:"?" }}
+              </span>
+              <span class="fw-semibold text-dark">{{ emp.full_name|default:"—" }}</span>
+            </div>
+          </td>
+          <td>
+            {% if emp.role == "manager" %}
+              <span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;">Manager</span>
+            {% elif emp.role == "safety_manager" %}
+              <span class="badge" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;">Safety Manager</span>
+            {% elif emp.role == "action_owner" %}
+              <span class="badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;">Action Owner</span>
+            {% elif emp.role == "contractor" %}
+              <span class="badge" style="background:#f0f9ff;color:#075985;border:1px solid #bae6fd;">Contractor</span>
+            {% else %}
+              <span class="badge" style="background:#f5f3ff;color:#5b21b6;border:1px solid #ddd6fe;">Observer</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if emp.email %}
+              <span class="text-muted">{{ emp.email }}</span>
+            {% elif emp.employee_id %}
+              <code style="background:#f1f5f9;padding:3px 8px;border-radius:5px;font-size:.8rem;">
+                ID: {{ emp.employee_id }}
+              </code>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if emp.reports_to %}
+              <span class="text-dark">{{ emp.reports_to.full_name }}</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if emp.is_active %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+            {% else %}
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="text-end pe-4">
+            {% if emp.pk != request.user.pk %}
+            <form method="post"
+                  action="{% url 'core:toggle_employee_active' emp.pk %}"
+                  onsubmit="return confirm('{% if emp.is_active %}Deactivate {{ emp.full_name|escapejs }}? They will immediately lose access.{% else %}Reactivate {{ emp.full_name|escapejs }}?{% endif %}')">
+              {% csrf_token %}
+              <input type="hidden" name="inactive" value="{% if show_inactive %}1{% endif %}">
+              <button type="submit"
+                      class="btn btn-sm {% if emp.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                {% if emp.is_active %}
+                  <i class="bi bi-person-dash me-1"></i>Deactivate
+                {% else %}
+                  <i class="bi bi-person-check me-1"></i>Reactivate
+                {% endif %}
+              </button>
+            </form>
+            {% else %}
+              <span class="text-muted" style="font-size:.8rem;">You</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="text-center py-5" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;">
+  <div style="font-size:2.5rem;margin-bottom:12px;">👥</div>
+  <div class="fw-bold text-dark mb-1">No employees found</div>
+  <p class="text-muted mb-3" style="font-size:.875rem;">Try adjusting your filters.</p>
+  <a href="{% url 'core:employee_directory' %}" class="btn btn-outline-secondary btn-sm">Clear filters</a>
+</div>
+{% endif %}
+
+{% endblock %}

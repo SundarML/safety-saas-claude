@@ -65,7 +65,15 @@
               </div>
             </div>
             {% if can_manage %}
-            <div class="d-flex gap-2 flex-shrink-0">
+            <div class="d-flex gap-2 flex-shrink-0 flex-wrap">
+              <a href="{% url 'training:module_edit' module.pk %}"
+                 class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil me-1"></i>Edit
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger"
+                      data-bs-toggle="modal" data-bs-target="#deleteModuleModal">
+                <i class="bi bi-trash me-1"></i>Delete
+              </button>
               {% if not assessment %}
                 <a href="{% url 'training:assessment_create' module.pk %}"
                    class="btn btn-sm btn-primary">
@@ -279,4 +287,41 @@
 
   </div>
 </div>
+
+{% if can_manage %}
+<div class="modal fade" id="deleteModuleModal" tabindex="-1" aria-labelledby="deleteModuleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="deleteModuleModalLabel">
+          <i class="bi bi-trash me-2"></i>Delete Module
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Delete <strong>{{ module.title }}</strong>?</p>
+        {% if assessment %}
+          {% with count=assessment.attempts.count %}
+          <div class="alert alert-warning py-2 mb-2">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            This module has a linked assessment with <strong>{{ count }} attempt{{ count|pluralize }}</strong>.
+            All attempt records will be permanently deleted.
+          </div>
+          {% endwith %}
+        {% endif %}
+        <p class="text-muted small mb-0">This cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form method="post" action="{% url 'training:module_delete' module.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash me-1"></i>Delete Module
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

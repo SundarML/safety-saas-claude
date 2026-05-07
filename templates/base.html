@@ -1019,7 +1019,12 @@
       <i class="bi bi-chevron-down sb-chevron"></i>
     </button>
     <div class="collapse sb-group-content" id="grp-settings">
-      {% if user.is_manager %}
+      {% if user.is_manager or user.is_safety_manager %}
+      <a href="{% url 'core:employee_directory' %}"
+         class="sb-link {% if 'employees' in request.path %}active{% endif %}"
+         data-bs-toggle="tooltip" data-bs-placement="right" title="View all employees, filter by role, deactivate leavers">
+        <i class="bi bi-people"></i> Employee Directory
+      </a>
       <a href="{% url 'core:manage_team' %}"
          class="sb-link {% if 'manage-team' in request.path %}active{% endif %}"
          data-bs-toggle="tooltip" data-bs-placement="right" title="Set reporting lines — assign each employee a manager so they appear in appraisal cycles">
@@ -1037,8 +1042,8 @@
       </a>
       <a href="{% url 'core:worker_list' %}"
          class="sb-link {% if 'workers' in request.path %}active{% endif %}"
-         data-bs-toggle="tooltip" data-bs-placement="right" title="Manage no-email worker accounts that log in with Employee ID and PIN">
-        <i class="bi bi-people"></i> Worker Accounts
+         data-bs-toggle="tooltip" data-bs-placement="right" title="Manage no-email employee accounts that log in with Employee ID and PIN">
+        <i class="bi bi-people"></i> Employee Accounts
       </a>
       <a href="{% url 'core:billing' %}"
          class="sb-link {% if 'billing' in request.path %}active{% endif %}"

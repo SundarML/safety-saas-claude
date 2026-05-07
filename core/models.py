@@ -18,6 +18,7 @@ class UserInvite(models.Model):
             ("observer", "Observer"),
             ("action_owner", "Action Owner"),
             ("manager", "Manager"),
+            ("safety_manager", "Safety Manager"),
         ]
     )
     token = models.UUIDField(default=uuid.uuid4, unique=True)
